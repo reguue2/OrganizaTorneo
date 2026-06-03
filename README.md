@@ -1,36 +1,140 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏆 Torneo-app
 
-## Getting Started
+Plataforma moderna para organizar y gestionar torneos deportivos. Crea, administra y monetiza tus eventos deportivos con una interfaz intuitiva y herramientas profesionales.
 
-First, run the development server:
+## 📋 Características
 
+- ✨ **Gestión de Torneos**: Crea y administra torneos completos con soporte para múltiples formatos
+- 👥 **Gestión de Participantes**: Registra jugadores y equipos con validación automática
+- 📊 **Sistema de Clasificaciones**: Rankings y tablas de posiciones actualizadas en tiempo real
+- 💳 **Pagos Integrados**: Procesa pagos de inscripción con Stripe
+- 🔐 **Autenticación Segura**: Sistema de usuarios con Supabase
+- 📱 **Diseño Responsive**: Interfaz optimizada para todos los dispositivos
+- 🎯 **Validación de Datos**: Esquemas de validación robustos con Zod
+
+## 🛠️ Tecnologías
+
+### Frontend
+- **Next.js 16**: Framework React con renderizado del lado del servidor
+- **React 19**: Biblioteca de interfaz de usuario
+- **TypeScript**: Tipado estático para mayor seguridad
+- **Tailwind CSS**: Framework de estilos utility-first
+- **UUID**: Generación de identificadores únicos
+
+### Backend & Base de Datos
+- **Supabase**: Backend as a Service (BaaS) con PostgreSQL
+- **Supabase SSR**: Autenticación y gestión de sesiones
+- **PostgreSQL/PLpgSQL**: Base de datos relacional (44.8% del código)
+
+### Herramientas Adicionales
+- **Stripe**: Procesamiento de pagos
+- **ESLint**: Linting de código
+- **Babel**: Compilación de JavaScript
+
+## 🚀 Inicio Rápido
+
+### Requisitos Previos
+- Node.js 18 o superior
+- npm, yarn, pnpm o bun
+
+### Instalación
+
+1. **Clona el repositorio**
+```bash
+git clone https://github.com/reguue2/Torneo-app.git
+cd Torneo-app
+```
+
+2. **Instala las dependencias**
+```bash
+npm install
+# o con yarn
+yarn install
+# o con pnpm
+pnpm install
+# o con bun
+bun install
+```
+
+3. **Configura las variables de entorno**
+Crea un archivo `.env.local` en la raíz del proyecto:
+```env
+NEXT_PUBLIC_SUPABASE_URL=tu_url_supabase
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_clave_anonima
+STRIPE_PUBLIC_KEY=tu_clave_publica_stripe
+STRIPE_SECRET_KEY=tu_clave_secreta_stripe
+```
+
+4. **Inicia el servidor de desarrollo**
 ```bash
 npm run dev
-# or
+# o con yarn
 yarn dev
-# or
+# o con pnpm
 pnpm dev
-# or
+# o con bun
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador para ver la aplicación.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📖 Estructura del Proyecto
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+Torneo-app/
+├── app/                 # Directorio de la aplicación Next.js
+├── components/          # Componentes React reutilizables
+├── lib/                 # Utilidades y funciones auxiliares
+├── public/              # Archivos estáticos
+├── styles/              # Estilos globales
+├── package.json         # Dependencias del proyecto
+└── tsconfig.json        # Configuración de TypeScript
+```
 
-## Learn More
+## 🔧 Comandos Disponibles
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run dev` - Inicia el servidor de desarrollo
+- `npm run build` - Compila la aplicación para producción
+- `npm start` - Inicia el servidor de producción
+- `npm run lint` - Ejecuta el linter de código
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🌐 Despliegue
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Desplegar en Vercel
 
-## Deploy on Vercel
+La forma más sencilla de desplegar es usando [Vercel Platform](https://vercel.com):
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Conecta tu repositorio de GitHub a Vercel
+2. Las variables de entorno se configurarán automáticamente
+3. Vercel compilará y desplegará automáticamente en cada push
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Para más detalles, consulta la [documentación de despliegue de Next.js](https://nextjs.org/docs/app/building-your-application/deploying).
+
+## 📚 Aprender Más
+
+- [Documentación de Next.js](https://nextjs.org/docs) - Características y API de Next.js
+- [Tutorial Next.js](https://nextjs.org/learn) - Tutorial interactivo
+- [Documentación de Supabase](https://supabase.com/docs) - Base de datos y autenticación
+- [Documentación de Stripe](https://stripe.com/docs) - Integración de pagos
+
+## 🤝 Contribuciones
+
+Las contribuciones son bienvenidas. Por favor:
+
+1. Fork el repositorio
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## 📄 Licencia
+
+Este proyecto está bajo una licencia abierta. Consulta el archivo LICENSE para más detalles.
+
+## 📞 Contacto
+
+Para preguntas o sugerencias, puedes abrir un issue en el repositorio o contactar al autor.
+
+---
+
+**Creado con ❤️ por [reguue2](https://github.com/reguue2)**
