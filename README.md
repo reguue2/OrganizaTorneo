@@ -1,4 +1,4 @@
-# 🏆 Torneo-app
+# 🏆 OrganizaTorneo
 
 Plataforma moderna para organizar y gestionar torneos deportivos. Crea, administra y monetiza tus eventos deportivos con una interfaz intuitiva y herramientas profesionales.
 
