@@ -1,4 +1,5 @@
 import { Users } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -49,16 +50,56 @@ function StructureStep({
   onEditCategory,
   onRemoveCategory,
 }: StructureStepProps) {
+  const categoryWarningRef = useRef<HTMLDivElement | null>(null)
+  const [showCategoryWarning, setShowCategoryWarning] = useState(false)
+
+  useEffect(() => {
+    if (!errors.categories) {
+      return
+    }
+
+    const showTimer = window.setTimeout(() => {
+      setShowCategoryWarning(true)
+    }, 0)
+
+    const focusTimer = window.setTimeout(() => {
+      categoryWarningRef.current?.focus()
+      categoryWarningRef.current?.scrollIntoView({
+        block: "center",
+        behavior: "smooth",
+      })
+    }, 50)
+
+    const hideTimer = window.setTimeout(() => {
+      setShowCategoryWarning(false)
+    }, 3500)
+
+    return () => {
+      window.clearTimeout(showTimer)
+      window.clearTimeout(focusTimer)
+      window.clearTimeout(hideTimer)
+    }
+  }, [errors])
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Formato del torneo</CardTitle>
+        <CardTitle>Categorías</CardTitle>
         <CardDescription>
-          Configura si el torneo usa inscripción general o categorías.
+          Decide si el torneo es con categorías o no.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-3 sm:grid-cols-2">
+          <Button
+            type="button"
+            variant={!draft.has_categories ? "default" : "outline"}
+            className="h-auto justify-start p-4"
+            onClick={() => onDraftChange("has_categories", false)}
+          >
+            <Users className="size-4" />
+            Sin categorías
+          </Button>
           <Button
             type="button"
             variant={draft.has_categories ? "default" : "outline"}
@@ -68,21 +109,12 @@ function StructureStep({
             <Users className="size-4" />
             Con categorías
           </Button>
-          <Button
-            type="button"
-            variant={!draft.has_categories ? "default" : "outline"}
-            className="h-auto justify-start p-4"
-            onClick={() => onDraftChange("has_categories", false)}
-          >
-            <Users className="size-4" />
-            Inscripción general
-          </Button>
         </div>
 
         {draft.has_categories ? (
           <>
-            {errors.categories && (
-              <Alert variant="warning">
+            {showCategoryWarning && errors.categories && (
+              <Alert ref={categoryWarningRef} tabIndex={-1} variant="warning">
                 <AlertDescription>{errors.categories}</AlertDescription>
               </Alert>
             )}
@@ -92,7 +124,6 @@ function StructureStep({
               categories={draft.categories}
               errors={categoryErrors}
               editingCategoryId={editingCategoryId}
-              prizeMode={draft.prize_mode}
               onCategoryChange={onCategoryDraftChange}
               onAddOrSave={onAddOrSaveCategory}
               onEdit={onEditCategory}
@@ -102,7 +133,7 @@ function StructureStep({
           </>
         ) : (
           <FormField
-            label="Formato de inscripción"
+            label="Tipo de participantes"
             error={errors.participant_type}
           >
             <Select

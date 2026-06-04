@@ -72,6 +72,6 @@ describe("tournament domain", () => {
     )
 
     expect(result.canPublish).toBe(false)
-    expect(result.issues).toContain("Debes crear al menos una categoría.")
+    expect(result.issues).toContain("Debes crear al menos 2 categorías.")
   })
 })

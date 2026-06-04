@@ -35,11 +35,7 @@ function CreateTournamentHiddenFields({
       <input type="hidden" name="prize_mode" value={draft.prize_mode} />
       <input type="hidden" name="prizes" value={draft.prizes} />
       <input type="hidden" name="rules" value={draft.rules} />
-      <input
-        type="hidden"
-        name="min_participants"
-        value={draft.min_participants}
-      />
+      <input type="hidden" name="min_participants" value="1" />
       <input
         type="hidden"
         name="max_participants"

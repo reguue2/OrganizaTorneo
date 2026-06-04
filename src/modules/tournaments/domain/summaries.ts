@@ -29,8 +29,8 @@ export function getExplorePriceLabel(tournament: ExploreTournament) {
 export function getExploreCapacityLabel(tournament: ExploreTournament) {
   if (!tournament.has_categories) {
     return tournament.max_participants === null
-      ? `Mín. ${tournament.min_participants} · Sin máximo`
-      : `Mín. ${tournament.min_participants} · Máx. ${tournament.max_participants}`
+      ? "Sin límite"
+      : `${tournament.max_participants} plazas`
   }
 
   const categories = tournament.categories ?? []
@@ -49,7 +49,7 @@ export function getExploreCapacityLabel(tournament: ExploreTournament) {
     0
   )
 
-  return `${categories.length} categorías · ${totalMax} plazas máx.`
+  return `${categories.length} categorías · ${totalMax} plazas`
 }
 
 export function getExploreStructureLabel(tournament: ExploreTournament) {
@@ -87,8 +87,8 @@ export function getTournamentCapacitySummary(
 ) {
   if (!tournament.has_categories) {
     return tournament.max_participants === null
-      ? `Mínimo ${tournament.min_participants} · Sin máximo`
-      : `${tournament.max_participants} plazas máx.`
+      ? "Sin límite"
+      : `${tournament.max_participants} plazas`
   }
 
   if (categories.length === 0) return "Cupos por categoría"
@@ -104,7 +104,7 @@ export function getTournamentCapacitySummary(
 
   if (hasUnlimited) return "Cupos por categoría"
 
-  return `${totalMax} plazas máx.`
+  return `${totalMax} plazas`
 }
 
 export function getTournamentCategoriesSummary(

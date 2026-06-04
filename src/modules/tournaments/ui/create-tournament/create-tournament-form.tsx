@@ -4,7 +4,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Input } from "@/components/ui/input"
 
 import { CreateTournamentHiddenFields } from "./hidden-fields"
-import { CreateTournamentPreviewSidebar } from "./preview-sidebar"
 import { BasicsStep } from "./steps/basics-step"
 import { DetailsStep } from "./steps/details-step"
 import { PricingStep } from "./steps/pricing-step"
@@ -21,9 +20,10 @@ function CreateTournamentForm() {
     categoryDraft,
     categoryErrors,
     changePoster,
+    clearPoster,
     currentStepIndex,
-    currentStepNumber,
     draft,
+    dropPoster,
     editCategory,
     editingCategoryId,
     errors,
@@ -31,7 +31,6 @@ function CreateTournamentForm() {
     formAction,
     goBack,
     goNext,
-    goToStep,
     isLastStep,
     loaded,
     pending,
@@ -51,7 +50,7 @@ function CreateTournamentForm() {
     <form
       action={formAction}
       onSubmit={submit}
-      className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)_320px]"
+      className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]"
     >
       <CreateTournamentHiddenFields draft={draft} />
       <Input
@@ -67,8 +66,6 @@ function CreateTournamentForm() {
       <CreateTournamentStepSidebar
         currentStep={step}
         currentStepIndex={currentStepIndex}
-        currentStepNumber={currentStepNumber}
-        onStepChange={goToStep}
       />
 
       <div className="min-w-0 space-y-6">
@@ -120,12 +117,19 @@ function CreateTournamentForm() {
             fileInputRef={fileInputRef}
             posterName={posterName}
             posterPreview={posterPreview}
+            onClearPoster={clearPoster}
             onDraftChange={setDraftValue}
+            onPosterDrop={dropPoster}
           />
         )}
 
         {step === "review" && (
-          <ReviewStep draft={draft} previewItems={previewItems} />
+          <ReviewStep
+            draft={draft}
+            posterName={posterName}
+            posterPreview={posterPreview}
+            previewItems={previewItems}
+          />
         )}
 
         <CreateTournamentWizardNavigation
@@ -137,12 +141,6 @@ function CreateTournamentForm() {
           onNext={goNext}
         />
       </div>
-
-      <CreateTournamentPreviewSidebar
-        draft={draft}
-        posterName={posterName}
-        previewItems={previewItems}
-      />
     </form>
   )
 }

@@ -300,7 +300,7 @@ export function validateTournamentForPublication(
     (tournament.max_participants !== null &&
       tournament.max_participants < tournament.min_participants)
   ) {
-    issues.push("Revisa el mínimo y máximo de participantes del torneo.")
+    issues.push("Revisa las plazas disponibles del torneo.")
   }
 
   if (!tournament.has_categories) {
@@ -328,7 +328,7 @@ export function validateTournamentForPublication(
     )
 
     if (invalidCategory) {
-      issues.push("Revisa las categorías, sus precios y sus cupos.")
+      issues.push("Revisa las categorías, sus precios y sus plazas.")
     }
   }
 

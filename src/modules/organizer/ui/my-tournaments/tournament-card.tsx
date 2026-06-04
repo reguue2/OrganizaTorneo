@@ -97,7 +97,7 @@ export function TournamentCard({
             <span>Ocupación</span>
             <span>
               {tournament.occupancyPercent === null
-                ? "Sin máximo"
+                ? "Sin límite"
                 : `${tournament.occupancyPercent}%`}
             </span>
           </div>

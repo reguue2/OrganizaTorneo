@@ -2,7 +2,12 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { cloneElement, useMemo, type ReactElement } from "react"
+import {
+  cloneElement,
+  useMemo,
+  useState,
+  type ReactElement,
+} from "react"
 import {
   CalendarDays,
   CreditCard,
@@ -51,6 +56,9 @@ function ExploreTournamentsView({
   initialProvince,
   loadError,
 }: ExploreTournamentsViewProps) {
+  const [query, setQuery] = useState(initialQuery)
+  const [province, setProvince] = useState(initialProvince)
+
   const filteredTournaments = useMemo(() => {
     const normalizedQuery = normalizeText(initialQuery)
 
@@ -74,9 +82,8 @@ function ExploreTournamentsView({
   return (
     <PublicPage size="wide" className="py-8 md:py-10">
       <PublicPageHeader
-        eyebrow="Torneos públicos"
         title="Explorar torneos"
-        description="Busca torneos locales publicados y entra al enlace público para consultar detalles o iniciar la inscripción."
+        description="Busca torneos publicados y entra para consultar detalles o iniciar la inscripción."
       />
 
       <div className="space-y-6">
@@ -94,7 +101,8 @@ function ExploreTournamentsView({
                 <Input
                   id="q"
                   name="q"
-                  defaultValue={initialQuery}
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
                   placeholder="Torneo, zona o categoría"
                   className="pl-9"
                 />
@@ -102,14 +110,15 @@ function ExploreTournamentsView({
 
               <div>
                 <label htmlFor="province" className="sr-only">
-                  Zona
+                  Provincia
                 </label>
                 <Select
                   id="province"
                   name="province"
-                  defaultValue={initialProvince}
+                  value={province}
+                  onChange={(event) => setProvince(event.target.value)}
                 >
-                  <option value="">Todas las zonas</option>
+                  <option value="">Selecciona provincia</option>
                   {SPAIN_COMMUNITIES.map((provinceOption) => (
                     <option key={provinceOption} value={provinceOption}>
                       {provinceOption}
@@ -159,12 +168,12 @@ function ExploreTournamentsView({
             title={
               loadError
                 ? "Ahora mismo no se puede cargar explorar"
-                : "No hay torneos para esos filtros"
+                : "No se ha encontrado ningún torneo"
             }
             description={
               loadError
                 ? "La conexión al backend no está respondiendo correctamente."
-                : "Prueba otra búsqueda o amplía la zona."
+                : ""
             }
           />
         ) : (

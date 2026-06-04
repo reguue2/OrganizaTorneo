@@ -33,8 +33,8 @@ function TournamentCategoriesCard({
                   <p>
                     Cupo:{" "}
                     {category.max_participants === null
-                      ? `mín. ${category.min_participants} · sin máximo`
-                      : `mín. ${category.min_participants} · máx. ${category.max_participants}`}
+                      ? "sin límite"
+                      : `${category.max_participants} plazas`}
                   </p>
                   {category.start_at && (
                     <p>Fecha/hora: {formatDate(category.start_at)}</p>

@@ -33,7 +33,7 @@ export function OperationalSummary({
         />
         <SummaryLine
           label="Cupos"
-          value={totalCapacity === null ? "Sin máximo" : `${totalCapacity} plazas`}
+          value={totalCapacity === null ? "Sin límite" : `${totalCapacity} plazas`}
         />
         <SummaryLine
           label="Precio base"
@@ -74,8 +74,8 @@ export function CategoriesSummary({ categories }: { categories: CategoryRow[] })
             </div>
             <p className="mt-1 text-muted-foreground">
               {category.max_participants === null
-                ? "sin máximo"
-                : `máx. ${category.max_participants}`}
+                ? "sin límite"
+                : `${category.max_participants} plazas`}
             </p>
           </div>
         ))}

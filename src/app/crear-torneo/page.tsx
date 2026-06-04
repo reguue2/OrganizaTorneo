@@ -19,7 +19,7 @@ export default async function CrearTorneoPage() {
     <OrganizerPage size="wide">
       <OrganizerPageHeader
         title="Crear torneo"
-        description="Configura el torneo completo y publícalo cuando los datos estén listos."
+        description="Configura tu torneo y publícalo cuando completes los datos."
       />
       <CreateTournamentForm />
     </OrganizerPage>

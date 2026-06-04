@@ -14,7 +14,7 @@ export const CreateTournamentCategorySchema = z
     min_participants: z.coerce
       .number()
       .int()
-      .min(1, "El mínimo de inscripciones de la categoría debe ser al menos 1."),
+      .min(1, "Las plazas de la categoría no son válidas."),
     max_participants: z.union([z.coerce.number().int().min(1), z.null()]),
     start_at: z.string().nullable(),
     address: z.string().nullable(),
@@ -27,8 +27,7 @@ export const CreateTournamentCategorySchema = z
     ) {
       ctx.addIssue({
         code: "custom",
-        message:
-          "El máximo de inscripciones de la categoría no puede ser menor que el mínimo.",
+        message: "Las plazas de la categoría no son válidas.",
         path: ["max_participants"],
       })
     }
@@ -57,8 +56,8 @@ export const CreateTournamentFormSchema = z
     participant_type: z.enum(["individual", "team"]).nullable(),
     min_participants: z
       .number()
-      .int("El mínimo de inscripciones del torneo no es válido.")
-      .min(1, "El mínimo de inscripciones del torneo no es válido."),
+      .int("Las plazas del torneo no son válidas.")
+      .min(1, "Las plazas del torneo no son válidas."),
     max_participants: z.number().int().nullable(),
     payment_method: PaymentMethodSchema.nullable(),
     prize_mode: PrizeModeSchema,
@@ -113,7 +112,7 @@ export const CreateTournamentFormSchema = z
     ) {
       ctx.addIssue({
         code: "custom",
-        message: "El máximo de inscripciones del torneo no es válido.",
+        message: "Las plazas del torneo no son válidas.",
         path: ["max_participants"],
       })
     }
@@ -260,14 +259,14 @@ export function parseCreateTournamentFormData(formData: FormData):
   if (minParticipants === null || Number.isNaN(minParticipants)) {
     return {
       success: false,
-      error: "El mínimo de inscripciones del torneo no es válido.",
+      error: "Las plazas del torneo no son válidas.",
     }
   }
 
   if (Number.isNaN(maxParticipants)) {
     return {
       success: false,
-      error: "El máximo de inscripciones del torneo no es válido.",
+      error: "Las plazas del torneo no son válidas.",
     }
   }
 

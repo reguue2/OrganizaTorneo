@@ -51,7 +51,7 @@ export function RegistrationGroupCard({
           <CardTitle>{group.name}</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
             {group.capacity === null
-              ? `${activeGroupCount} activas · sin máximo`
+              ? `${activeGroupCount} activas · sin límite`
               : `${activeGroupCount}/${group.capacity} activas · ${remainingGroupSpots} plazas restantes`}
           </p>
         </div>

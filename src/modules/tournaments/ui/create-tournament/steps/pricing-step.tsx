@@ -25,27 +25,14 @@ function PricingStep({ draft, errors, onDraftChange }: PricingStepProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Cupos y precio</CardTitle>
+        <CardTitle>Inscripción</CardTitle>
         <CardDescription>
-          Define límites y precio base cuando no hay categorías.
+          Define plazas disponibles y precio de inscripción.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-2">
         <FormField
-          label="Mínimo de inscripciones"
-          error={errors.min_participants}
-        >
-          <Input
-            value={draft.min_participants}
-            onChange={(event) =>
-              onDraftChange("min_participants", event.target.value)
-            }
-            inputMode="numeric"
-          />
-        </FormField>
-
-        <FormField
-          label="Máximo de inscripciones"
+          label="Plazas disponibles"
           error={errors.max_participants}
         >
           <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
@@ -55,7 +42,6 @@ function PricingStep({ draft, errors, onDraftChange }: PricingStepProps) {
                 onDraftChange("max_participants", event.target.value)
               }
               inputMode="numeric"
-              placeholder="Sin máximo"
               disabled={draft.noMax}
             />
             <label className="inline-flex h-10 items-center gap-2 rounded-lg border border-border px-3 text-sm text-foreground">
@@ -64,28 +50,37 @@ function PricingStep({ draft, errors, onDraftChange }: PricingStepProps) {
                 checked={draft.noMax}
                 onChange={(event) => onDraftChange("noMax", event.target.checked)}
               />
-              Sin máximo
+              Sin límite
             </label>
           </div>
         </FormField>
 
         {!draft.has_categories && (
-          <FormField label="Precio" error={errors.entry_price}>
-            <Input
-              value={draft.entry_price}
-              onChange={(event) =>
-                onDraftChange("entry_price", event.target.value)
-              }
-              inputMode="decimal"
-              placeholder="0"
-            />
+          <FormField label="Precio de inscripción" error={errors.entry_price}>
+            <div className="relative">
+              <Input
+                value={draft.entry_price}
+                onChange={(event) =>
+                  onDraftChange("entry_price", event.target.value)
+                }
+                onBlur={() => {
+                  if (!draft.entry_price.trim()) onDraftChange("entry_price", "0")
+                }}
+                inputMode="decimal"
+                className="pr-8"
+              />
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                €
+              </span>
+            </div>
           </FormField>
         )}
 
         {draft.has_categories && (
           <Alert className="md:col-span-2">
             <AlertDescription>
-              El precio se toma de cada categoría. El precio global se enviará como 0.
+              Cada categoría usa su propio precio. No hace falta definir un precio
+              general para el torneo.
             </AlertDescription>
           </Alert>
         )}

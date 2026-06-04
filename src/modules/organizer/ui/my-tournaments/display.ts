@@ -88,7 +88,7 @@ export function getRegistrationBadge(
 
 export function getParticipantLine(view: OrganizerTournamentView) {
   if (view.capacity === null) {
-    return `${view.registrationsCount} activas · Sin máximo`
+    return `${view.registrationsCount} activas · Sin límite`
   }
 
   return `${view.registrationsCount}/${view.capacity} activas`

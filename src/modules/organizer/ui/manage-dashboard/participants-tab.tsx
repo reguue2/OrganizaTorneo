@@ -47,11 +47,11 @@ export function ParticipantsTab({
       <div className="grid gap-4 md:grid-cols-3">
         <SummaryTile
           label="Capacidad total"
-          value={totalCapacity === null ? "Sin máximo" : `${totalCapacity} plazas`}
+          value={totalCapacity === null ? "Sin límite" : `${totalCapacity} plazas`}
         />
         <SummaryTile
           label="Plazas restantes"
-          value={remainingSpots === null ? "Sin máximo" : `${remainingSpots} libres`}
+          value={remainingSpots === null ? "Sin límite" : `${remainingSpots} libres`}
         />
         <SummaryTile label="Canceladas" value={cancelledRegistrations.length} />
       </div>

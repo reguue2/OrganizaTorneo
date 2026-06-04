@@ -16,9 +16,10 @@ export type CreateTournamentCategoryDraft = {
   name: string
   participant_type: ParticipantType | null
   price: string
-  min_participants: string
   max_participants: string
   noMax: boolean
+  hasCustomDate: boolean
+  hasCustomAddress: boolean
   start_at: string
   address: string
   prizes: string
@@ -34,7 +35,6 @@ export type CreateTournamentDraft = {
   is_public: boolean
   has_categories: boolean
   participant_type: ParticipantType | null
-  min_participants: string
   max_participants: string
   noMax: boolean
   entry_price: string

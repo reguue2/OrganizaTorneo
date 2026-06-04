@@ -100,7 +100,7 @@ describe("create tournament schema", () => {
     })
   })
 
-  it("accepts tournaments with a single category", () => {
+  it("rejects tournaments with a single category", () => {
     const result = parseCreateTournamentFormData(
       baseFormData({
         has_categories: "true",
@@ -119,10 +119,10 @@ describe("create tournament schema", () => {
       })
     )
 
-    expect(result.success).toBe(true)
-    if (!result.success) return
-
-    expect(result.data.categories).toHaveLength(1)
+    expect(result).toEqual({
+      success: false,
+      error: "Debes crear al menos 2 categorías.",
+    })
   })
 
   it("rejects per-category prizes when categories have no prizes", () => {

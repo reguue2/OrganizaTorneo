@@ -42,6 +42,8 @@ import type {
 } from "./types"
 
 const STORAGE_KEY = "create-tournament-form-v2"
+const SUBMITTED_STORAGE_KEY = "create-tournament-form-v2-submitted"
+const MAX_POSTER_SIZE = 5 * 1024 * 1024
 
 const initialActionState: CreateTournamentActionState = {
   error: null,
@@ -54,12 +56,18 @@ function getStepIndex(step: CreateTournamentStepId) {
 function getFirstInvalidStep(
   draft: CreateTournamentDraft
 ): CreateTournamentStepId | null {
-  for (const step of CREATE_TOURNAMENT_STEPS) {
+  for (const step of getFlowSteps(draft)) {
     const errors = validateStep(step.id, draft)
     if (Object.keys(errors).length > 0) return step.id
   }
 
   return null
+}
+
+function getFlowSteps(draft: CreateTournamentDraft) {
+  if (!draft.has_categories) return CREATE_TOURNAMENT_STEPS
+
+  return CREATE_TOURNAMENT_STEPS.filter((item) => item.id !== "pricing")
 }
 
 function buildPreviewItems(
@@ -68,7 +76,7 @@ function buildPreviewItems(
   return [
     { label: "Fecha", value: formatPreviewDate(draft.date), icon: CalendarDays },
     {
-      label: "Formato",
+      label: draft.has_categories ? "Categorías" : "Inscripción",
       value: draft.has_categories
         ? `${draft.categories.length} categorías`
         : getParticipantTypeLabel(draft.participant_type),
@@ -113,9 +121,16 @@ function useCreateTournamentForm() {
     queueMicrotask(() => {
       if (cancelled) return
 
-      const stored = parseStoredCreateTournamentDraft(
-        sessionStorage.getItem(STORAGE_KEY)
-      )
+      const wasSubmitted = sessionStorage.getItem(SUBMITTED_STORAGE_KEY) === "true"
+
+      if (wasSubmitted) {
+        sessionStorage.removeItem(STORAGE_KEY)
+        sessionStorage.removeItem(SUBMITTED_STORAGE_KEY)
+      }
+
+      const stored = wasSubmitted
+        ? null
+        : parseStoredCreateTournamentDraft(sessionStorage.getItem(STORAGE_KEY))
 
       setDraft(stored ?? INITIAL_CREATE_TOURNAMENT_DRAFT)
       setLoaded(true)
@@ -132,6 +147,11 @@ function useCreateTournamentForm() {
   }, [draft, loaded])
 
   useEffect(() => {
+    if (!serverState.error) return
+    sessionStorage.removeItem(SUBMITTED_STORAGE_KEY)
+  }, [serverState.error])
+
+  useEffect(() => {
     return () => {
       if (posterPreview) URL.revokeObjectURL(posterPreview)
     }
@@ -141,7 +161,15 @@ function useCreateTournamentForm() {
     key: Key,
     value: CreateTournamentDraft[Key]
   ) => {
-    setDraft((current) => ({ ...current, [key]: value }))
+    setDraft((current) => {
+      const next = { ...current, [key]: value }
+
+      if (key === "has_categories" && value === false && next.prize_mode === "per_category") {
+        next.prize_mode = "none"
+      }
+
+      return next
+    })
     setErrors((current) => {
       if (!current[key as string]) return current
       const next = { ...current }
@@ -150,8 +178,35 @@ function useCreateTournamentForm() {
     })
   }
 
-  const changePoster = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null
+  const setPosterFile = (file: File | null) => {
+    if (file && !file.type.startsWith("image/")) {
+      if (fileInputRef.current) fileInputRef.current.value = ""
+      setPosterName("")
+      setPosterPreview((currentPreview) => {
+        if (currentPreview) URL.revokeObjectURL(currentPreview)
+        return null
+      })
+      setErrors((current) => ({
+        ...current,
+        poster: "El cartel debe ser una imagen válida.",
+      }))
+      return
+    }
+
+    if (file && file.size > MAX_POSTER_SIZE) {
+      if (fileInputRef.current) fileInputRef.current.value = ""
+      setPosterName("")
+      setPosterPreview((currentPreview) => {
+        if (currentPreview) URL.revokeObjectURL(currentPreview)
+        return null
+      })
+      setErrors((current) => ({
+        ...current,
+        poster: "El cartel no puede superar los 5MB.",
+      }))
+      return
+    }
+
     setPosterName(file?.name ?? "")
     setErrors((current) => {
       const next = { ...current }
@@ -163,6 +218,28 @@ function useCreateTournamentForm() {
       if (currentPreview) URL.revokeObjectURL(currentPreview)
       return file ? URL.createObjectURL(file) : null
     })
+  }
+
+  const changePoster = (event: ChangeEvent<HTMLInputElement>) => {
+    setPosterFile(event.target.files?.[0] ?? null)
+  }
+
+  const dropPoster = (file: File) => {
+    if (fileInputRef.current) {
+      const dataTransfer = new DataTransfer()
+      dataTransfer.items.add(file)
+      fileInputRef.current.files = dataTransfer.files
+    }
+
+    setPosterFile(file)
+  }
+
+  const clearPoster = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+
+    setPosterFile(null)
   }
 
   const resetCategoryEditor = () => {
@@ -234,19 +311,26 @@ function useCreateTournamentForm() {
 
     if (Object.keys(stepErrors).length > 0) return
 
-    const nextStep = CREATE_TOURNAMENT_STEPS[currentStepIndex + 1]?.id
+    const flowSteps = getFlowSteps(draft)
+    const flowStepIndex = flowSteps.findIndex((item) => item.id === step)
+    const nextStep = flowSteps[flowStepIndex + 1]?.id
     if (nextStep) goToStep(nextStep)
   }
 
   const goBack = () => {
-    const previousStep = CREATE_TOURNAMENT_STEPS[currentStepIndex - 1]?.id
+    const flowSteps = getFlowSteps(draft)
+    const flowStepIndex = flowSteps.findIndex((item) => item.id === step)
+    const previousStep = flowSteps[flowStepIndex - 1]?.id
     if (previousStep) goToStep(previousStep)
   }
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     const invalidStep = getFirstInvalidStep(draft)
 
-    if (!invalidStep) return
+    if (!invalidStep) {
+      sessionStorage.setItem(SUBMITTED_STORAGE_KEY, "true")
+      return
+    }
 
     event.preventDefault()
     setStep(invalidStep)
@@ -255,12 +339,12 @@ function useCreateTournamentForm() {
 
   return {
     addOrSaveCategory,
-    canGoBack: currentStepIndex > 0,
+    canGoBack: getFlowSteps(draft).findIndex((item) => item.id === step) > 0,
     categoryDraft,
     categoryErrors,
     changePoster,
+    clearPoster,
     currentStepIndex,
-    currentStepNumber: currentStepIndex + 1,
     draft,
     editCategory,
     editingCategoryId,
@@ -270,12 +354,13 @@ function useCreateTournamentForm() {
     goBack,
     goNext,
     goToStep,
-    isLastStep: currentStepIndex === CREATE_TOURNAMENT_STEPS.length - 1,
+    isLastStep: step === getFlowSteps(draft).at(-1)?.id,
     loaded,
     pending,
     posterName,
     posterPreview,
     previewItems,
+    dropPoster,
     removeCategory,
     resetCategoryEditor,
     serverState,

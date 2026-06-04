@@ -8,15 +8,11 @@ import type { CreateTournamentStepId } from "./types"
 type CreateTournamentStepSidebarProps = {
   currentStep: CreateTournamentStepId
   currentStepIndex: number
-  currentStepNumber: number
-  onStepChange: (step: CreateTournamentStepId) => void
 }
 
 function CreateTournamentStepSidebar({
   currentStep,
   currentStepIndex,
-  currentStepNumber,
-  onStepChange,
 }: CreateTournamentStepSidebarProps) {
   return (
     <aside className="space-y-3">
@@ -27,30 +23,26 @@ function CreateTournamentStepSidebar({
             const isDone = index < currentStepIndex
 
             return (
-              <button
+              <div
                 key={item.id}
-                type="button"
-                onClick={() => onStepChange(item.id)}
+                aria-current={isActive ? "step" : undefined}
                 className={
-                  "flex h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm transition " +
+                  "flex h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm " +
                   (isActive
                     ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground")
+                    : "text-muted-foreground")
                 }
               >
                 <span className="flex size-5 shrink-0 items-center justify-center rounded-full border border-current text-xs">
                   {isDone ? <Check className="size-3" /> : index + 1}
                 </span>
                 <span className="truncate">{item.label}</span>
-              </button>
+              </div>
             )
           })}
         </div>
       </Card>
 
-      <p className="text-xs leading-5 text-muted-foreground">
-        Paso {currentStepNumber} de {CREATE_TOURNAMENT_STEPS.length}
-      </p>
     </aside>
   )
 }

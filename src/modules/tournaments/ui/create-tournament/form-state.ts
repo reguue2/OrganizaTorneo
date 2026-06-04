@@ -14,11 +14,11 @@ export const CREATE_TOURNAMENT_STEPS: Array<{
   id: CreateTournamentStepId
   label: string
 }> = [
-  { id: "basics", label: "Base" },
-  { id: "structure", label: "Formato" },
-  { id: "pricing", label: "Cupos" },
-  { id: "details", label: "Detalles" },
-  { id: "review", label: "Revisión" },
+  { id: "basics", label: "Información básica" },
+  { id: "structure", label: "Categorías" },
+  { id: "pricing", label: "Inscripción" },
+  { id: "details", label: "Publicación" },
+  { id: "review", label: "Confirmar" },
 ]
 
 export const EMPTY_CATEGORY: CreateTournamentCategoryDraft = {
@@ -26,9 +26,10 @@ export const EMPTY_CATEGORY: CreateTournamentCategoryDraft = {
   name: "",
   participant_type: null,
   price: "0",
-  min_participants: "1",
   max_participants: "",
   noMax: true,
+  hasCustomDate: false,
+  hasCustomAddress: false,
   start_at: "",
   address: "",
   prizes: "",
@@ -42,9 +43,8 @@ export const INITIAL_CREATE_TOURNAMENT_DRAFT: CreateTournamentDraft = {
   date: "",
   registration_deadline: "",
   is_public: true,
-  has_categories: true,
+  has_categories: false,
   participant_type: null,
-  min_participants: "1",
   max_participants: "",
   noMax: true,
   entry_price: "0",
@@ -81,6 +81,8 @@ export function parseStoredCreateTournamentDraft(
         ? parsed.categories.map((category) => ({
             ...EMPTY_CATEGORY,
             ...category,
+            hasCustomDate: Boolean(category.hasCustomDate || category.start_at),
+            hasCustomAddress: Boolean(category.hasCustomAddress || category.address),
             id: category.id || createCategoryId(),
           }))
         : [],
@@ -104,12 +106,12 @@ export function serializeCreateTournamentCategories(
       name: category.name.trim(),
       participant_type: category.participant_type,
       price: category.price.trim() || "0",
-      min_participants: category.min_participants.trim() || "1",
+      min_participants: "1",
       max_participants: category.noMax
         ? null
         : category.max_participants.trim() || null,
-      start_at: category.start_at || null,
-      address: category.address.trim() || null,
+      start_at: category.hasCustomDate ? category.start_at || null : null,
+      address: category.hasCustomAddress ? category.address.trim() || null : null,
       prizes: category.prizes.trim() || null,
     }))
   )
@@ -120,7 +122,6 @@ export function validateCategoryDraft(
 ): CreateTournamentErrors {
   const errors: CreateTournamentErrors = {}
   const price = Number(category.price || "0")
-  const minParticipants = Number(category.min_participants || "0")
   const maxParticipants = Number(category.max_participants || "0")
 
   if (!category.name.trim()) errors.name = "El nombre es obligatorio."
@@ -130,14 +131,11 @@ export function validateCategoryDraft(
   if (!Number.isFinite(price) || price < 0) {
     errors.price = "El precio no es válido."
   }
-  if (!Number.isInteger(minParticipants) || minParticipants <= 0) {
-    errors.min_participants = "El mínimo debe ser al menos 1."
-  }
   if (
     !category.noMax &&
-    (!Number.isInteger(maxParticipants) || maxParticipants < minParticipants)
+    (!Number.isInteger(maxParticipants) || maxParticipants < 1)
   ) {
-    errors.max_participants = "El máximo debe ser mayor o igual al mínimo."
+    errors.max_participants = "Las plazas deben ser al menos 1."
   }
 
   return errors
@@ -183,20 +181,18 @@ export function validateStep(
   }
 
   if (step === "pricing") {
-    const minParticipants = Number(draft.min_participants || "0")
+    if (draft.has_categories) return errors
+
     const maxParticipants = Number(draft.max_participants || "0")
     const entryPrice = Number(draft.entry_price || "0")
 
-    if (!Number.isInteger(minParticipants) || minParticipants <= 0) {
-      errors.min_participants = "El mínimo debe ser al menos 1."
-    }
     if (
       !draft.noMax &&
-      (!Number.isInteger(maxParticipants) || maxParticipants < minParticipants)
+      (!Number.isInteger(maxParticipants) || maxParticipants < 1)
     ) {
-      errors.max_participants = "El máximo debe ser mayor o igual al mínimo."
+      errors.max_participants = "Las plazas deben ser al menos 1."
     }
-    if (!draft.has_categories && (!Number.isFinite(entryPrice) || entryPrice < 0)) {
+    if (!Number.isFinite(entryPrice) || entryPrice < 0) {
       errors.entry_price = "El precio no es válido."
     }
   }

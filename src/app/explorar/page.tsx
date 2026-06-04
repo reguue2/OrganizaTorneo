@@ -13,6 +13,7 @@ export default async function ExplorarPage({
 
   return (
     <ExploreTournamentsView
+      key={`${q}-${province}`}
       initialTournaments={result.data}
       initialQuery={q}
       initialProvince={province}

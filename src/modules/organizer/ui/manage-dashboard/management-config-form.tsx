@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+import { DateTimeField } from "@/components/ui/date-time-field"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -55,28 +56,26 @@ export function ManagementConfigForm({
       <div className="grid gap-5 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="management-date">Fecha del torneo</Label>
-          <Input
+          <DateTimeField
             id="management-date"
-            type="datetime-local"
             value={form.date}
-            onChange={(event) =>
-              setForm((prev) => ({ ...prev, date: event.target.value }))
-            }
+            onChange={(value) => setForm((prev) => ({ ...prev, date: value }))}
+            placeholder="Elige fecha y hora"
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="management-deadline">Fecha límite de inscripción</Label>
-          <Input
+          <DateTimeField
             id="management-deadline"
-            type="datetime-local"
             value={form.registration_deadline}
-            onChange={(event) =>
+            onChange={(value) =>
               setForm((prev) => ({
                 ...prev,
-                registration_deadline: event.target.value,
+                registration_deadline: value,
               }))
             }
+            placeholder="Elige cierre"
           />
         </div>
       </div>

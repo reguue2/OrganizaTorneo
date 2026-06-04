@@ -1,15 +1,13 @@
 import { Edit3, Plus, Trash2 } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { DateTimeField } from "@/components/ui/date-time-field"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 
 import { FormField } from "./form-field"
-import { formatPreviewMoney } from "./form-state"
 import type {
   CreateTournamentCategoryDraft,
   CreateTournamentErrors,
@@ -21,7 +19,6 @@ type CategoryEditorProps = {
   categories: CreateTournamentCategoryDraft[]
   errors: CreateTournamentErrors
   editingCategoryId: string | null
-  prizeMode: "none" | "global" | "per_category"
   onCategoryChange: (
     patch: Partial<CreateTournamentCategoryDraft>
   ) => void
@@ -44,7 +41,6 @@ function CategoryEditor({
   categories,
   errors,
   editingCategoryId,
-  prizeMode,
   onCategoryChange,
   onAddOrSave,
   onEdit,
@@ -61,12 +57,12 @@ function CategoryEditor({
             <Input
               value={category.name}
               onChange={(event) => onCategoryChange({ name: event.target.value })}
-              placeholder="Senior, mixto, sub-16..."
+              placeholder="Femenino, Individual, Sub-16..."
             />
           </FormField>
 
           <FormField
-            label="Formato"
+            label="Tipo de participantes"
             error={errors.participant_type}
           >
             <Select
@@ -90,28 +86,25 @@ function CategoryEditor({
             </Select>
           </FormField>
 
-          <FormField label="Precio" error={errors.price}>
-            <Input
-              value={category.price}
-              onChange={(event) => onCategoryChange({ price: event.target.value })}
-              inputMode="decimal"
-              placeholder="0"
-            />
-          </FormField>
-
-          <FormField label="Mínimo de inscripciones" error={errors.min_participants}>
-            <Input
-              value={category.min_participants}
-              onChange={(event) =>
-                onCategoryChange({ min_participants: event.target.value })
-              }
-              inputMode="numeric"
-              placeholder="1"
-            />
+          <FormField label="Precio de inscripción" error={errors.price}>
+            <div className="relative">
+              <Input
+                value={category.price}
+                onChange={(event) => onCategoryChange({ price: event.target.value })}
+                onBlur={() => {
+                  if (!category.price.trim()) onCategoryChange({ price: "0" })
+                }}
+                inputMode="decimal"
+                className="pr-8"
+              />
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                €
+              </span>
+            </div>
           </FormField>
 
           <FormField
-            label="Máximo de inscripciones"
+            label="Plazas disponibles"
             error={errors.max_participants}
           >
             <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
@@ -121,7 +114,6 @@ function CategoryEditor({
                   onCategoryChange({ max_participants: event.target.value })
                 }
                 inputMode="numeric"
-                placeholder="Sin máximo"
                 disabled={category.noMax}
               />
               <label className="inline-flex h-10 items-center gap-2 rounded-lg border border-border px-3 text-sm text-foreground">
@@ -132,42 +124,73 @@ function CategoryEditor({
                     onCategoryChange({ noMax: event.target.checked })
                   }
                 />
-                Sin máximo
+                Sin límite
               </label>
             </div>
           </FormField>
 
-          <FormField label="Fecha propia">
-            <Input
-              type="datetime-local"
-              value={category.start_at}
-              onChange={(event) =>
-                onCategoryChange({ start_at: event.target.value })
-              }
-            />
-          </FormField>
+          <div className="space-y-3 lg:col-span-2">
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="flex min-h-14 items-start gap-3 rounded-lg border border-border bg-muted/30 p-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={category.hasCustomDate}
+                  onChange={(event) =>
+                    onCategoryChange({
+                      hasCustomDate: event.target.checked,
+                      start_at: event.target.checked ? category.start_at : "",
+                    })
+                  }
+                  className="mt-1 size-4 shrink-0 rounded border-border accent-primary"
+                />
+                <span>
+                  <span className="block font-medium text-foreground">
+                    Esta categoría tiene otra fecha distinta
+                  </span>
+                </span>
+              </label>
 
-          <FormField label="Dirección propia" className="lg:col-span-2">
-            <Input
-              value={category.address}
-              onChange={(event) =>
-                onCategoryChange({ address: event.target.value })
-              }
-              placeholder="Solo si cambia respecto al torneo"
-            />
-          </FormField>
+              <label className="flex min-h-14 items-start gap-3 rounded-lg border border-border bg-muted/30 p-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={category.hasCustomAddress}
+                  onChange={(event) =>
+                    onCategoryChange({
+                      hasCustomAddress: event.target.checked,
+                      address: event.target.checked ? category.address : "",
+                    })
+                  }
+                  className="mt-1 size-4 shrink-0 rounded border-border accent-primary"
+                />
+                <span>
+                  <span className="block font-medium text-foreground">
+                    Esta categoría tiene otra dirección distinta
+                  </span>
+                </span>
+              </label>
+            </div>
 
-          {prizeMode === "per_category" && (
-            <FormField label="Premios de esta categoría" className="lg:col-span-2">
-              <Textarea
-                value={category.prizes}
-                onChange={(event) =>
-                  onCategoryChange({ prizes: event.target.value })
-                }
-                placeholder="Premios o reconocimientos"
-              />
-            </FormField>
-          )}
+            {category.hasCustomDate && (
+              <FormField label="Fecha de esta categoría">
+                <DateTimeField
+                  value={category.start_at}
+                  onChange={(value) => onCategoryChange({ start_at: value })}
+                  placeholder="Elige fecha y hora"
+                />
+              </FormField>
+            )}
+
+            {category.hasCustomAddress && (
+              <FormField label="Dirección de esta categoría">
+                <Input
+                  value={category.address}
+                  onChange={(event) =>
+                    onCategoryChange({ address: event.target.value })
+                  }
+                />
+              </FormField>
+            )}
+          </div>
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2">
@@ -197,18 +220,8 @@ function CategoryEditor({
                 editingCategoryId === item.id && "border-primary"
               )}
             >
-              <div className="min-w-0 space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-medium text-foreground">{item.name}</h3>
-                  <Badge variant="outline">
-                    {item.participant_type === "team" ? "Equipos" : "Individual"}
-                  </Badge>
-                  <Badge variant="secondary">{formatPreviewMoney(item.price)}</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Mín. {item.min_participants || "1"}
-                  {item.noMax ? " · sin máximo" : ` · máx. ${item.max_participants}`}
-                </p>
+              <div className="min-w-0">
+                <h3 className="truncate font-medium text-foreground">{item.name}</h3>
               </div>
 
               <div className="flex shrink-0 gap-2">

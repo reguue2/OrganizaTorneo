@@ -8,6 +8,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { DateTimeField } from "@/components/ui/date-time-field"
 import { SPAIN_COMMUNITIES } from "@/shared/locations"
 
 import { FormField } from "../form-field"
@@ -28,22 +29,23 @@ function BasicsStep({ draft, errors, onDraftChange }: BasicsStepProps) {
     <Card>
       <CardHeader>
         <CardTitle>Información básica</CardTitle>
-        <CardDescription>Datos públicos principales del torneo.</CardDescription>
+        <CardDescription>
+          Nombre, ubicación y fechas que verá el participante.
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
-        <FormField label="Título" error={errors.title}>
+        <FormField label="Nombre del torneo" error={errors.title}>
           <Input
             value={draft.title}
             onChange={(event) => onDraftChange("title", event.target.value)}
-            placeholder="Torneo local de verano"
           />
         </FormField>
 
-        <FormField label="Descripción">
+        <FormField label="Descripción para participantes">
           <Textarea
             value={draft.description}
             onChange={(event) => onDraftChange("description", event.target.value)}
-            placeholder="Información útil para participantes"
+            className="resize-none"
           />
         </FormField>
 
@@ -66,15 +68,14 @@ function BasicsStep({ draft, errors, onDraftChange }: BasicsStepProps) {
             <Input
               value={draft.address}
               onChange={(event) => onDraftChange("address", event.target.value)}
-              placeholder="Polideportivo, plaza, pista..."
             />
           </FormField>
 
           <FormField label="Fecha del torneo" error={errors.date}>
-            <Input
-              type="datetime-local"
+            <DateTimeField
               value={draft.date}
-              onChange={(event) => onDraftChange("date", event.target.value)}
+              onChange={(value) => onDraftChange("date", value)}
+              placeholder="Elige fecha y hora"
             />
           </FormField>
 
@@ -82,12 +83,10 @@ function BasicsStep({ draft, errors, onDraftChange }: BasicsStepProps) {
             label="Cierre de inscripción"
             error={errors.registration_deadline}
           >
-            <Input
-              type="datetime-local"
+            <DateTimeField
               value={draft.registration_deadline}
-              onChange={(event) =>
-                onDraftChange("registration_deadline", event.target.value)
-              }
+              onChange={(value) => onDraftChange("registration_deadline", value)}
+              placeholder="Elige cierre"
             />
           </FormField>
         </div>
