@@ -1,36 +1,25 @@
 import Link from "next/link"
-import { Eye } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import {
-  getPublicVisibilityLabel,
+  formatDate,
   getRegistrationState,
-  getSidebarStatus,
-  getTournamentCapacitySummary,
 } from "@/modules/tournaments/domain"
 
-import { getPublicTournamentStatusVariant } from "../status-badge"
 import { ShareTournamentButton } from "./share-tournament-button"
 import type { PublicTournamentViewData } from "./types"
 
 type TournamentRegistrationSidebarProps = PublicTournamentViewData & {
   registerPath: string
   registrationState: ReturnType<typeof getRegistrationState>
-  statusLabel: string
-  statusState: ReturnType<typeof getSidebarStatus>["state"]
   sharePath: string
 }
 
 function TournamentRegistrationSidebar({
   tournament,
-  categories,
   registerPath,
   registrationState,
-  statusLabel,
-  statusState,
   sharePath,
 }: TournamentRegistrationSidebarProps) {
   return (
@@ -38,16 +27,20 @@ function TournamentRegistrationSidebar({
       <Card>
         <CardContent className="space-y-5 p-5">
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Estado</p>
-            <Badge variant={getPublicTournamentStatusVariant(statusState)}>
-              {statusLabel}
-            </Badge>
+            <p className="text-xl font-semibold text-foreground">
+              Participa en el torneo
+            </p>
+            <p className="text-sm leading-6 text-muted-foreground">
+              Envía tu solicitud antes del límite y el participa en el torneo.
+            </p>
           </div>
 
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Plazas</p>
-            <p className="text-xl font-semibold text-foreground">
-              {getTournamentCapacitySummary(tournament, categories)}
+          <div className="space-y-1 rounded-lg border border-border bg-muted/30 p-3">
+            <p className="text-sm text-muted-foreground">
+              Límite de inscripción
+            </p>
+            <p className="text-sm font-medium text-foreground">
+              {formatDate(tournament.registration_deadline)}
             </p>
           </div>
 
@@ -61,28 +54,11 @@ function TournamentRegistrationSidebar({
             </Button>
           )}
 
-          <ShareTournamentButton path={sharePath} variant="full" />
-
-          <Separator />
-
-          <div className="space-y-2">
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Eye className="size-4" />
-              Visibilidad
-            </p>
-            <p className="text-sm leading-6 text-foreground">
-              {getPublicVisibilityLabel(tournament.is_public)}
-            </p>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Inscripción</p>
-            <p className="text-sm leading-6 text-foreground">
-              {registrationState.message}
-            </p>
-          </div>
+          <ShareTournamentButton
+            path={sharePath}
+            title={tournament.title}
+            variant="full"
+          />
         </CardContent>
       </Card>
     </aside>

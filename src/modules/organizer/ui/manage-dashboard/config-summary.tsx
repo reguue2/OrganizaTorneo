@@ -32,7 +32,7 @@ export function OperationalSummary({
           value={tournament.has_categories ? "Con categorías" : "Sin categorías"}
         />
         <SummaryLine
-          label="Cupos"
+          label="Plazas"
           value={totalCapacity === null ? "Sin límite" : `${totalCapacity} plazas`}
         />
         <SummaryLine

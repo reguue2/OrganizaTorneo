@@ -65,7 +65,10 @@ export function getTournamentPriceSummary(
 
   if (prices.length === 0) return "Según categoría"
 
-  return `Desde ${formatMoney(Math.min(...prices))}`
+  const minPrice = Math.min(...prices)
+  if (minPrice === 0) return "Gratis"
+
+  return `Desde ${formatMoney(minPrice)}`
 }
 
 export function getTournamentCapacitySummary(
@@ -78,7 +81,7 @@ export function getTournamentCapacitySummary(
       : `${tournament.max_participants} plazas`
   }
 
-  if (categories.length === 0) return "Cupos por categoría"
+  if (categories.length === 0) return "Plazas por categoría"
 
   const totalMax = categories.reduce((acc, category) => {
     if (category.max_participants === null) return acc
@@ -89,7 +92,7 @@ export function getTournamentCapacitySummary(
     (category) => category.max_participants === null
   )
 
-  if (hasUnlimited) return "Cupos por categoría"
+  if (hasUnlimited) return "Plazas por categoría"
 
   return `${totalMax} plazas`
 }

@@ -15,11 +15,13 @@ import { Input } from "@/components/ui/input"
 
 type ShareTournamentButtonProps = {
   path: string
+  title: string
   variant?: "icon" | "full"
 }
 
 function ShareTournamentButton({
   path,
+  title,
   variant = "full",
 }: ShareTournamentButtonProps) {
   const [open, setOpen] = useState(false)
@@ -30,6 +32,8 @@ function ShareTournamentButton({
     return `${window.location.origin}${path}`
   }, [path])
 
+  const shareText = `Mira este torneo: ${title}`
+
   async function copyToClipboard() {
     try {
       await navigator.clipboard.writeText(shareUrl)
@@ -38,6 +42,27 @@ function ShareTournamentButton({
     } catch {
       setCopied(false)
     }
+  }
+
+  async function shareTournament() {
+    const shareData: ShareData = {
+      title,
+      text: shareText,
+      url: shareUrl,
+    }
+
+    if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
+      try {
+        await navigator.share(shareData)
+        return
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return
+        }
+      }
+    }
+
+    setOpen(true)
   }
 
   useEffect(() => {
@@ -69,7 +94,7 @@ function ShareTournamentButton({
         className={variant === "full" ? "w-full" : undefined}
         aria-label="Compartir torneo"
         title="Compartir torneo"
-        onClick={() => setOpen(true)}
+        onClick={shareTournament}
       >
         <Share2 className="size-4" />
         {variant === "full" && <span>Compartir torneo</span>}

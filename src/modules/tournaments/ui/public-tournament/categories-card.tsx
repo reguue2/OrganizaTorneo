@@ -31,7 +31,7 @@ function TournamentCategoriesCard({
                 <div className="space-y-1 text-sm text-muted-foreground">
                   <p>Precio: {formatMoney(category.price)}</p>
                   <p>
-                    Cupo:{" "}
+                    Plazas:{" "}
                     {category.max_participants === null
                       ? "sin límite"
                       : `${category.max_participants} plazas`}

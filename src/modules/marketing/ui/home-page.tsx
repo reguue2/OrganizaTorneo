@@ -25,13 +25,13 @@ const featureCards = [
     icon: ListChecks,
     title: "Creación clara",
     description:
-      "Configura estructura, cupos, reglas, premios y método de pago desde un único flujo.",
+      "Configura estructura, plazas, reglas, premios y método de pago desde un único flujo.",
   },
   {
     icon: UsersRound,
     title: "Con o sin categorías",
     description:
-      "Monta torneos simples o con categorías donde precio y cupos tienen reglas propias.",
+      "Monta torneos simples o con categorías donde precio y plazas tienen reglas propias.",
   },
   {
     icon: ShieldCheck,
@@ -110,7 +110,7 @@ export function HomePage() {
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
             Crea, publica y gestiona torneos para tu comunidad. Comparte un enlace público,
-            recoge solicitudes de inscripción y mantén el control real de estados, cupos y pagos.
+            recoge solicitudes de inscripción y mantén el control real de estados, plazas y pagos.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">

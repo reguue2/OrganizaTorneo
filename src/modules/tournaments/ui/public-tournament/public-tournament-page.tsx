@@ -1,25 +1,11 @@
 import Image from "next/image"
-import Link from "next/link"
-import {
-  ChevronRight,
-  MapPin,
-} from "lucide-react"
 
 import { PublicPage } from "@/components/layout"
-import { Badge } from "@/components/ui/badge"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import {
   getRegistrationState,
-  getSidebarStatus,
 } from "@/modules/tournaments/domain"
 import { cn } from "@/lib/utils"
 
-import { getPublicTournamentStatusVariant } from "../status-badge"
 import { TournamentCategoriesCard } from "./categories-card"
 import { TournamentDetailsCard } from "./details-card"
 import { TournamentRegistrationSidebar } from "./registration-sidebar"
@@ -44,24 +30,12 @@ function PublicTournamentContent({
 }: PublicTournamentViewData & {
   showRegistrationSidebar?: boolean
 }) {
-  const status = getSidebarStatus(tournament)
   const registrationState = getRegistrationState(tournament)
   const sharePath = `/torneos/${tournament.id}`
   const registerPath = `/torneo/${tournament.id}/inscribirse`
 
   return (
     <div className="space-y-6">
-      <nav
-        aria-label="Ruta de navegación"
-        className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground"
-      >
-        <Link href="/explorar" className="transition-colors hover:text-foreground">
-          Explorar torneos
-        </Link>
-        <ChevronRight className="size-4 shrink-0" />
-        <span className="truncate">{tournament.title}</span>
-      </nav>
-
       <section
         className={cn(
           "grid gap-6",
@@ -92,22 +66,16 @@ function PublicTournamentContent({
           <header className="space-y-4">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0 space-y-3">
-                <Badge variant={getPublicTournamentStatusVariant(status.state)}>
-                  {status.label}
-                </Badge>
                 <h1 className="max-w-4xl text-3xl font-semibold tracking-tight text-foreground md:text-5xl">
                   {tournament.title}
                 </h1>
-                <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-base text-muted-foreground">
-                  <span className="inline-flex items-center gap-1.5">
-                    <MapPin className="size-4" />
-                    {tournament.province ?? "Ubicación por definir"}
-                  </span>
-                  {tournament.address && <span>{tournament.address}</span>}
-                </p>
               </div>
 
-              <ShareTournamentButton path={sharePath} variant="icon" />
+              <ShareTournamentButton
+                path={sharePath}
+                title={tournament.title}
+                variant="icon"
+              />
             </div>
 
             {tournament.description && (
@@ -122,19 +90,6 @@ function PublicTournamentContent({
             categories={categories}
           />
 
-          {tournament.rules && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Reglas y normativa</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-                  {tournament.rules}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
           {tournament.has_categories && categories.length > 0 && (
             <TournamentCategoriesCard categories={categories} />
           )}
@@ -146,8 +101,6 @@ function PublicTournamentContent({
             categories={categories}
             registerPath={registerPath}
             registrationState={registrationState}
-            statusLabel={status.label}
-            statusState={status.state}
             sharePath={sharePath}
           />
         )}

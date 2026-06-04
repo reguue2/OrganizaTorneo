@@ -3,9 +3,14 @@ import { describe, expect, it } from "vitest"
 import {
   getExploreCapacityLabel,
   getExplorePriceLabel,
+  getTournamentPriceSummary,
   getTournamentCategoriesSummary,
 } from "./summaries"
-import type { ExploreTournament, PublicTournamentCategory } from "./read-models"
+import type {
+  ExploreTournament,
+  PublicTournamentCategory,
+  PublicTournamentDetail,
+} from "./read-models"
 
 describe("tournament summaries", () => {
   it("summarizes explore price from categories", () => {
@@ -30,6 +35,18 @@ describe("tournament summaries", () => {
     } as ExploreTournament
 
     expect(getExplorePriceLabel(tournament)).toBe("Gratis")
+  })
+
+  it("does not prefix free public category prices with from", () => {
+    const tournament = {
+      has_categories: true,
+    } as PublicTournamentDetail
+    const categories = [
+      { id: "a", name: "Senior", price: 0 },
+      { id: "b", name: "Junior", price: 8 },
+    ] as PublicTournamentCategory[]
+
+    expect(getTournamentPriceSummary(tournament, categories)).toBe("Gratis")
   })
 
   it("summarizes unlimited category capacity", () => {

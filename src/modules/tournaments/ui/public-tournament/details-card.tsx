@@ -2,6 +2,7 @@ import { cloneElement, type ReactElement } from "react"
 import {
   CalendarDays,
   CreditCard,
+  FileText,
   MapPin,
   Trophy,
   Users,
@@ -17,9 +18,7 @@ import { Separator } from "@/components/ui/separator"
 import {
   formatDate,
   getTournamentCapacitySummary,
-  getTournamentCategoriesSummary,
   getTournamentPriceSummary,
-  paymentMethodLabel,
 } from "@/modules/tournaments/domain"
 
 import type { PublicTournamentViewData } from "./types"
@@ -39,41 +38,41 @@ function TournamentDetailsCard({
             icon={<MapPin />}
             label="Ubicación"
             value={`${tournament.province ?? "Por definir"}${
-              tournament.address ? ` · ${tournament.address}` : ""
+              tournament.address ? `, ${tournament.address}` : ""
             }`}
           />
           <DetailItem
             icon={<CalendarDays />}
             label="Fecha"
             value={formatDate(tournament.date, true)}
-            description={`Inscripción hasta ${formatDate(
-              tournament.registration_deadline
-            )}`}
           />
           <DetailItem
             icon={<CreditCard />}
-            label="Cuota"
+            label="Precio de inscripción"
             value={getTournamentPriceSummary(tournament, categories)}
-            description={paymentMethodLabel(tournament.payment_method)}
           />
           <DetailItem
             icon={<Users />}
-            label="Cupos"
+            label="Plazas"
             value={getTournamentCapacitySummary(tournament, categories)}
           />
-          {tournament.has_categories && (
-            <DetailItem
-              icon={<Trophy />}
-              label="Categorías"
-              value={getTournamentCategoriesSummary(categories)}
-            />
-          )}
         </div>
 
         {tournament.prize_mode !== "none" && (
           <>
             <Separator className="my-5" />
             <TournamentPrizes tournament={tournament} categories={categories} />
+          </>
+        )}
+
+        {tournament.rules && (
+          <>
+            <Separator className="my-5" />
+            <DetailsTextSection
+              icon={<FileText />}
+              title="Reglas y normativa"
+              text={tournament.rules}
+            />
           </>
         )}
       </CardContent>
@@ -116,18 +115,17 @@ function TournamentPrizes({
 }: PublicTournamentViewData) {
   if (tournament.prize_mode === "global") {
     return (
-      <div className="space-y-2">
-        <p className="text-sm font-medium text-foreground">Premios</p>
-        <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-          {tournament.prizes ?? "Sin premios definidos"}
-        </p>
-      </div>
+      <DetailsTextSection
+        icon={<Trophy />}
+        title="Premios"
+        text={tournament.prizes ?? "Sin premios definidos"}
+      />
     )
   }
 
   return (
     <div className="space-y-3">
-      <p className="text-sm font-medium text-foreground">Premios por categoría</p>
+      <SectionTitle icon={<Trophy />} title="Premios por categoría" />
       <div className="grid gap-3 md:grid-cols-2">
         {categories.map((category) => (
           <div key={category.id} className="rounded-lg border border-border p-4">
@@ -139,6 +137,42 @@ function TournamentPrizes({
         ))}
       </div>
     </div>
+  )
+}
+
+function DetailsTextSection({
+  icon,
+  title,
+  text,
+}: {
+  icon: ReactElement<{ className?: string }>
+  title: string
+  text: string
+}) {
+  return (
+    <div className="space-y-2">
+      <SectionTitle icon={icon} title={title} />
+      <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+        {text}
+      </p>
+    </div>
+  )
+}
+
+function SectionTitle({
+  icon,
+  title,
+}: {
+  icon: ReactElement<{ className?: string }>
+  title: string
+}) {
+  return (
+    <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+      {cloneElement(icon, {
+        className: "size-4 shrink-0 text-muted-foreground",
+      })}
+      {title}
+    </p>
   )
 }
 
