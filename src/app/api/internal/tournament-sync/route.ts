@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server"
-import { runAutomaticStateSync } from "@/lib/tournaments/server"
+import { getServerEnv } from "@/config/env"
+import { runAutomaticStateSync } from "@/modules/tournaments/server"
 
 function isAuthorized(request: Request) {
-  const cronSecret = process.env.CRON_SECRET
+  const cronSecret = getServerEnv().cronSecret
   if (!cronSecret) return false
 
   const authorization = request.headers.get("authorization")

@@ -1,4 +1,5 @@
-import VerifyFlow from "./verify-flow"
+import { PublicPage } from "@/components/layout"
+import { VerifyRegistrationFlow } from "@/modules/registrations/ui"
 
 type SearchParams = Promise<{
   request?: string
@@ -14,14 +15,12 @@ export default async function VerificarInscripcionPage({
   const { request = "", token = "", code = "" } = await searchParams
 
   return (
-    <div className="section-spacing">
-      <div className="container-custom max-w-3xl">
-        <VerifyFlow
-          initialRequestId={request}
-          initialToken={token}
-          initialCode={code}
-        />
-      </div>
-    </div>
+    <PublicPage size="narrow">
+      <VerifyRegistrationFlow
+        initialRequestId={request}
+        initialToken={token}
+        initialCode={code}
+      />
+    </PublicPage>
   )
 }

@@ -1,8 +1,28 @@
-# 🏆 OrganizaTorneo
+# Organiza Torneo
 
-Plataforma moderna para organizar y gestionar torneos deportivos. Crea, administra y monetiza tus eventos deportivos con una interfaz intuitiva y herramientas profesionales.
+Aplicacion web para crear, publicar y gestionar torneos locales. El organizador
+usa cuenta; los participantes se inscriben sin cuenta mediante solicitud publica
+y verificacion por email.
 
-## 📋 Características
+## Estado Actual
+
+El proyecto esta en fase de refactorizacion y limpieza arquitectonica. No se
+deben anadir funcionalidades nuevas hasta cerrar el plan activo documentado en
+`docs/roadmap.md`.
+
+La base actual usa:
+
+- Next.js App Router.
+- React.
+- TypeScript estricto.
+- Supabase para auth, Postgres, RLS y storage.
+- Tailwind CSS y componentes base en `src/components/ui`.
+- Zod para contratos de entrada.
+- Vitest para tests unitarios.
+- Playwright para e2e.
+- pnpm como package manager.
+
+## Scripts
 
 - ✨ **Gestión de Torneos**: Crea y administra torneos completos con soporte para múltiples formatos
 - 👥 **Gestión de Participantes**: Registra jugadores y equipos con validación automática
@@ -67,74 +87,78 @@ STRIPE_SECRET_KEY=tu_clave_secreta_stripe
 
 4. **Inicia el servidor de desarrollo**
 ```bash
-npm run dev
-# o con yarn
-yarn dev
-# o con pnpm
 pnpm dev
-# o con bun
-bun dev
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm test:e2e
+pnpm build
 ```
 
-Abre [http://localhost:3000](http://localhost:3000) en tu navegador para ver la aplicación.
+Notas:
 
-## 📖 Estructura del Proyecto
+- `pnpm test:e2e` arranca un servidor local con Playwright.
+- En entornos sandbox puede necesitar permisos para abrir puerto local.
+- `pnpm build` usa `next build --webpack`.
 
+## Estructura
+
+```txt
+src/
+  app/              Rutas Next y composicion ligera
+  components/       UI generica y layouts compartidos
+  lib/              Infraestructura transversal
+  modules/          Modulos de producto por dominio
+  shared/           Contratos y datos transversales
+  types/            Tipos generados o compartidos
+supabase/
+  migrations/       Baseline limpia actual
+docs/               Producto, arquitectura, base de datos y roadmap
+e2e/                Tests Playwright
 ```
-Torneo-app/
-├── app/                 # Directorio de la aplicación Next.js
-├── components/          # Componentes React reutilizables
-├── lib/                 # Utilidades y funciones auxiliares
-├── public/              # Archivos estáticos
-├── styles/              # Estilos globales
-├── package.json         # Dependencias del proyecto
-└── tsconfig.json        # Configuración de TypeScript
+
+Regla principal:
+
+- `app` compone.
+- `ui` presenta.
+- `server` adapta HTTP, Supabase y proveedores.
+- `schemas` valida entradas.
+- `domain` contiene reglas puras testeables.
+
+## Documentacion
+
+- `docs/product.md`: decisiones de producto y MVP.
+- `docs/architecture.md`: limites de capas y dependencias permitidas.
+- `docs/architecture-rules.md`: reglas automatizadas de arquitectura.
+- `docs/ai-guidelines.md`: reglas para trabajar con IA sin romper el proyecto.
+- `docs/database.md`: contrato de Supabase.
+- `docs/database-types.md`: regeneracion de tipos Supabase.
+- `docs/security.md`: Gitleaks, hooks y escaneo de secrets.
+- `docs/storage.md`: bucket y policies de Storage.
+- `docs/ui-system.md`: sistema UI.
+- `docs/roadmap.md`: fases de refactorizacion y plan activo.
+
+## Base De Datos
+
+La baseline actual vive en:
+
+```txt
+supabase/migrations/20260528190000_initial_schema.sql
 ```
 
-## 🔧 Comandos Disponibles
+El proyecto no debe subir dumps ni migraciones legacy. La baseline anterior es
+reemplazable porque no se conservan datos reales de produccion, siempre que el
+schema y los contratos queden documentados.
 
-- `npm run dev` - Inicia el servidor de desarrollo
-- `npm run build` - Compila la aplicación para producción
-- `npm start` - Inicia el servidor de producción
-- `npm run lint` - Ejecuta el linter de código
+## Regla De Trabajo Actual
 
-## 🌐 Despliegue
+Hasta cerrar la limpieza legacy:
 
-### Desplegar en Vercel
-
-La forma más sencilla de desplegar es usando [Vercel Platform](https://vercel.com):
-
-1. Conecta tu repositorio de GitHub a Vercel
-2. Las variables de entorno se configurarán automáticamente
-3. Vercel compilará y desplegará automáticamente en cada push
-
-Para más detalles, consulta la [documentación de despliegue de Next.js](https://nextjs.org/docs/app/building-your-application/deploying).
-
-## 📚 Aprender Más
-
-- [Documentación de Next.js](https://nextjs.org/docs) - Características y API de Next.js
-- [Tutorial Next.js](https://nextjs.org/learn) - Tutorial interactivo
-- [Documentación de Supabase](https://supabase.com/docs) - Base de datos y autenticación
-- [Documentación de Stripe](https://stripe.com/docs) - Integración de pagos
-
-## 🤝 Contribuciones
-
-Las contribuciones son bienvenidas. Por favor:
-
-1. Fork el repositorio
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
-## 📄 Licencia
-
-Este proyecto está bajo una licencia abierta. Consulta el archivo LICENSE para más detalles.
-
-## 📞 Contacto
-
-Para preguntas o sugerencias, puedes abrir un issue en el repositorio o contactar al autor.
-
----
-
-**Creado con ❤️ por [reguue2](https://github.com/reguue2)**
+- No anadir nuevas pantallas de producto.
+- No activar Stripe real.
+- No cambiar reglas de negocio salvo que sea para eliminar compatibilidad legacy
+  documentada.
+- No reintroducir clases globales legacy como `btn-primary`, `card`, `input` o
+  `container-custom`.
+- Todo cambio debe pasar `pnpm lint`, `pnpm typecheck`, `pnpm test` y, cuando
+  toque flujos UI, `pnpm test:e2e`.

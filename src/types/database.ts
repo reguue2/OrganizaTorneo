@@ -464,34 +464,23 @@ export type Database = {
           p_address: string
           p_categories?: Json
           p_date: string
-          p_description: string
+          p_description: string | null
           p_entry_price?: number
           p_has_categories: boolean
           p_is_public: boolean
-          p_max_participants?: number
+          p_max_participants?: number | null
           p_min_participants?: number
-          p_participant_type?: Database["public"]["Enums"]["participant_type"]
+          p_participant_type?:
+            | Database["public"]["Enums"]["participant_type"]
+            | null
           p_payment_method?: Database["public"]["Enums"]["payment_method_enum"]
-          p_poster_url: string
+          p_poster_url: string | null
           p_prize_mode?: Database["public"]["Enums"]["prize_mode"]
-          p_prizes?: string
+          p_prizes?: string | null
           p_province: string
           p_registration_deadline: string
-          p_rules?: string
+          p_rules?: string | null
           p_title: string
-        }
-        Returns: string
-      }
-      create_public_registration: {
-        Args: {
-          p_category_id?: string
-          p_contact_email?: string
-          p_contact_phone: string
-          p_display_name: string
-          p_participant_type: Database["public"]["Enums"]["participant_type"]
-          p_payment_method?: Database["public"]["Enums"]["registration_payment_method"]
-          p_players?: Json
-          p_tournament_id: string
         }
         Returns: string
       }
@@ -558,10 +547,7 @@ export type Database = {
       prize_mode: "none" | "global" | "per_category"
       registration_payment_method: "cash" | "online"
       registration_status:
-        | "pending"
-        | "paid"
         | "cancelled"
-        | "pending_verification"
         | "pending_cash_validation"
         | "pending_online_payment"
         | "confirmed"
@@ -705,10 +691,7 @@ export const Constants = {
       prize_mode: ["none", "global", "per_category"],
       registration_payment_method: ["cash", "online"],
       registration_status: [
-        "pending",
-        "paid",
         "cancelled",
-        "pending_verification",
         "pending_cash_validation",
         "pending_online_payment",
         "confirmed",

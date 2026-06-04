@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import CreateTournamentForm from "./tournament-form"
+import {
+  OrganizerPage,
+  OrganizerPageHeader,
+} from "@/components/layout"
+import { CreateTournamentForm } from "@/modules/tournaments/ui"
 
 export default async function CrearTorneoPage() {
   const supabase = await createClient()
@@ -12,13 +16,12 @@ export default async function CrearTorneoPage() {
   if (!user) redirect("/login")
 
   return (
-    <div className="container-custom py-16">
-      <h1 className="mb-2 text-3xl font-bold">Crear torneo</h1>
-      <p className="mb-10 max-w-3xl text-gray-600">
-        Este flujo ya no crea borradores en base de datos. Todo se prepara en cliente
-        y solo se persiste cuando pulsas publicar.
-      </p>
+    <OrganizerPage size="wide">
+      <OrganizerPageHeader
+        title="Crear torneo"
+        description="Configura el torneo completo y publícalo cuando los datos estén listos."
+      />
       <CreateTournamentForm />
-    </div>
+    </OrganizerPage>
   )
 }

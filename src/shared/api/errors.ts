@@ -1,0 +1,33 @@
+export type AppErrorCode =
+  | "ACTION_NOT_ALLOWED"
+  | "AUTH_REQUIRED"
+  | "CANCELLATION_DEADLINE_PASSED"
+  | "CANCELLATION_INVALID"
+  | "CATEGORY_FULL"
+  | "FORBIDDEN"
+  | "PAYMENT_METHOD_NOT_ALLOWED"
+  | "PAYMENT_FAILED"
+  | "PAYMENT_REQUIRED"
+  | "RATE_LIMITED"
+  | "REGISTRATION_DUPLICATED"
+  | "REGISTRATION_NOT_FOUND"
+  | "REGISTRATION_REQUEST_EXPIRED"
+  | "REGISTRATION_REQUEST_NOT_FOUND"
+  | "REGISTRATION_REQUEST_PENDING"
+  | "TOURNAMENT_FULL"
+  | "TOURNAMENT_NOT_FOUND"
+  | "TOURNAMENT_NOT_OPEN"
+  | "VALIDATION_ERROR"
+  | "VERIFICATION_INVALID"
+
+export type ApiErrorPayload = {
+  error: string
+  code: AppErrorCode
+}
+
+export function createApiErrorPayload(
+  error: string,
+  code: AppErrorCode
+): ApiErrorPayload {
+  return { error, code }
+}

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "next.config.ts",
+    "postcss.config.mjs",
+    "eslint.config.mjs",
+    "middleware.ts",
+    "playwright.config.ts",
+    "vitest.config.mts",
+    "src/app/**/{page,layout,route,loading,error,not-found}.ts",
+    "src/app/**/{page,layout,route,loading,error,not-found}.tsx",
+    "src/modules/**/index.ts",
+    "src/test/setup.ts"
+  ],
+  "project": [
+    "*.config.{js,cjs,mjs,ts,mts}",
+    "middleware.ts",
+    "src/**/*.{ts,tsx}",
+    "e2e/**/*.ts"
+  ],
+  "ignore": [
+    "next-env.d.ts",
+    "src/components/ui/**",
+    "src/types/database.ts",
+    "supabase/**"
+  ],
+  "ignoreDependencies": [
+    "@hookform/resolvers",
+    "@rolldown/binding-linux-x64-gnu",
+    "@testing-library/react",
+    "@testing-library/user-event",
+    "postcss",
+    "react-hook-form",
+    "shadcn",
+    "tailwindcss",
+    "tw-animate-css"
+  ]
+}

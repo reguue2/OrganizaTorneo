@@ -1,0 +1,16 @@
+pre-commit:
+  commands:
+    secrets:
+      run: pnpm security:secrets:staged
+    lint:
+      glob: "*.{js,jsx,ts,tsx,mjs,mts,cjs}"
+      run: pnpm lint
+
+pre-push:
+  commands:
+    typecheck:
+      run: pnpm typecheck
+    test:
+      run: pnpm test
+    architecture:
+      run: pnpm arch:check

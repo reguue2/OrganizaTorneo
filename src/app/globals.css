@@ -1,255 +1,160 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-/* =========================
-   GLOBAL DESIGN SYSTEM
-========================= */
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #f9fafb;
-  --foreground: #111827;
-
-  --primary: #4f46e5;
-  --primary-dark: #4338ca;
-
-  --muted: #6b7280;
-  --card: #ffffff;
+  --app-font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --background: oklch(0.985 0.004 240);
+  --foreground: oklch(0.18 0.018 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.018 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.018 250);
+  --primary: oklch(0.43 0.12 174);
+  --primary-foreground: oklch(0.99 0.003 240);
+  --secondary: oklch(0.955 0.006 240);
+  --secondary-foreground: oklch(0.24 0.02 250);
+  --muted: oklch(0.95 0.006 240);
+  --muted-foreground: oklch(0.48 0.025 250);
+  --accent: oklch(0.95 0.045 83);
+  --accent-foreground: oklch(0.27 0.04 70);
+  --destructive: oklch(0.58 0.22 27);
+  --border: oklch(0.89 0.01 240);
+  --input: oklch(0.9 0.01 240);
+  --ring: oklch(0.5 0.12 174);
+  --chart-1: oklch(0.55 0.13 174);
+  --chart-2: oklch(0.58 0.16 250);
+  --chart-3: oklch(0.68 0.17 75);
+  --chart-4: oklch(0.58 0.18 25);
+  --chart-5: oklch(0.55 0.12 315);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.98 0.004 240);
+  --sidebar-foreground: oklch(0.18 0.018 250);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.94 0.008 240);
+  --sidebar-accent-foreground: oklch(0.24 0.02 250);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 }
 
-html,
-body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
+.dark {
+  --background: oklch(0.16 0.015 250);
+  --foreground: oklch(0.97 0.004 240);
+  --card: oklch(0.2 0.018 250);
+  --card-foreground: oklch(0.97 0.004 240);
+  --popover: oklch(0.2 0.018 250);
+  --popover-foreground: oklch(0.97 0.004 240);
+  --primary: oklch(0.7 0.14 174);
+  --primary-foreground: oklch(0.16 0.015 250);
+  --secondary: oklch(0.26 0.02 250);
+  --secondary-foreground: oklch(0.97 0.004 240);
+  --muted: oklch(0.26 0.02 250);
+  --muted-foreground: oklch(0.72 0.025 250);
+  --accent: oklch(0.3 0.06 80);
+  --accent-foreground: oklch(0.95 0.045 83);
+  --destructive: oklch(0.7 0.18 24);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.7 0.14 174);
+  --chart-1: oklch(0.72 0.14 174);
+  --chart-2: oklch(0.7 0.16 250);
+  --chart-3: oklch(0.78 0.17 75);
+  --chart-4: oklch(0.72 0.18 25);
+  --chart-5: oklch(0.7 0.12 315);
+  --sidebar: oklch(0.2 0.018 250);
+  --sidebar-foreground: oklch(0.97 0.004 240);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.26 0.02 250);
+  --sidebar-accent-foreground: oklch(0.97 0.004 240);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 }
 
-html {
-  background-color: var(--background);
+@theme inline {
+  --font-sans: var(--app-font-sans);
+  --font-heading: var(--app-font-sans);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) * 0.625);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.25);
+  --radius-xl: calc(var(--radius) * 1.5);
+  --radius-2xl: calc(var(--radius) * 2);
+  --radius-3xl: calc(var(--radius) * 2.5);
+  --radius-4xl: calc(var(--radius) * 3);
 }
 
-body {
-  margin: 0;
-  padding: 0;
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html,
+  body {
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    @apply bg-background font-sans;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  ::selection {
+    @apply bg-primary/20 text-foreground;
+  }
 }
 
-.container-custom {
-  @apply max-w-6xl mx-auto px-6;
-}
-
-.section-spacing {
-  @apply py-24;
-}
-
-.btn-primary {
-  @apply bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium transition hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed;
-}
-
-.btn-secondary {
-  @apply border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium transition hover:bg-gray-100;
-}
-
-.card {
-  @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
-}
-
-/* =========================
-   FORM CONTROLS (FIGMA-LIKE)
-========================= */
-
-.label {
-  @apply block mb-2 font-medium text-gray-800;
-}
-
-.input {
-  @apply w-full bg-gray-100 border border-gray-100 rounded-lg px-4 py-3 text-gray-800 placeholder:text-gray-500
-  focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300;
-}
-
-.textarea {
-  @apply w-full bg-gray-100 border border-gray-100 rounded-lg px-4 py-3 text-gray-800 placeholder:text-gray-500
-  focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 resize-none;
-}
-
-.input--error {
-  @apply border-red-300 ring-0 focus:ring-red-100 focus:border-red-400;
-}
-
-.field-error {
-  @apply mt-2 text-sm text-red-600;
-}
-
-/* =========================
-   Number input: remove spinners
-========================= */
-
-/* Chrome, Safari, Edge */
 .no-spin::-webkit-outer-spin-button,
 .no-spin::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
-/* Firefox */
 .no-spin[type="number"] {
   -moz-appearance: textfield;
-}
-
-/* =========================
-   UPLOAD DROPZONE
-========================= */
-
-.upload-box {
-  @apply w-full rounded-xl border-2 border-dashed border-gray-300 bg-white
-  flex flex-col items-center justify-center gap-2 p-10 text-center cursor-pointer
-  transition;
-}
-
-.upload-box--active {
-  @apply border-indigo-400 bg-indigo-50;
-}
-
-.upload-icon {
-  @apply w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 text-2xl;
-}
-
-.upload-text {
-  @apply select-none;
-}
-
-/* =========================
-   TOGGLE SWITCH
-========================= */
-
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 52px;
-  height: 30px;
-}
-
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0;
-  background-color: #e5e7eb; /* gray-200 */
-  transition: 0.2s;
-  border-radius: 999px;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 24px;
-  width: 24px;
-  left: 3px;
-  top: 3px;
-  background-color: white;
-  transition: 0.2s;
-  border-radius: 999px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
-}
-
-.switch input:checked + .slider {
-  background-color: #4f46e5; /* indigo-600 */
-}
-
-.switch input:checked + .slider:before {
-  transform: translateX(22px);
-}
-/* =========================
-   Structure choice (clickable cards)
-   Uses :has() for reliable "selected" styling
-========================= */
-
-.structure-option {
-  display: block;
-  cursor: pointer;
-}
-
-/* El input cubre toda la card -> click en cualquier lado marca */
-.structure-radio {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-  margin: 0;
-}
-
-/* Card base */
-.structure-card {
-  position: relative;
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-
-  background: #fff;
-  border: 2px solid transparent;
-  border-radius: 12px;
-  padding: 24px;
-
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-  transition: 0.15s ease;
-}
-
-.structure-option:hover .structure-card {
-  border-color: #d1d5db; /* gray-300 */
-  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-}
-
-/* Dot */
-.structure-dot {
-  margin-top: 2px;
-  height: 20px;
-  width: 20px;
-  border-radius: 999px;
-  border: 2px solid #d1d5db; /* gray-300 */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: 0.15s ease;
-}
-
-.structure-dot-inner {
-  height: 10px;
-  width: 10px;
-  border-radius: 999px;
-  background: #4f46e5; /* indigo-600 */
-  opacity: 0;
-  transition: 0.15s ease;
-}
-
-/* Estado seleccionado (la clave): */
-.structure-option:has(input:checked) .structure-card {
-  border-color: #4f46e5; /* indigo-600 */
-  background: #eef2ff;   /* indigo-50 */
-  box-shadow: 0 6px 18px rgba(79,70,229,0.12);
-}
-
-.structure-option:has(input:checked) .structure-dot {
-  border-color: #4f46e5;
-}
-
-.structure-option:has(input:checked) .structure-dot-inner {
-  opacity: 1;
-}
-
-.structure-main {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-}
-
-.structure-dot {
-  margin-top: 6px;
 }

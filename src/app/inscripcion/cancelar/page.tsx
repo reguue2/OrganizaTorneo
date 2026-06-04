@@ -1,4 +1,5 @@
-import CancelFlow from "./cancel-flow"
+import { PublicPage } from "@/components/layout"
+import { CancelRegistrationFlow } from "@/modules/registrations/ui"
 
 type SearchParams = Promise<{
   reference?: string
@@ -14,14 +15,12 @@ export default async function CancelarInscripcionPage({
   const { reference = "", token = "", code = "" } = await searchParams
 
   return (
-    <div className="section-spacing">
-      <div className="container-custom max-w-3xl">
-        <CancelFlow
-          initialReference={reference}
-          initialToken={token}
-          initialCode={code}
-        />
-      </div>
-    </div>
+    <PublicPage size="narrow">
+      <CancelRegistrationFlow
+        initialReference={reference}
+        initialToken={token}
+        initialCode={code}
+      />
+    </PublicPage>
   )
 }

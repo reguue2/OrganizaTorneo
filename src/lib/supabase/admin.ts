@@ -1,17 +1,10 @@
 import { createClient } from "@supabase/supabase-js"
+import { getPublicEnv, requireServerEnv } from "@/config/env"
 import type { Database } from "@/types/database"
 
 export function createAdminClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!supabaseUrl) {
-    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL")
-  }
-
-  if (!serviceRoleKey) {
-    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY")
-  }
+  const { supabaseUrl } = getPublicEnv()
+  const serviceRoleKey = requireServerEnv("SUPABASE_SERVICE_ROLE_KEY")
 
   return createClient<Database>(supabaseUrl, serviceRoleKey, {
     auth: {
