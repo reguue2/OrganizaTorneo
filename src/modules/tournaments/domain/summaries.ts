@@ -23,33 +23,20 @@ export function getExplorePriceLabel(tournament: ExploreTournament) {
 
   if (prices.length === 0) return "Por categoría"
 
-  return `Desde ${formatMoney(Math.min(...prices))}`
+  const minPrice = Math.min(...prices)
+  if (minPrice === 0) return "Gratis"
+
+  return `Desde ${formatMoney(minPrice)}`
 }
 
 export function getExploreCapacityLabel(tournament: ExploreTournament) {
   if (!tournament.has_categories) {
     return tournament.max_participants === null
-      ? "Sin límite"
+      ? "Sin límite de plazas"
       : `${tournament.max_participants} plazas`
   }
 
-  const categories = tournament.categories ?? []
-  if (categories.length === 0) return "Cupos por categoría"
-
-  const hasUnlimitedCategory = categories.some(
-    (category) => category.max_participants === null
-  )
-
-  if (hasUnlimitedCategory) {
-    return `${categories.length} categorías · cupos por categoría`
-  }
-
-  const totalMax = categories.reduce(
-    (acc, category) => acc + (category.max_participants ?? 0),
-    0
-  )
-
-  return `${categories.length} categorías · ${totalMax} plazas`
+  return "Plazas por categorías"
 }
 
 export function getExploreStructureLabel(tournament: ExploreTournament) {

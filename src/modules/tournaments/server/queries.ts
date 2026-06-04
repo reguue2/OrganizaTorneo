@@ -13,6 +13,10 @@ export type TournamentQueryResult<T> = {
   error: string | null
 }
 
+function getOpenRegistrationFilterDate() {
+  return new Date().toISOString()
+}
+
 export async function listPublishedPublicTournaments({
   province,
 }: {
@@ -20,6 +24,7 @@ export async function listPublishedPublicTournaments({
 } = {}): Promise<TournamentQueryResult<ExploreTournament[]>> {
   const supabase = await createClient()
   const selectedProvince = province?.trim()
+  const openRegistrationFilterDate = getOpenRegistrationFilterDate()
 
   let query = supabase
     .from("tournaments")
@@ -46,6 +51,9 @@ export async function listPublishedPublicTournaments({
     `)
     .eq("status", "published")
     .eq("is_public", true)
+    .or(
+      `registration_deadline.is.null,registration_deadline.gte.${openRegistrationFilterDate}`
+    )
     .order("date", { ascending: true })
 
   if (selectedProvince) {

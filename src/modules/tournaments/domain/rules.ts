@@ -79,8 +79,8 @@ export function formatDate(value: string | null, withWeekday = false) {
 
 export function paymentMethodLabel(method: TournamentPaymentMethod) {
   if (!method) return "Por definir"
-  if (method === "cash") return "Solo efectivo"
-  if (method === "online") return "Solo online"
+  if (method === "cash") return "Solo pagos en efectivo"
+  if (method === "online") return "Solo pagos online"
   return "Efectivo y online"
 }
 

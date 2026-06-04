@@ -20,6 +20,18 @@ describe("tournament summaries", () => {
     expect(getExplorePriceLabel(tournament)).toBe("Desde 5€")
   })
 
+  it("does not prefix free category prices with from", () => {
+    const tournament = {
+      has_categories: true,
+      categories: [
+        { id: "a", name: "Senior", price: 0, min_participants: 1, max_participants: 16 },
+        { id: "b", name: "Junior", price: 5, min_participants: 1, max_participants: null },
+      ],
+    } as ExploreTournament
+
+    expect(getExplorePriceLabel(tournament)).toBe("Gratis")
+  })
+
   it("summarizes unlimited category capacity", () => {
     const tournament = {
       has_categories: true,
@@ -29,9 +41,7 @@ describe("tournament summaries", () => {
       ],
     } as ExploreTournament
 
-    expect(getExploreCapacityLabel(tournament)).toBe(
-      "2 categorías · cupos por categoría"
-    )
+    expect(getExploreCapacityLabel(tournament)).toBe("Plazas por categorías")
   })
 
   it("summarizes public category count", () => {

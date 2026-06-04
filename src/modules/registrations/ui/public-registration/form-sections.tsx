@@ -102,7 +102,7 @@ function PaymentMethodField({
     <div className="rounded-lg border border-border bg-card p-4 text-sm text-card-foreground">
       <p>
         <span className="font-medium text-foreground">Canal de pago configurado:</span>{" "}
-        {paymentMethod === "cash" ? "Solo efectivo" : "Solo online"}
+        {paymentMethod === "cash" ? "Solo pagos en efectivo" : "Solo pagos online"}
       </p>
     </div>
   )
