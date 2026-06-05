@@ -5,7 +5,6 @@ import { OrganizerPageHeader } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import type { OrganizerTournamentsOverview } from "@/modules/organizer/domain"
 
-import { OverviewStats } from "./overview-stats"
 import { TournamentSection } from "./tournament-section"
 
 export function MyTournamentsPage({
@@ -17,7 +16,6 @@ export function MyTournamentsPage({
     <div className="space-y-8">
       <OrganizerPageHeader
         title="Mis torneos"
-        description="Gestiona tus torneos activos, revisa estados reales de inscripción y controla la operación desde un solo sitio."
         actions={
           <Button asChild size="lg">
             <Link href="/crear-torneo">
@@ -28,11 +26,9 @@ export function MyTournamentsPage({
         }
       />
 
-      <OverviewStats totals={overview.totals} />
-
       <TournamentSection
         title="Torneos activos"
-        description="Publicados o cerrados, pero todavía en operación real."
+        description=""
         emptyTitle="No tienes torneos activos"
         emptyDescription="Cuando publiques un torneo o cierres inscripciones de uno ya existente, aparecerá aquí."
         tournaments={overview.activeTournaments}

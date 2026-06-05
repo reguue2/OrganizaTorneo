@@ -26,7 +26,13 @@ export function formatDate(value: string | null) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return "Fecha por definir"
 
-  return date.toLocaleDateString("es-ES")
+  return date.toLocaleString("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
 }
 
 export function formatMoney(value: number | null | undefined) {
@@ -88,8 +94,8 @@ export function getRegistrationBadge(
 
 export function getParticipantLine(view: OrganizerTournamentView) {
   if (view.capacity === null) {
-    return `${view.registrationsCount} activas · Sin límite`
+    return `${view.registrationsCount} participantes · Sin límite`
   }
 
-  return `${view.registrationsCount}/${view.capacity} activas`
+  return `${view.registrationsCount}/${view.capacity} participantes`
 }

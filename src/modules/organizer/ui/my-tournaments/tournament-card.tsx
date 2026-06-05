@@ -1,8 +1,6 @@
 import Link from "next/link"
 import {
   CalendarDays,
-  CheckCircle2,
-  CircleDollarSign,
   Clock3,
   ExternalLink,
   Settings,
@@ -16,11 +14,10 @@ import {
   CardContent,
 } from "@/components/ui/card"
 import type { OrganizerTournamentView } from "@/modules/organizer/domain"
+import { ShareTournamentButton } from "@/modules/tournaments/ui/public-tournament/share-tournament-button"
 
-import { CopyTournamentLinkButton } from "./copy-tournament-link-button"
 import {
   formatDate,
-  formatMoney,
   getParticipantLine,
   getRegistrationBadge,
   getTournamentStatusLabel,
@@ -71,14 +68,6 @@ export function TournamentCard({
           )}
 
           <TournamentMetaItem icon={<UsersRound />} text={getParticipantLine(tournament)} />
-          <TournamentMetaItem
-            icon={<CheckCircle2 />}
-            text={`${tournament.confirmedCount} confirmadas`}
-          />
-          <TournamentMetaItem
-            icon={<CircleDollarSign />}
-            text={`${formatMoney(tournament.revenue)} recaudado`}
-          />
         </div>
 
         {(tournament.pendingCashCount > 0 || tournament.pendingOnlineCount > 0) && (
@@ -92,49 +81,32 @@ export function TournamentCard({
           </div>
         )}
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>Ocupación</span>
-            <span>
-              {tournament.occupancyPercent === null
-                ? "Sin límite"
-                : `${tournament.occupancyPercent}%`}
-            </span>
-          </div>
-          <div className="h-2 overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-primary transition-all"
-              style={{
-                width:
-                  tournament.occupancyPercent === null
-                    ? "35%"
-                    : `${Math.min(tournament.occupancyPercent, 100)}%`,
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:flex-wrap">
+        <div className="pt-1">
           {isDraft ? (
             <Button asChild>
               <Link href="/crear-torneo">Crear de nuevo</Link>
             </Button>
           ) : (
-            <>
-              <Button asChild>
-                <Link href={`/torneo/${tournament.id}/gestionar`}>
-                  <Settings data-icon="inline-start" />
-                  Gestionar
-                </Link>
-              </Button>
-              <Button asChild variant="secondary">
-                <Link href={`/torneos/${tournament.id}`}>
-                  <ExternalLink data-icon="inline-start" />
-                  Página pública
-                </Link>
-              </Button>
-              <CopyTournamentLinkButton path={`/torneos/${tournament.id}`} />
-            </>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <Button asChild>
+                  <Link href={`/torneo/${tournament.id}/gestionar`}>
+                    <Settings data-icon="inline-start" />
+                    Gestionar
+                  </Link>
+                </Button>
+                <Button asChild variant="secondary">
+                  <Link href={`/torneos/${tournament.id}`}>
+                    <ExternalLink data-icon="inline-start" />
+                    Publicación
+                  </Link>
+                </Button>
+              </div>
+              <ShareTournamentButton
+                path={`/torneos/${tournament.id}`}
+                title={tournament.title}
+              />
+            </div>
           )}
         </div>
       </CardContent>
