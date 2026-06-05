@@ -63,17 +63,43 @@ export function formatMoney(value: number | null | undefined) {
   return `${text}€`
 }
 
-export function formatDate(value: string | null, withWeekday = false) {
+type FormatDateOptions = {
+  withWeekday?: boolean
+  withTime?: boolean
+}
+
+function normalizeFormatDateOptions(
+  options: boolean | FormatDateOptions
+): FormatDateOptions {
+  return typeof options === "boolean" ? { withWeekday: options } : options
+}
+
+export function formatDate(
+  value: string | null,
+  options: boolean | FormatDateOptions = {}
+) {
   if (!value) return "Por definir"
 
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return "Por definir"
 
-  return date.toLocaleDateString("es-ES", {
+  const { withTime = false, withWeekday = false } =
+    normalizeFormatDateOptions(options)
+  const dateOptions: Intl.DateTimeFormatOptions = {
     weekday: withWeekday ? "long" : undefined,
     day: "numeric",
     month: "long",
     year: "numeric",
+  }
+
+  if (!withTime) {
+    return date.toLocaleDateString("es-ES", dateOptions)
+  }
+
+  return date.toLocaleString("es-ES", {
+    ...dateOptions,
+    hour: "2-digit",
+    minute: "2-digit",
   })
 }
 
@@ -229,7 +255,7 @@ export function getRegistrationState(tournament: PublicTournamentLike) {
       canJoin: true,
       title: "Inscripción disponible",
       message:
-        "Puedes crear tu solicitud ahora. Primero validarás el email y después el organizador revisará el pago en efectivo si corresponde.",
+        "Puedes crear tu solicitud ahora.",
       buttonLabel: "Inscribirse al torneo",
     }
   }

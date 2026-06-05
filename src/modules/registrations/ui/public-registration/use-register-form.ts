@@ -11,14 +11,21 @@ import type {
   ErrorPayload,
   ParticipantType,
   RegisterFormProps,
+  RegistrationFormFieldErrors,
   RegistrationPaymentMethod,
   RegistrationRequestResult,
 } from "./types"
+
+type ValidationResult = {
+  fieldErrors: RegistrationFormFieldErrors
+  formError: string | null
+}
 
 function useRegisterForm({
   categories,
   entryPrice,
   hasCategories,
+  onCategoryChange,
   paymentMethod,
   tournamentId,
   tournamentParticipantType,
@@ -34,6 +41,7 @@ function useRegisterForm({
   const [submitting, setSubmitting] = useState(false)
   const [resending, setResending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<RegistrationFormFieldErrors>({})
   const [requestResult, setRequestResult] =
     useState<RegistrationRequestResult | null>(null)
   const [pendingRequestId, setPendingRequestId] = useState<string | null>(null)
@@ -61,42 +69,88 @@ function useRegisterForm({
     return Number(entryPrice)
   }, [hasCategories, selectedCategory, entryPrice])
 
-  const validate = () => {
+  const validate = (): ValidationResult => {
+    const nextFieldErrors: RegistrationFormFieldErrors = {}
+
     if (hasCategories && !categoryId) {
-      return "Debes seleccionar una categoría."
+      nextFieldErrors.categoryId = "Debes seleccionar una categoría."
     }
 
     if (!effectiveParticipantType) {
-      return hasCategories
-        ? "La categoría seleccionada todavía no tiene configurado el formato de inscripción."
-        : "El organizador todavía no ha configurado el formato de inscripción de este torneo."
+      if (hasCategories) {
+        nextFieldErrors.categoryId =
+          "La categoría seleccionada todavía no tiene configurado el formato de inscripción."
+        return { fieldErrors: nextFieldErrors, formError: null }
+      }
+
+      return {
+        fieldErrors: nextFieldErrors,
+        formError:
+          "El organizador todavía no ha configurado el formato de inscripción de este torneo.",
+      }
     }
 
     if (!displayName.trim()) {
-      return effectiveParticipantType === "team"
+      nextFieldErrors.displayName = effectiveParticipantType === "team"
         ? "El nombre del equipo es obligatorio."
         : "El nombre del participante es obligatorio."
     }
 
     const phoneError = getSpanishPhoneValidationMessage(contactPhone)
-    if (phoneError) return phoneError
+    if (phoneError) {
+      nextFieldErrors.contactPhone = phoneError
+    }
 
     if (!contactEmail.trim()) {
-      return "El email de contacto es obligatorio para validar la inscripción."
+      nextFieldErrors.contactEmail =
+        "El email de contacto es obligatorio."
+    } else if (!isValidEmail(contactEmail.trim())) {
+      nextFieldErrors.contactEmail = "Introduce un email válido."
     }
 
-    if (!isValidEmail(contactEmail.trim())) {
-      return "Introduce un email válido."
-    }
-
-    return null
+    return { fieldErrors: nextFieldErrors, formError: null }
   }
 
   const resetState = () => {
     setError(null)
+    setFieldErrors({})
     setPendingRequestId(null)
     setPendingRequestExpiresAt(null)
     setResendFeedback(null)
+  }
+
+  const clearFieldError = (field: keyof RegistrationFormFieldErrors) => {
+    setFieldErrors((current) => {
+      if (!current[field]) return current
+      const next = { ...current }
+      delete next[field]
+      return next
+    })
+  }
+
+  const updateCategoryId = (value: string) => {
+    setCategoryId(value)
+    onCategoryChange?.(value)
+    clearFieldError("categoryId")
+    setError(null)
+  }
+
+  const updateDisplayName = (value: string) => {
+    setDisplayName(value)
+    clearFieldError("displayName")
+    setError(null)
+  }
+
+  const updateContactPhone = (value: string) => {
+    setContactPhone(value)
+    clearFieldError("contactPhone")
+    setError(null)
+  }
+
+  const updateContactEmail = (value: string) => {
+    setContactEmail(value)
+    clearFieldError("contactEmail")
+    setError(null)
   }
 
   const resetForm = () => {
@@ -115,6 +169,7 @@ function useRegisterForm({
 
     setResending(true)
     setError(null)
+    setFieldErrors({})
     setResendFeedback(null)
 
     try {
@@ -169,9 +224,13 @@ function useRegisterForm({
     event.preventDefault()
     resetState()
 
-    const validationError = validate()
-    if (validationError) {
-      setError(validationError)
+    const validationResult = validate()
+    if (
+      validationResult.formError ||
+      Object.keys(validationResult.fieldErrors).length > 0
+    ) {
+      setError(validationResult.formError)
+      setFieldErrors(validationResult.fieldErrors)
       return
     }
 
@@ -230,6 +289,7 @@ function useRegisterForm({
     displayName,
     effectiveParticipantType,
     error,
+    fieldErrors,
     pendingRequestExpiresAt,
     pendingRequestId,
     requestResult,
@@ -237,10 +297,10 @@ function useRegisterForm({
     resending,
     selectedCategory,
     selectedPaymentMethod,
-    setCategoryId,
-    setContactEmail,
-    setContactPhone,
-    setDisplayName,
+    setCategoryId: updateCategoryId,
+    setContactEmail: updateContactEmail,
+    setContactPhone: updateContactPhone,
+    setDisplayName: updateDisplayName,
     setSelectedPaymentMethod,
     submit,
     submitting,

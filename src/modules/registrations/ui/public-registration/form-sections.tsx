@@ -4,15 +4,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
-import {
-  formatMoney,
-  getParticipantTypeLabel,
-} from "@/modules/tournaments/domain"
+import { formatMoney } from "@/modules/tournaments/domain"
 
 import { formatDateTime } from "./display"
 import type {
   Category,
   ParticipantType,
+  RegistrationFormFieldErrors,
   RegistrationPaymentMethod,
 } from "./types"
 
@@ -75,20 +73,20 @@ function PaymentMethodField({
     return (
       <div className="space-y-3">
         <Label>
-          Canal de pago <span className="text-red-500">*</span>
+          Método de pago <span className="text-red-500">*</span>
         </Label>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <PaymentOption
             active={selectedPaymentMethod === "cash"}
             title="Efectivo"
-            description="El organizador validará manualmente el cobro."
+            description="Paga el importe directamente al organizador."
             onClick={() => onChange("cash")}
           />
           <PaymentOption
             active={selectedPaymentMethod === "online"}
             title="Online"
-            description="Quedará preparada para el flujo online cuando esté conectado."
+            description="Paga online al completar la inscripción."
             onClick={() => onChange("online")}
           />
         </div>
@@ -96,16 +94,7 @@ function PaymentMethodField({
     )
   }
 
-  if (!paymentMethod) return null
-
-  return (
-    <div className="rounded-lg border border-border bg-card p-4 text-sm text-card-foreground">
-      <p>
-        <span className="font-medium text-foreground">Canal de pago configurado:</span>{" "}
-        {paymentMethod === "cash" ? "Solo pagos en efectivo" : "Solo pagos online"}
-      </p>
-    </div>
-  )
+  return null
 }
 
 function PaymentOption({
@@ -138,10 +127,12 @@ function PaymentOption({
 function CategoryField({
   categories,
   categoryId,
+  error,
   onChange,
 }: {
   categories: Category[]
   categoryId: string
+  error?: string
   onChange: (value: string) => void
 }) {
   return (
@@ -152,15 +143,21 @@ function CategoryField({
       <Select
         value={categoryId}
         onChange={(event) => onChange(event.target.value)}
+        aria-invalid={Boolean(error)}
+        className={
+          error
+            ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
+            : undefined
+        }
       >
         <option value="">Selecciona una categoría</option>
         {categories.map((category) => (
           <option key={category.id} value={category.id}>
-            {category.name} · {getParticipantTypeLabel(category.participant_type)} ·{" "}
-            {formatMoney(category.price)}
+            {category.name}
           </option>
         ))}
       </Select>
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   )
 }
@@ -170,7 +167,7 @@ function ParticipantContactFields({
   contactPhone,
   displayName,
   effectiveParticipantType,
-  hasCategories,
+  fieldErrors,
   onContactEmailChange,
   onContactPhoneChange,
   onDisplayNameChange,
@@ -179,29 +176,13 @@ function ParticipantContactFields({
   contactPhone: string
   displayName: string
   effectiveParticipantType: ParticipantType | null
-  hasCategories: boolean
+  fieldErrors: RegistrationFormFieldErrors
   onContactEmailChange: (value: string) => void
   onContactPhoneChange: (value: string) => void
   onDisplayNameChange: (value: string) => void
 }) {
   return (
     <>
-      <div className="rounded-lg border border-border bg-card p-4 text-sm text-card-foreground">
-        <p>
-          <span className="font-medium text-foreground">Formato de inscripción:</span>{" "}
-          {getParticipantTypeLabel(effectiveParticipantType)}
-        </p>
-        <p className="mt-2 text-muted-foreground">
-          {effectiveParticipantType === "team"
-            ? "Esta inscripción representa a un equipo. Solo pediremos el nombre del equipo y el contacto de quien realiza la inscripción."
-            : effectiveParticipantType === "individual"
-              ? "Esta inscripción representa a una sola persona."
-              : hasCategories
-                ? "Selecciona una categoría para ver qué formato de inscripción aplica."
-                : "El organizador todavía no ha configurado el formato de inscripción."}
-        </p>
-      </div>
-
       <div>
         <Label>
           {effectiveParticipantType === "team" ? "Nombre del equipo" : "Nombre completo"}{" "}
@@ -211,9 +192,13 @@ function ParticipantContactFields({
           value={displayName}
           onChange={(event) => onDisplayNameChange(event.target.value)}
           placeholder={
-            effectiveParticipantType === "team" ? "Ej: FC Warriors" : "Ej: Diego Martínez"
+            effectiveParticipantType === "team" ? "Nombre del equipo" : "Nombre del participante"
           }
+          aria-invalid={Boolean(fieldErrors.displayName)}
         />
+        {fieldErrors.displayName && (
+          <p className="mt-2 text-sm text-destructive">{fieldErrors.displayName}</p>
+        )}
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
@@ -224,12 +209,13 @@ function ParticipantContactFields({
           <Input
             value={contactPhone}
             onChange={(event) => onContactPhoneChange(event.target.value)}
-            placeholder="Ej: 612345678 o +34 612 345 678"
+            placeholder="Telefono de contacto"
             autoComplete="tel"
+            aria-invalid={Boolean(fieldErrors.contactPhone)}
           />
-          <p className="mt-2 text-xs text-muted-foreground">
-            Solo aceptamos teléfonos españoles válidos.
-          </p>
+          {fieldErrors.contactPhone && (
+            <p className="mt-2 text-sm text-destructive">{fieldErrors.contactPhone}</p>
+          )}
         </div>
 
         <div>
@@ -240,13 +226,16 @@ function ParticipantContactFields({
             value={contactEmail}
             onChange={(event) => onContactEmailChange(event.target.value)}
             placeholder={
-              effectiveParticipantType === "team" ? "Ej: equipo@correo.com" : "Ej: jugador@correo.com"
+              effectiveParticipantType === "team"
+                ? "Correo de contacto"
+                : "Correo de contacto"
             }
             autoComplete="email"
+            aria-invalid={Boolean(fieldErrors.contactEmail)}
           />
-          <p className="mt-2 text-xs text-muted-foreground">
-            Lo usamos para validar la solicitud y enviarte después la referencia de la inscripción.
-          </p>
+          {fieldErrors.contactEmail && (
+            <p className="mt-2 text-sm text-destructive">{fieldErrors.contactEmail}</p>
+          )}
         </div>
       </div>
     </>
@@ -255,31 +244,40 @@ function ParticipantContactFields({
 
 function AmountSummary({
   amount,
+  paymentMethod,
   selectedPaymentMethod,
 }: {
   amount: number | null
+  paymentMethod: "cash" | "online" | "both" | null
   selectedPaymentMethod: RegistrationPaymentMethod
 }) {
+  const isFree = amount !== null && Number(amount) <= 0
+  const showFixedPaymentDescription =
+    !isFree && (paymentMethod === "cash" || paymentMethod === "online")
+  const paymentTitle = selectedPaymentMethod === "cash"
+    ? "Pago en efectivo"
+    : "Pago online"
+  const paymentDescription = selectedPaymentMethod === "cash"
+    ? "paga el precio directamente al organizador"
+    : "paga online al completar la inscripción"
+
   return (
-    <div className="rounded-lg border border-border bg-card p-5">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm text-muted-foreground">Importe</p>
-          <p className="mt-1 text-2xl font-semibold text-foreground">
+    <div>
+      <div className="border-y border-border px-4 py-4">
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-base font-semibold text-foreground">Precio</p>
+          <p className="text-2xl font-semibold text-foreground">
             {amount === null ? "Selecciona categoría" : formatMoney(amount)}
           </p>
         </div>
-
-        <div className="text-right text-sm text-muted-foreground">
-          {amount !== null && Number(amount) <= 0 ? (
-            <p>Inscripción gratuita</p>
-          ) : selectedPaymentMethod === "cash" ? (
-            <p>Pago en efectivo con validación manual</p>
-          ) : (
-            <p>Pago online pendiente de integración completa</p>
-          )}
-        </div>
       </div>
+
+      {showFixedPaymentDescription && (
+        <p className="px-4 pt-3 text-sm leading-5 text-muted-foreground">
+          <span className="font-medium text-foreground">{paymentTitle}</span>,{" "}
+          {paymentDescription}.
+        </p>
+      )}
     </div>
   )
 }

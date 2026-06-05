@@ -44,7 +44,10 @@ function TournamentDetailsCard({
           <DetailItem
             icon={<CalendarDays />}
             label="Fecha"
-            value={formatDate(tournament.date, true)}
+            value={formatDate(tournament.date, {
+              withTime: true,
+              withWeekday: true,
+            })}
           />
           <DetailItem
             icon={<CreditCard />}

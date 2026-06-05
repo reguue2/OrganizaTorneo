@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  formatDate,
   formatMoney,
   getRegistrationState,
   validateTournamentForPublication,
@@ -12,6 +13,20 @@ describe("tournament domain", () => {
     expect(formatMoney(12)).toBe("12€")
     expect(formatMoney(12.5)).toBe("12.50€")
     expect(formatMoney(null)).toBe("Gratis")
+  })
+
+  it("formats dates with time when requested", () => {
+    const formatted = formatDate("2999-01-01T10:30:00", {
+      withTime: true,
+      withWeekday: true,
+    })
+
+    expect(formatted).toContain("1 de enero de 2999")
+    expect(formatted).toContain("10:30")
+  })
+
+  it("keeps public date formatting without time by default", () => {
+    expect(formatDate("2999-01-01T10:30:00")).not.toContain("10:30")
   })
 
   it("blocks registrations when tournament is closed", () => {

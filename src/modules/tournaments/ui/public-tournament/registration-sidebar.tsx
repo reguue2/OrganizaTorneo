@@ -40,7 +40,7 @@ function TournamentRegistrationSidebar({
               Límite de inscripción
             </p>
             <p className="text-sm font-medium text-foreground">
-              {formatDate(tournament.registration_deadline)}
+              {formatDate(tournament.registration_deadline, { withTime: true })}
             </p>
           </div>
 

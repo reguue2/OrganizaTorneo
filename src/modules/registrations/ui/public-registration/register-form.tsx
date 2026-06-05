@@ -25,6 +25,7 @@ export default function RegisterForm(props: RegisterFormProps) {
     displayName,
     effectiveParticipantType,
     error,
+    fieldErrors,
     pendingRequestExpiresAt,
     pendingRequestId,
     requestResult,
@@ -86,14 +87,6 @@ export default function RegisterForm(props: RegisterFormProps) {
         />
       )}
 
-      <div className="rounded-lg border border-border bg-muted p-4">
-        <p className="text-sm font-medium text-foreground">Cómo funciona la inscripción</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Primero creas una solicitud y solo después, cuando el email esté verificado, se
-          genera la inscripción real.
-        </p>
-      </div>
-
       <PaymentMethodField
         paymentMethod={props.paymentMethod}
         selectedPaymentMethod={selectedPaymentMethod}
@@ -104,6 +97,7 @@ export default function RegisterForm(props: RegisterFormProps) {
         <CategoryField
           categories={props.categories}
           categoryId={categoryId}
+          error={fieldErrors.categoryId}
           onChange={setCategoryId}
         />
       )}
@@ -113,7 +107,7 @@ export default function RegisterForm(props: RegisterFormProps) {
         contactPhone={contactPhone}
         displayName={displayName}
         effectiveParticipantType={effectiveParticipantType}
-        hasCategories={props.hasCategories}
+        fieldErrors={fieldErrors}
         onContactEmailChange={setContactEmail}
         onContactPhoneChange={setContactPhone}
         onDisplayNameChange={setDisplayName}
@@ -121,15 +115,16 @@ export default function RegisterForm(props: RegisterFormProps) {
 
       <AmountSummary
         amount={amount}
+        paymentMethod={props.paymentMethod}
         selectedPaymentMethod={selectedPaymentMethod}
       />
 
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <Button type="submit" disabled={submitting}>
-          {submitting ? "Creando solicitud..." : "Crear solicitud"}
-        </Button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Button asChild variant="secondary">
           <Link href={`/torneos/${props.tournamentId}`}>Volver al torneo</Link>
+        </Button>
+        <Button type="submit" disabled={submitting}>
+          {submitting ? "Inscribiendo..." : "Inscribirse"}
         </Button>
       </div>
     </form>

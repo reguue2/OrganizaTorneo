@@ -1012,8 +1012,13 @@ CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
 begin
-  insert into public.users (id, email, created_at)
-  values (new.id, new.email, now());
+  insert into public.users (id, email, name, created_at)
+  values (
+    new.id,
+    new.email,
+    nullif(trim(coalesce(new.raw_user_meta_data ->> 'name', '')), ''),
+    now()
+  );
 
   return new;
 end;

@@ -37,7 +37,10 @@ function TournamentCategoriesCard({
                       : `${category.max_participants} plazas`}
                   </p>
                   {category.start_at && (
-                    <p>Fecha/hora: {formatDate(category.start_at)}</p>
+                    <p>
+                      Fecha/hora:{" "}
+                      {formatDate(category.start_at, { withTime: true })}
+                    </p>
                   )}
                   {category.address && <p>Dirección: {category.address}</p>}
                 </div>

@@ -1,5 +1,7 @@
-import Link from "next/link"
-import { CalendarDays, ChevronRight, CreditCard, Eye, MapPin, Users } from "lucide-react"
+"use client"
+
+import { useState, type ReactNode } from "react"
+import { CalendarDays, CreditCard, MapPin, Users } from "lucide-react"
 
 import { PublicPage } from "@/components/layout"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -13,7 +15,6 @@ import {
   formatDate,
   formatMoney,
   getParticipantTypeLabel,
-  getPublicVisibilityLabel,
   getRegistrationState,
   type RegistrationCategory,
   type RegistrationTournament,
@@ -31,6 +32,12 @@ function PublicRegistrationPage({
   categories,
 }: PublicRegistrationPageProps) {
   const registrationState = getRegistrationState(tournament)
+  const registrationTitle = registrationState.canJoin
+    ? `Inscripción para el ${tournament.title}`
+    : registrationState.title
+  const [selectedCategoryId, setSelectedCategoryId] = useState(
+    tournament.has_categories && categories.length === 1 ? categories[0].id : ""
+  )
   const hasValidParticipantConfig = tournament.has_categories
     ? categories.length > 0 && categories.every((category) => Boolean(category.participant_type))
     : Boolean(tournament.participant_type)
@@ -38,34 +45,13 @@ function PublicRegistrationPage({
   return (
     <PublicPage size="wide" className="py-6 md:py-8">
       <div className="space-y-6">
-        <nav
-          aria-label="Ruta de navegación"
-          className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground"
-        >
-          <Link
-            href={`/torneos/${tournament.id}`}
-            className="transition-colors hover:text-foreground"
-          >
-            Volver al torneo
-          </Link>
-          <ChevronRight className="size-4 shrink-0" />
-          <span className="truncate">Inscripción</span>
-        </nav>
-
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="min-w-0 space-y-6">
-            <header>
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
-                Inscribirse al torneo
-              </h1>
-              <p className="mt-3 text-base leading-7 text-muted-foreground">
-                {tournament.title}
-              </p>
-            </header>
-
             <Card>
               <CardHeader>
-                <CardTitle>{registrationState.title}</CardTitle>
+                <CardTitle className="text-2xl leading-tight tracking-tight md:text-3xl">
+                  {registrationTitle}
+                </CardTitle>
                 <p className="text-sm leading-6 text-muted-foreground">
                   {registrationState.message}
                 </p>
@@ -80,6 +66,7 @@ function PublicRegistrationPage({
                     categories={categories}
                     entryPrice={tournament.entry_price}
                     paymentMethod={tournament.payment_method}
+                    onCategoryChange={setSelectedCategoryId}
                   />
                 ) : registrationState.canJoin ? (
                   <Alert variant="warning">
@@ -101,6 +88,7 @@ function PublicRegistrationPage({
           <RegistrationSummarySidebar
             tournament={tournament}
             categories={categories}
+            selectedCategoryId={selectedCategoryId}
           />
         </section>
       </div>
@@ -111,35 +99,39 @@ function PublicRegistrationPage({
 function RegistrationSummarySidebar({
   tournament,
   categories,
-}: PublicRegistrationPageProps) {
+  selectedCategoryId,
+}: PublicRegistrationPageProps & {
+  selectedCategoryId: string
+}) {
+  const selectedCategory = tournament.has_categories
+    ? categories.find((category) => category.id === selectedCategoryId) ?? null
+    : null
+  const categoryDependentValue = "Selecciona categoría"
+
   return (
     <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
       <Card>
         <CardContent className="space-y-5 p-5">
-          <SummaryItem label="Torneo" value={tournament.title} />
           <SummaryItem
             icon={<MapPin className="size-4" />}
             label="Ubicación"
             value={`${tournament.province ?? "Por definir"}${
-              tournament.address ? ` · ${tournament.address}` : ""
+              tournament.address ? `, ${tournament.address}` : ""
             }`}
           />
           <SummaryItem
             icon={<CalendarDays className="size-4" />}
             label="Fecha"
-            value={formatDate(tournament.date)}
-          />
-          <SummaryItem
-            icon={<CalendarDays className="size-4" />}
-            label="Fecha límite de inscripción"
-            value={formatDate(tournament.registration_deadline)}
+            value={formatDate(tournament.date, { withTime: true })}
           />
           <SummaryItem
             icon={<CreditCard className="size-4" />}
-            label="Precio base"
+            label="Precio"
             value={
               tournament.has_categories
-                ? "Según categoría"
+                ? selectedCategory
+                  ? formatMoney(selectedCategory.price)
+                  : categoryDependentValue
                 : formatMoney(tournament.entry_price)
             }
           />
@@ -148,42 +140,12 @@ function RegistrationSummarySidebar({
             label="Formato de inscripción"
             value={
               tournament.has_categories
-                ? "Según categoría"
+                ? selectedCategory
+                  ? getParticipantTypeLabel(selectedCategory.participant_type)
+                  : categoryDependentValue
                 : getParticipantTypeLabel(tournament.participant_type)
             }
           />
-
-          {tournament.has_categories && categories.length > 0 && (
-            <div>
-              <p className="text-sm text-muted-foreground">Categorías disponibles</p>
-              <div className="mt-2 space-y-2 text-sm">
-                {categories.map((category) => (
-                  <div key={category.id} className="rounded-lg border border-border bg-muted p-3">
-                    <p className="font-medium text-foreground">{category.name}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {getParticipantTypeLabel(category.participant_type)} ·{" "}
-                      {formatMoney(category.price)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <SummaryItem
-            icon={<Eye className="size-4" />}
-            label="Visibilidad"
-            value={getPublicVisibilityLabel(tournament.is_public)}
-          />
-
-          <div>
-            <p className="text-sm text-muted-foreground">Cómo funciona ahora</p>
-            <p className="mt-1 text-sm leading-6 text-foreground">
-              Primero validas el email. Después se crea la inscripción real y, si corresponde,
-              el organizador validará el pago en efectivo o seguirás el flujo online cuando
-              esté conectado.
-            </p>
-          </div>
         </CardContent>
       </Card>
     </aside>
@@ -195,7 +157,7 @@ function SummaryItem({
   label,
   value,
 }: {
-  icon?: React.ReactNode
+  icon?: ReactNode
   label: string
   value: string
 }) {

@@ -24,7 +24,15 @@ export type RegisterFormProps = {
   categories: Category[]
   entryPrice: number
   paymentMethod: "cash" | "online" | "both" | null
+  onCategoryChange?: (categoryId: string) => void
 }
+
+export type RegistrationFormFieldErrors = Partial<{
+  categoryId: string
+  displayName: string
+  contactPhone: string
+  contactEmail: string
+}>
 
 export type RegistrationRequestResult = {
   request_id: string
