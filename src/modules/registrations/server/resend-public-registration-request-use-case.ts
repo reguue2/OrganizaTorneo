@@ -7,7 +7,7 @@ import {
   createRegistrationErrorPayload,
   getRegistrationErrorCode,
 } from "./errors"
-import { isJsonObject, resolveRequestOrigin } from "./request-utils"
+import { isJsonObject } from "./request-utils"
 
 export type ResendPublicRegistrationRequestInput = {
   requestId: string
@@ -16,7 +16,6 @@ export type ResendPublicRegistrationRequestInput = {
 type ResendRequestRpcResult = {
   request_id: string
   verification_code: string
-  verification_token: string
   expires_at: string
   amount: number
   payment_method: "cash" | "online"
@@ -32,7 +31,6 @@ function parseRpcResult(value: Json | null): ResendRequestRpcResult | null {
 
   const requestId = value.request_id
   const verificationCode = value.verification_code
-  const verificationToken = value.verification_token
   const expiresAt = value.expires_at
   const amount = value.amount
   const paymentMethod = value.payment_method
@@ -41,7 +39,6 @@ function parseRpcResult(value: Json | null): ResendRequestRpcResult | null {
   if (
     typeof requestId !== "string" ||
     typeof verificationCode !== "string" ||
-    typeof verificationToken !== "string" ||
     typeof expiresAt !== "string" ||
     typeof amount !== "number" ||
     typeof contactEmail !== "string" ||
@@ -53,7 +50,6 @@ function parseRpcResult(value: Json | null): ResendRequestRpcResult | null {
   return {
     request_id: requestId,
     verification_code: verificationCode,
-    verification_token: verificationToken,
     expires_at: expiresAt,
     amount,
     payment_method: paymentMethod,
@@ -70,8 +66,7 @@ function extractRetryAfterSeconds(message: string) {
 }
 
 export async function resendPublicRegistrationRequestUseCase(
-  input: ResendPublicRegistrationRequestInput,
-  request: Request
+  input: ResendPublicRegistrationRequestInput
 ): Promise<UseCaseResult> {
   try {
     const supabase = createAdminClient()
@@ -112,17 +107,10 @@ export async function resendPublicRegistrationRequestUseCase(
       }
     }
 
-    const verifyUrl = `${resolveRequestOrigin(request)}/inscripcion/verificar?request=${encodeURIComponent(
-      result.request_id
-    )}&token=${encodeURIComponent(result.verification_token)}`
-
     const delivery = await dispatchRegistrationVerificationEmail({
-      requestId: result.request_id,
       recipientEmail: result.contact_email,
       verificationCode: result.verification_code,
-      verificationToken: result.verification_token,
       expiresAt: result.expires_at,
-      verifyUrl,
     })
 
     return {

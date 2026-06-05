@@ -8,7 +8,7 @@ import {
   createRegistrationErrorPayload,
   getRegistrationErrorCode,
 } from "./errors"
-import { isJsonObject, resolveRequestOrigin } from "./request-utils"
+import { isJsonObject } from "./request-utils"
 
 export type CreatePublicRegistrationRequestInput = {
   tournamentId: string
@@ -22,7 +22,6 @@ export type CreatePublicRegistrationRequestInput = {
 type PublicRegistrationRequestRpcResult = {
   request_id: string
   verification_code: string
-  verification_token: string
   expires_at: string
   amount: number
   payment_method: "cash" | "online"
@@ -32,12 +31,20 @@ type UseCaseResult =
   | { status: 200; body: Record<string, unknown> }
   | { status: 400 | 409 | 500; body: Record<string, unknown> }
 
+type ConflictResult = { status: 409; body: Record<string, unknown> }
+
+type SupabaseAdminClient = ReturnType<typeof createAdminClient>
+
+type CapacityCheckResult =
+  | { status: "available" }
+  | { status: "category_full" }
+  | { status: "tournament_full" }
+
 function parseRpcResult(value: Json | null): PublicRegistrationRequestRpcResult | null {
   if (!isJsonObject(value)) return null
 
   const requestId = value.request_id
   const verificationCode = value.verification_code
-  const verificationToken = value.verification_token
   const expiresAt = value.expires_at
   const amount = value.amount
   const paymentMethod = value.payment_method
@@ -45,7 +52,6 @@ function parseRpcResult(value: Json | null): PublicRegistrationRequestRpcResult 
   if (
     typeof requestId !== "string" ||
     typeof verificationCode !== "string" ||
-    typeof verificationToken !== "string" ||
     typeof expiresAt !== "string" ||
     typeof amount !== "number" ||
     (paymentMethod !== "cash" && paymentMethod !== "online")
@@ -56,16 +62,96 @@ function parseRpcResult(value: Json | null): PublicRegistrationRequestRpcResult 
   return {
     request_id: requestId,
     verification_code: verificationCode,
-    verification_token: verificationToken,
     expires_at: expiresAt,
     amount,
     payment_method: paymentMethod,
   }
 }
 
+function isActiveRegistrationStatus(status: string | null) {
+  return status !== "cancelled" && status !== "expired"
+}
+
+async function getCapacityCheckResult(
+  supabase: SupabaseAdminClient,
+  input: Pick<CreatePublicRegistrationRequestInput, "categoryId" | "tournamentId">
+): Promise<CapacityCheckResult> {
+  if (input.categoryId) {
+    const { data: category } = await supabase
+      .from("categories")
+      .select("max_participants")
+      .eq("id", input.categoryId)
+      .eq("tournament_id", input.tournamentId)
+      .maybeSingle<{ max_participants: number | null }>()
+
+    if (!category || category.max_participants === null) {
+      return { status: "available" }
+    }
+
+    const { data: registrations } = await supabase
+      .from("registrations")
+      .select("status")
+      .eq("tournament_id", input.tournamentId)
+      .eq("category_id", input.categoryId)
+      .returns<Array<{ status: string | null }>>()
+
+    const activeCount = (registrations ?? []).filter((registration) =>
+      isActiveRegistrationStatus(registration.status)
+    ).length
+
+    return activeCount >= category.max_participants
+      ? { status: "category_full" }
+      : { status: "available" }
+  }
+
+  const { data: tournament } = await supabase
+    .from("tournaments")
+    .select("max_participants")
+    .eq("id", input.tournamentId)
+    .maybeSingle<{ max_participants: number | null }>()
+
+  if (!tournament || tournament.max_participants === null) {
+    return { status: "available" }
+  }
+
+  const { data: registrations } = await supabase
+    .from("registrations")
+    .select("status")
+    .eq("tournament_id", input.tournamentId)
+    .is("category_id", null)
+    .returns<Array<{ status: string | null }>>()
+
+  const activeCount = (registrations ?? []).filter((registration) =>
+    isActiveRegistrationStatus(registration.status)
+  ).length
+
+  return activeCount >= tournament.max_participants
+    ? { status: "tournament_full" }
+    : { status: "available" }
+}
+
+function createCapacityErrorResult(
+  capacity: CapacityCheckResult
+): ConflictResult | null {
+  if (capacity.status === "category_full") {
+    return {
+      status: 409,
+      body: createRegistrationErrorPayload("Category is full"),
+    }
+  }
+
+  if (capacity.status === "tournament_full") {
+    return {
+      status: 409,
+      body: createRegistrationErrorPayload("Tournament is full"),
+    }
+  }
+
+  return null
+}
+
 export async function createPublicRegistrationRequestUseCase(
-  input: CreatePublicRegistrationRequestInput,
-  request: Request
+  input: CreatePublicRegistrationRequestInput
 ): Promise<UseCaseResult> {
   const normalizedPhone = normalizeSpanishPhone(input.contactPhone)
   if (!normalizedPhone) {
@@ -80,6 +166,13 @@ export async function createPublicRegistrationRequestUseCase(
 
   try {
     const supabase = createAdminClient()
+    const capacityError = createCapacityErrorResult(
+      await getCapacityCheckResult(supabase, input)
+    )
+
+    if (capacityError) {
+      return capacityError
+    }
 
     const { data, error } = await supabase.rpc("create_public_registration_request", {
       p_tournament_id: input.tournamentId,
@@ -91,6 +184,14 @@ export async function createPublicRegistrationRequestUseCase(
     })
 
     if (error) {
+      const capacityError = createCapacityErrorResult(
+        await getCapacityCheckResult(supabase, input)
+      )
+
+      if (capacityError) {
+        return capacityError
+      }
+
       if (getRegistrationErrorCode(error.message) === "REGISTRATION_REQUEST_PENDING") {
         let query = supabase
           .from("registration_requests")
@@ -159,17 +260,10 @@ export async function createPublicRegistrationRequestUseCase(
       }
     }
 
-    const verifyUrl = `${resolveRequestOrigin(request)}/inscripcion/verificar?request=${encodeURIComponent(
-      result.request_id
-    )}&token=${encodeURIComponent(result.verification_token)}`
-
     const delivery = await dispatchRegistrationVerificationEmail({
-      requestId: result.request_id,
       recipientEmail: input.contactEmail,
       verificationCode: result.verification_code,
-      verificationToken: result.verification_token,
       expiresAt: result.expires_at,
-      verifyUrl,
     })
 
     return {

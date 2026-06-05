@@ -3,6 +3,7 @@ import { z } from "zod"
 import { createApiErrorPayload } from "@/shared/api/errors"
 
 import { createPublicRegistrationRequestUseCase } from "./create-public-registration-request-use-case"
+import { createOnlineRegistrationCheckoutUseCase } from "./create-online-registration-checkout-use-case"
 
 const CreatePublicRegistrationRequestSchema = z.object({
   tournamentId: z.string().uuid(),
@@ -34,6 +35,9 @@ export async function createPublicRegistrationRequest(request: Request) {
     )
   }
 
-  const result = await createPublicRegistrationRequestUseCase(parsed.data, request)
+  const result =
+    parsed.data.paymentMethod === "online"
+      ? await createOnlineRegistrationCheckoutUseCase(parsed.data, request)
+      : await createPublicRegistrationRequestUseCase(parsed.data)
   return NextResponse.json(result.body, { status: result.status })
 }

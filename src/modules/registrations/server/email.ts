@@ -9,12 +9,9 @@ type RenderedEmail = {
 }
 
 export type VerificationEmailPayload = {
-  requestId: string
   recipientEmail: string
   verificationCode: string
-  verificationToken: string
   expiresAt: string
-  verifyUrl: string
 }
 
 export type ConfirmationEmailPayload = {
@@ -177,13 +174,9 @@ export function renderRegistrationVerificationEmail(
       <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #111827;">
         <h2 style="margin: 0 0 16px;">Valida tu inscripción</h2>
         <p>Hemos recibido tu solicitud de inscripción. Antes de crear la inscripción real, necesitas validar tu email.</p>
-        <p><strong>Código de verificación:</strong> ${escapeHtml(payload.verificationCode)}</p>
+        <p style="font-size: 28px; font-weight: 700; letter-spacing: 6px; margin: 24px 0;">${escapeHtml(payload.verificationCode)}</p>
         <p><strong>Caduca:</strong> ${escapeHtml(expiresAt)}</p>
-        <p style="margin: 24px 0;">
-          <a href="${escapeHtml(payload.verifyUrl)}" style="display: inline-block; padding: 12px 20px; background: #4f46e5; color: white; text-decoration: none; border-radius: 10px; font-weight: 600;">Validar inscripción</a>
-        </p>
-        <p>Si el botón no te funciona, copia y pega este enlace:</p>
-        <p><a href="${escapeHtml(payload.verifyUrl)}">${escapeHtml(payload.verifyUrl)}</a></p>
+        <p>Introduce este código en la ventana de validación que tienes abierta.</p>
         <p>Si no has pedido esta inscripción, ignora este mensaje.</p>
         <p style="color: #6b7280; font-size: 14px;">Soporte: ${escapeHtml(supportEmail)}</p>
       </div>
@@ -194,7 +187,7 @@ export function renderRegistrationVerificationEmail(
       "Necesitas validar tu email antes de crear la inscripción real.",
       `Código de verificación: ${payload.verificationCode}`,
       `Caduca: ${expiresAt}`,
-      `Enlace de validación: ${payload.verifyUrl}`,
+      "Introduce el código en la ventana de validación que tienes abierta.",
       `Soporte: ${supportEmail}`,
     ].join("\n"),
   }

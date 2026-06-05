@@ -9,11 +9,13 @@ import {
 } from "./display"
 import type {
   ErrorPayload,
+  OnlineCheckoutResult,
   ParticipantType,
   RegisterFormProps,
   RegistrationFormFieldErrors,
   RegistrationPaymentMethod,
   RegistrationRequestResult,
+  RegistrationVerificationResult,
 } from "./types"
 
 type ValidationResult = {
@@ -48,6 +50,12 @@ function useRegisterForm({
   const [pendingRequestExpiresAt, setPendingRequestExpiresAt] =
     useState<string | null>(null)
   const [resendFeedback, setResendFeedback] = useState<string | null>(null)
+  const [verificationCode, setVerificationCode] = useState("")
+  const [verificationError, setVerificationError] = useState<string | null>(null)
+  const [verificationResult, setVerificationResult] =
+    useState<RegistrationVerificationResult | null>(null)
+  const [verifying, setVerifying] = useState(false)
+  const [verificationModalOpen, setVerificationModalOpen] = useState(false)
 
   const selectedCategory = useMemo(() => {
     if (!hasCategories) return null
@@ -79,7 +87,7 @@ function useRegisterForm({
     if (!effectiveParticipantType) {
       if (hasCategories) {
         nextFieldErrors.categoryId =
-          "La categoría seleccionada todavía no tiene configurado el formato de inscripción."
+          "Tienes que seleccionar una categoría."
         return { fieldErrors: nextFieldErrors, formError: null }
       }
 
@@ -159,6 +167,10 @@ function useRegisterForm({
     setContactPhone("")
     setContactEmail("")
     setSelectedPaymentMethod(getInitialPaymentMethod(paymentMethod))
+    setVerificationCode("")
+    setVerificationError(null)
+    setVerificationResult(null)
+    setVerificationModalOpen(false)
     resetState()
   }
 
@@ -213,11 +225,68 @@ function useRegisterForm({
           ? "Te hemos reenviado el correo de verificación."
           : result.email_delivery_message
       )
+      if (result.email_delivery_status === "sent") {
+        setVerificationError(null)
+        setVerificationModalOpen(true)
+      } else {
+        setError(result.email_delivery_message)
+      }
     } catch {
       setError("No se pudo reenviar la verificación.")
     } finally {
       setResending(false)
     }
+  }
+
+  const verifyCode = async () => {
+    if (!requestResult || verificationCode.length !== 6) return
+
+    setVerifying(true)
+    setVerificationError(null)
+
+    try {
+      const response = await fetch("/api/public-registration-verifications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          requestId: requestResult.request_id,
+          verificationCode,
+        }),
+      })
+      const payload = (await response.json()) as
+        | RegistrationVerificationResult
+        | ErrorPayload
+
+      if (!response.ok) {
+        const errorPayload = payload as ErrorPayload
+        setVerificationError(
+          mapErrorMessage(
+            errorPayload.error ?? "No se pudo validar el código.",
+            errorPayload.code
+          )
+        )
+        return
+      }
+
+      setVerificationResult(payload as RegistrationVerificationResult)
+    } catch {
+      setVerificationError("No se pudo validar el código.")
+    } finally {
+      setVerifying(false)
+    }
+  }
+
+  const closeVerificationModal = () => {
+    if (verifying) return
+
+    if (verificationResult) {
+      resetForm()
+      return
+    }
+
+    setVerificationModalOpen(false)
   }
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -254,6 +323,7 @@ function useRegisterForm({
 
       const payload = (await response.json()) as
         | RegistrationRequestResult
+        | OnlineCheckoutResult
         | ErrorPayload
 
       if (!response.ok) {
@@ -270,10 +340,30 @@ function useRegisterForm({
         return
       }
 
+      if (selectedPaymentMethod === "online") {
+        const checkoutResult = payload as OnlineCheckoutResult
+        if (!checkoutResult.checkout_url) {
+          setError("Stripe no devolvió una URL para completar el pago.")
+          return
+        }
+
+        window.location.assign(checkoutResult.checkout_url)
+        return
+      }
+
       const result = payload as RegistrationRequestResult
-      setRequestResult(result)
       setPendingRequestId(result.request_id)
       setPendingRequestExpiresAt(result.expires_at)
+      if (result.email_delivery_status !== "sent") {
+        setError(result.email_delivery_message)
+        return
+      }
+
+      setRequestResult(result)
+      setVerificationCode("")
+      setVerificationError(null)
+      setVerificationResult(null)
+      setVerificationModalOpen(true)
     } catch {
       setError("No se pudo crear la solicitud de inscripción.")
     } finally {
@@ -305,7 +395,15 @@ function useRegisterForm({
     submit,
     submitting,
     handleResend,
+    closeVerificationModal,
     resetForm,
+    verificationCode,
+    verificationError,
+    verificationModalOpen,
+    verificationResult,
+    verifying,
+    setVerificationCode,
+    verifyCode,
   }
 }
 

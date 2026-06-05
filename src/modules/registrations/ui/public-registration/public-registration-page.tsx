@@ -35,6 +35,9 @@ function PublicRegistrationPage({
   const registrationTitle = registrationState.canJoin
     ? `Inscripción para el ${tournament.title}`
     : registrationState.title
+  const registrationDescription = registrationState.canJoin
+    ? "Rellena tus datos para inscribirte al torneo."
+    : registrationState.message
   const [selectedCategoryId, setSelectedCategoryId] = useState(
     tournament.has_categories && categories.length === 1 ? categories[0].id : ""
   )
@@ -53,7 +56,7 @@ function PublicRegistrationPage({
                   {registrationTitle}
                 </CardTitle>
                 <p className="text-sm leading-6 text-muted-foreground">
-                  {registrationState.message}
+                  {registrationDescription}
                 </p>
               </CardHeader>
               <CardContent>

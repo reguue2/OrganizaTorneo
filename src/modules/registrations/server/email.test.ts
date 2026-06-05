@@ -15,20 +15,14 @@ describe("registration email rendering", () => {
 
   it("escapes dynamic verification email html values", () => {
     const email = renderRegistrationVerificationEmail({
-      requestId: "request-id",
       recipientEmail: "participant@example.com",
       verificationCode: `<123456>`,
-      verificationToken: "token",
       expiresAt: "2999-01-01T10:00:00.000Z",
-      verifyUrl: `https://example.com/verify?token=<script>&next="x"`,
     })
 
     expect(email.html).toContain("&lt;123456&gt;")
-    expect(email.html).toContain(
-      "https://example.com/verify?token=&lt;script&gt;&amp;next=&quot;x&quot;"
-    )
+    expect(email.html).toContain("Introduce este código")
     expect(email.html).not.toContain("<123456>")
-    expect(email.html).not.toContain("<script>")
   })
 
   it("escapes dynamic confirmation email html values", () => {

@@ -29,6 +29,6 @@ export async function resendPublicRegistrationRequest(request: Request) {
     )
   }
 
-  const result = await resendPublicRegistrationRequestUseCase(parsed.data, request)
+  const result = await resendPublicRegistrationRequestUseCase(parsed.data)
   return NextResponse.json(result.body, { status: result.status })
 }

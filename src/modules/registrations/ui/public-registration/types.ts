@@ -43,6 +43,22 @@ export type RegistrationRequestResult = {
   email_delivery_message: string
 }
 
+export type OnlineCheckoutResult = {
+  checkout_url: string
+}
+
+export type RegistrationVerificationResult = {
+  already_verified: boolean
+  public_reference: string | null
+  registration_status: string | null
+  payment_method: RegistrationPaymentMethod | null
+  amount: number | null
+  cancel_code: string | null
+  cancel_token: string | null
+  email_delivery_status: EmailDeliveryStatus | null
+  email_delivery_message: string | null
+}
+
 export type ErrorPayload = {
   error?: string
   code?: AppErrorCode

@@ -1,5 +1,3 @@
-import Link from "next/link"
-
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,12 +14,10 @@ import type {
 
 function PendingRequestAlert({
   pendingRequestExpiresAt,
-  pendingRequestId,
   resending,
   onResend,
 }: {
   pendingRequestExpiresAt: string | null
-  pendingRequestId: string | null
   resending: boolean
   onResend: () => void
 }) {
@@ -29,15 +25,15 @@ function PendingRequestAlert({
     <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
       <p className="font-semibold">Ya hay una solicitud pendiente</p>
       <p className="mt-2">
-        No vamos a crear otra igual mientras siga activa. Puedes reenviar el correo de
-        verificación de esa solicitud.
+        No vamos a crear otra igual mientras siga activa. Reenvía el código para
+        continuar la validación.
       </p>
       {pendingRequestExpiresAt && (
         <p className="mt-2">
           Caduca el {formatDateTime(pendingRequestExpiresAt)}.
         </p>
       )}
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+      <div className="mt-4">
         <Button
           type="button"
           onClick={onResend}
@@ -45,15 +41,6 @@ function PendingRequestAlert({
           variant="secondary"
         >
           {resending ? "Reenviando..." : "Reenviar correo"}
-        </Button>
-        <Button asChild variant="secondary">
-          <Link
-            href={`/inscripcion/verificar?request=${encodeURIComponent(
-              pendingRequestId ?? ""
-            )}`}
-          >
-            Ir a validación manual
-          </Link>
         </Button>
       </div>
     </div>

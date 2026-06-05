@@ -1,4 +1,3 @@
-import type { EmailDeliveryStatus } from "./types"
 import type { AppErrorCode } from "@/shared/api/errors"
 
 const publicRegistrationErrorMessages: Partial<Record<AppErrorCode, string>> = {
@@ -45,16 +44,4 @@ export function mapErrorMessage(message: string, code?: AppErrorCode | null) {
   if (!code) return message
   if (code === "VALIDATION_ERROR") return message
   return publicRegistrationErrorMessages[code] ?? message
-}
-
-export function getDeliveryTone(status: EmailDeliveryStatus) {
-  if (status === "sent") {
-    return "border-green-200 bg-green-50 text-green-800"
-  }
-
-  if (status === "provider_not_configured") {
-    return "border-amber-200 bg-amber-50 text-amber-900"
-  }
-
-  return "border-red-200 bg-red-50 text-red-800"
 }

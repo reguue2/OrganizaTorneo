@@ -12,9 +12,9 @@ import {
   PaymentMethodField,
   PendingRequestAlert,
 } from "./form-sections"
-import { RegistrationCreatedPanel } from "./registration-created-panel"
 import type { RegisterFormProps } from "./types"
 import { useRegisterForm } from "./use-register-form"
+import { VerificationCodeModal } from "./verification-code-modal"
 
 export default function RegisterForm(props: RegisterFormProps) {
   const {
@@ -31,7 +31,6 @@ export default function RegisterForm(props: RegisterFormProps) {
     requestResult,
     resendFeedback,
     resending,
-    selectedCategory,
     selectedPaymentMethod,
     setCategoryId,
     setContactEmail,
@@ -41,92 +40,103 @@ export default function RegisterForm(props: RegisterFormProps) {
     submit,
     submitting,
     handleResend,
-    resetForm,
+    closeVerificationModal,
+    verificationCode,
+    verificationError,
+    verificationModalOpen,
+    verificationResult,
+    verifying,
+    setVerificationCode,
+    verifyCode,
   } = useRegisterForm(props)
 
-  if (requestResult) {
-    return (
-      <RegistrationCreatedPanel
-        amount={amount}
-        contactEmail={contactEmail}
-        contactPhone={contactPhone}
-        displayName={displayName}
-        effectiveParticipantType={effectiveParticipantType}
-        requestResult={requestResult}
-        resendFeedback={resendFeedback}
-        resending={resending}
-        selectedCategory={selectedCategory}
-        tournamentId={props.tournamentId}
-        tournamentTitle={props.tournamentTitle}
-        onResend={(requestId) => void handleResend(requestId)}
-        onReset={resetForm}
-      />
-    )
-  }
-
   return (
-    <form onSubmit={submit} className="space-y-6">
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-          {error}
-          {pendingRequestExpiresAt && (
-            <p className="mt-2">
-              La solicitud pendiente caduca el{" "}
-              {formatDateTime(pendingRequestExpiresAt)}.
-            </p>
-          )}
+    <>
+      <form onSubmit={submit} className="space-y-6">
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {error}
+            {pendingRequestExpiresAt && (
+              <p className="mt-2">
+                La solicitud pendiente caduca el{" "}
+                {formatDateTime(pendingRequestExpiresAt)}.
+              </p>
+            )}
+          </div>
+        )}
+
+        {pendingRequestId && (
+          <PendingRequestAlert
+            pendingRequestExpiresAt={pendingRequestExpiresAt}
+            resending={resending}
+            onResend={() => void handleResend()}
+          />
+        )}
+
+        <PaymentMethodField
+          paymentMethod={props.paymentMethod}
+          selectedPaymentMethod={selectedPaymentMethod}
+          onChange={setSelectedPaymentMethod}
+        />
+
+        {props.hasCategories && (
+          <CategoryField
+            categories={props.categories}
+            categoryId={categoryId}
+            error={fieldErrors.categoryId}
+            onChange={setCategoryId}
+          />
+        )}
+
+        <ParticipantContactFields
+          contactEmail={contactEmail}
+          contactPhone={contactPhone}
+          displayName={displayName}
+          effectiveParticipantType={effectiveParticipantType}
+          fieldErrors={fieldErrors}
+          onContactEmailChange={setContactEmail}
+          onContactPhoneChange={setContactPhone}
+          onDisplayNameChange={setDisplayName}
+        />
+
+        <AmountSummary
+          amount={amount}
+          paymentMethod={props.paymentMethod}
+          selectedPaymentMethod={selectedPaymentMethod}
+        />
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Button asChild variant="secondary">
+            <Link href={`/torneos/${props.tournamentId}`}>Volver al torneo</Link>
+          </Button>
+          <Button type="submit" disabled={submitting}>
+            {submitting
+              ? selectedPaymentMethod === "online"
+                ? "Abriendo pago..."
+                : "Enviando código..."
+              : selectedPaymentMethod === "online"
+                ? "Pagar e inscribirse"
+                : "Inscribirse"}
+          </Button>
         </div>
-      )}
+      </form>
 
-      {pendingRequestId && (
-        <PendingRequestAlert
-          pendingRequestExpiresAt={pendingRequestExpiresAt}
-          pendingRequestId={pendingRequestId}
+      {verificationModalOpen && requestResult && (
+        <VerificationCodeModal
+          code={verificationCode}
+          contactEmail={contactEmail}
+          error={verificationError}
+          requestResult={requestResult}
+          resendFeedback={resendFeedback}
           resending={resending}
-          onResend={() => void handleResend()}
+          result={verificationResult}
+          verifying={verifying}
+          onClose={closeVerificationModal}
+          onCodeChange={setVerificationCode}
+          onResend={() => void handleResend(requestResult.request_id)}
+          onVerify={() => void verifyCode()}
         />
       )}
-
-      <PaymentMethodField
-        paymentMethod={props.paymentMethod}
-        selectedPaymentMethod={selectedPaymentMethod}
-        onChange={setSelectedPaymentMethod}
-      />
-
-      {props.hasCategories && (
-        <CategoryField
-          categories={props.categories}
-          categoryId={categoryId}
-          error={fieldErrors.categoryId}
-          onChange={setCategoryId}
-        />
-      )}
-
-      <ParticipantContactFields
-        contactEmail={contactEmail}
-        contactPhone={contactPhone}
-        displayName={displayName}
-        effectiveParticipantType={effectiveParticipantType}
-        fieldErrors={fieldErrors}
-        onContactEmailChange={setContactEmail}
-        onContactPhoneChange={setContactPhone}
-        onDisplayNameChange={setDisplayName}
-      />
-
-      <AmountSummary
-        amount={amount}
-        paymentMethod={props.paymentMethod}
-        selectedPaymentMethod={selectedPaymentMethod}
-      />
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Button asChild variant="secondary">
-          <Link href={`/torneos/${props.tournamentId}`}>Volver al torneo</Link>
-        </Button>
-        <Button type="submit" disabled={submitting}>
-          {submitting ? "Inscribiendo..." : "Inscribirse"}
-        </Button>
-      </div>
-    </form>
+    </>
   )
 }

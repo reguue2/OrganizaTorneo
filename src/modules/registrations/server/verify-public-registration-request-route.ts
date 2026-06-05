@@ -8,7 +8,7 @@ const VerifySchema = z
   .object({
     requestId: z.string().uuid(),
     verificationToken: z.string().trim().optional(),
-    verificationCode: z.string().trim().optional(),
+    verificationCode: z.string().trim().regex(/^\d{6}$/).optional(),
   })
   .superRefine((value, ctx) => {
     if (!value.verificationToken && !value.verificationCode) {

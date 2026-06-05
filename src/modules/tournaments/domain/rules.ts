@@ -68,10 +68,83 @@ type FormatDateOptions = {
   withTime?: boolean
 }
 
+const monthNames = [
+  "enero",
+  "febrero",
+  "marzo",
+  "abril",
+  "mayo",
+  "junio",
+  "julio",
+  "agosto",
+  "septiembre",
+  "octubre",
+  "noviembre",
+  "diciembre",
+] as const
+
+const weekdayNames = [
+  "domingo",
+  "lunes",
+  "martes",
+  "miércoles",
+  "jueves",
+  "viernes",
+  "sábado",
+] as const
+
+type DateParts = {
+  date: Date
+  day: number
+  hours: number
+  minutes: number
+  monthIndex: number
+  year: number
+}
+
 function normalizeFormatDateOptions(
   options: boolean | FormatDateOptions
 ): FormatDateOptions {
   return typeof options === "boolean" ? { withWeekday: options } : options
+}
+
+function getDateParts(value: string): DateParts | null {
+  const localDateTimeMatch = /^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/.exec(
+    value.trim()
+  )
+
+  if (localDateTimeMatch) {
+    const [, yearText, monthText, dayText, hoursText = "00", minutesText = "00"] =
+      localDateTimeMatch
+    const year = Number(yearText)
+    const monthIndex = Number(monthText) - 1
+    const day = Number(dayText)
+    const hours = Number(hoursText)
+    const minutes = Number(minutesText)
+    const date = new Date(year, monthIndex, day, hours, minutes)
+
+    if (
+      date.getFullYear() === year &&
+      date.getMonth() === monthIndex &&
+      date.getDate() === day &&
+      date.getHours() === hours &&
+      date.getMinutes() === minutes
+    ) {
+      return { date, day, hours, minutes, monthIndex, year }
+    }
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+
+  return {
+    date,
+    day: date.getDate(),
+    hours: date.getHours(),
+    minutes: date.getMinutes(),
+    monthIndex: date.getMonth(),
+    year: date.getFullYear(),
+  }
 }
 
 export function formatDate(
@@ -80,27 +153,18 @@ export function formatDate(
 ) {
   if (!value) return "Por definir"
 
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return "Por definir"
+  const parts = getDateParts(value)
+  if (!parts) return "Por definir"
 
   const { withTime = false, withWeekday = false } =
     normalizeFormatDateOptions(options)
-  const dateOptions: Intl.DateTimeFormatOptions = {
-    weekday: withWeekday ? "long" : undefined,
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }
+  const dateText = `${parts.day} de ${monthNames[parts.monthIndex]} de ${parts.year}`
+  const weekdayText = withWeekday ? `${weekdayNames[parts.date.getDay()]}, ` : ""
+  const timeText = withTime
+    ? `, ${String(parts.hours).padStart(2, "0")}:${String(parts.minutes).padStart(2, "0")}`
+    : ""
 
-  if (!withTime) {
-    return date.toLocaleDateString("es-ES", dateOptions)
-  }
-
-  return date.toLocaleString("es-ES", {
-    ...dateOptions,
-    hour: "2-digit",
-    minute: "2-digit",
-  })
+  return `${weekdayText}${dateText}${timeText}`
 }
 
 export function paymentMethodLabel(method: TournamentPaymentMethod) {

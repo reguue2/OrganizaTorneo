@@ -21,8 +21,7 @@ describe("tournament domain", () => {
       withWeekday: true,
     })
 
-    expect(formatted).toContain("1 de enero de 2999")
-    expect(formatted).toContain("10:30")
+    expect(formatted).toBe("martes, 1 de enero de 2999, 10:30")
   })
 
   it("keeps public date formatting without time by default", () => {
