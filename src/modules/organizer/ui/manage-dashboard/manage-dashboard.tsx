@@ -3,6 +3,7 @@
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 import { ConfigTab } from "./config-tab"
+import { CuadroTab } from "./cuadro-tab"
 import { DashboardHeader } from "./dashboard-header"
 import { DashboardTabs } from "./dashboard-tabs"
 import { OverviewTab } from "./overview-tab"
@@ -43,6 +44,12 @@ export default function ManageDashboard(props: ManageDashboardProps) {
         />
       ) : dashboard.activeTab === "participants" ? (
         <ParticipantsTab dashboard={dashboard} tournament={props.tournament} />
+      ) : dashboard.activeTab === "bracket" ? (
+        <CuadroTab
+          categories={props.categories}
+          dashboard={dashboard}
+          tournament={props.tournament}
+        />
       ) : (
         <ConfigTab
           categories={props.categories}

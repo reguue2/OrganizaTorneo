@@ -38,6 +38,7 @@ export default async function GestionarTorneoPage({
         registrations={dashboard.registrations}
         participants={dashboard.participants}
         payments={dashboard.payments}
+        brackets={dashboard.brackets}
       />
     </OrganizerPage>
   )

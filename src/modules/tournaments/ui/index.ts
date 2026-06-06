@@ -1,3 +1,5 @@
+export * from "./bracket"
 export * from "./create-tournament"
 export * from "./explore-tournaments"
+export * from "./public-bracket"
 export * from "./public-tournament"

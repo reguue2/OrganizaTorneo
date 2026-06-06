@@ -98,7 +98,7 @@ const registrationErrorMatchers: Array<{
   {
     code: "VALIDATION_ERROR",
     matches: ["Contact email is required"],
-    message: "El email de contacto es obligatorio para validar la inscripción.",
+    message: "El email de contacto es obligatorio.",
   },
   {
     code: "VALIDATION_ERROR",
@@ -120,7 +120,7 @@ const registrationErrorMatchers: Array<{
     code: "VALIDATION_ERROR",
     matches: ["Category participant type is not configured"],
     message:
-      "La categoría seleccionada todavía no tiene configurado el formato de inscripción.",
+      "Tienes que seleccionar una categoría.",
   },
 ]
 

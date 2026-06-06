@@ -18,7 +18,7 @@ export function useDashboardDerivedData({
   payments,
   registrations,
   tournament,
-}: ManageDashboardProps) {
+}: Omit<ManageDashboardProps, "brackets">) {
   const participantMap = useMemo(
     () => new Map(participants.map((participant) => [participant.id, participant])),
     [participants]

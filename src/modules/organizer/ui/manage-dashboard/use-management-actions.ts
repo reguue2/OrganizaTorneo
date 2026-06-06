@@ -1,6 +1,8 @@
 import type { TournamentRow } from "@/modules/organizer/domain"
+import type { BracketFormat, BracketOptions } from "@/modules/tournaments/domain"
 
 import {
+  areRegistrationsClosed,
   canCancelFromDashboard,
   canReopenTournament,
   mapManagementError,
@@ -167,10 +169,61 @@ export function useManagementActions({
     refresh()
   }
 
+  const generateBracket = async (
+    format: BracketFormat,
+    options: BracketOptions
+  ) => {
+    setPageError(null)
+
+    if (!areRegistrationsClosed(tournament)) {
+      setPageError("Cierra las inscripciones antes de generar el cuadro del torneo.")
+      return
+    }
+
+    setBusy("bracket:generate")
+
+    const result = await requestManagementAction(
+      `/api/organizer/tournaments/${tournament.id}/bracket`,
+      { format, options }
+    )
+
+    setBusy(null)
+
+    if (result.error) {
+      setPageError(mapManagementError(result.error, result.errorCode))
+      return
+    }
+
+    refresh()
+  }
+
+  const deleteBracket = async () => {
+    setPageError(null)
+
+    setBusy("bracket:delete")
+
+    const result = await requestManagementAction(
+      `/api/organizer/tournaments/${tournament.id}/bracket`,
+      undefined,
+      "DELETE"
+    )
+
+    setBusy(null)
+
+    if (result.error) {
+      setPageError(mapManagementError(result.error, result.errorCode))
+      return
+    }
+
+    refresh()
+  }
+
   return {
     cancelRegistration,
     confirmCashRegistration,
     confirmOnlineRegistration,
+    deleteBracket,
+    generateBracket,
     saveConfig,
     updateTournamentStatus,
   }

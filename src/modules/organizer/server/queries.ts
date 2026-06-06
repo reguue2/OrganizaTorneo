@@ -12,6 +12,7 @@ import type {
   TournamentRow,
 } from "@/modules/organizer/domain"
 import { buildOrganizerTournamentsOverview } from "@/modules/organizer/domain"
+import type { TournamentBracketRow } from "@/modules/tournaments/domain"
 
 export type ManagedTournamentDashboard = {
   tournament: TournamentRow & { organizer_id: string }
@@ -19,6 +20,7 @@ export type ManagedTournamentDashboard = {
   registrations: RegistrationRow[]
   participants: ParticipantRow[]
   payments: PaymentRow[]
+  brackets: TournamentBracketRow[]
 }
 
 export async function getManagedTournamentDashboard(
@@ -86,8 +88,21 @@ export async function getManagedTournamentDashboard(
     throw new Error(registrationsError.message)
   }
 
+  const { data: bracketsData, error: bracketsError } = await supabase
+    .from("tournament_brackets")
+    .select(
+      "id,tournament_id,category_id,format,structure,participant_count,created_at,updated_at"
+    )
+    .eq("tournament_id", tournamentId)
+    .returns<TournamentBracketRow[]>()
+
+  if (bracketsError) {
+    throw new Error(bracketsError.message)
+  }
+
   const categories = categoriesData ?? []
   const registrations = registrationsData ?? []
+  const brackets = bracketsData ?? []
   const participantIds = registrations.map((registration) => registration.participant_id)
   const registrationIds = registrations.map((registration) => registration.id)
 
@@ -128,6 +143,7 @@ export async function getManagedTournamentDashboard(
     registrations,
     participants,
     payments,
+    brackets,
   }
 }
 

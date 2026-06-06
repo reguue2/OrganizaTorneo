@@ -55,6 +55,10 @@ export function isConfirmedRegistration(status: RegistrationStatus | null) {
   return status === "confirmed"
 }
 
+export function areRegistrationsClosed(tournament: TournamentRow) {
+  return tournament.status === "closed" || tournament.status === "finished"
+}
+
 export function hasTournamentStarted(tournament: TournamentRow) {
   if (!tournament.date) return false
 

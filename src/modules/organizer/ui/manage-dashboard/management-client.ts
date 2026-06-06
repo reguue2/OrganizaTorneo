@@ -9,10 +9,11 @@ type ManagementActionResult =
 
 export async function requestManagementAction(
   path: string,
-  body?: unknown
+  body?: unknown,
+  method: "POST" | "DELETE" = "POST"
 ): Promise<ManagementActionResult> {
   const response = await fetch(path, {
-    method: "POST",
+    method,
     headers: body ? { "Content-Type": "application/json" } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   })

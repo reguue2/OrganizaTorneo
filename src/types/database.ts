@@ -314,6 +314,54 @@ export type Database = {
           },
         ]
       }
+      tournament_brackets: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          format: string
+          id: string
+          participant_count: number
+          structure: Json
+          tournament_id: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          format: string
+          id?: string
+          participant_count?: number
+          structure: Json
+          tournament_id: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          format?: string
+          id?: string
+          participant_count?: number
+          structure?: Json
+          tournament_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_brackets_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_brackets_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tournaments: {
         Row: {
           address: string | null

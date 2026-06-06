@@ -5,6 +5,7 @@ import type {
   RegistrationRow,
   TournamentRow,
 } from "@/modules/organizer/domain"
+import type { TournamentBracketRow } from "@/modules/tournaments/domain"
 
 export type ManageDashboardProps = {
   tournament: TournamentRow
@@ -12,6 +13,7 @@ export type ManageDashboardProps = {
   registrations: RegistrationRow[]
   participants: ParticipantRow[]
   payments: PaymentRow[]
+  brackets: TournamentBracketRow[]
 }
 
 export type RegistrationView = {

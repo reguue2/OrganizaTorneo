@@ -7,6 +7,7 @@ import { useDashboardDerivedData } from "./use-dashboard-derived-data"
 import { useManagementActions } from "./use-management-actions"
 
 function useManageDashboard({
+  brackets,
   categories,
   participants,
   payments,
@@ -15,9 +16,9 @@ function useManageDashboard({
 }: ManageDashboardProps) {
   const router = useRouter()
 
-  const [activeTab, setActiveTab] = useState<"overview" | "participants" | "config">(
-    "overview"
-  )
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "participants" | "bracket" | "config"
+  >("overview")
   const [busy, setBusy] = useState<string | null>(null)
   const [pageError, setPageError] = useState<string | null>(null)
 
@@ -54,6 +55,7 @@ function useManageDashboard({
 
   return {
     activeTab,
+    brackets,
     busy,
     form,
     pageError,

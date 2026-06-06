@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { LayoutDashboard, Settings, UsersRound } from "lucide-react"
+import { LayoutDashboard, Settings, Trophy, UsersRound } from "lucide-react"
 import type { TournamentRow } from "@/modules/organizer/domain"
 
 import { TournamentStatusActions } from "./tournament-status-actions"
@@ -60,6 +60,21 @@ export function DashboardTabs({
           <UsersRound data-icon="inline-start" />
           Inscripciones
           <Badge variant="secondary">{participantsCount}</Badge>
+        </Button>
+        <Button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "bracket"}
+          variant="ghost"
+          className={
+            activeTab === "bracket"
+              ? "relative rounded-none border-0 bg-transparent hover:bg-transparent after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:bg-primary"
+              : "rounded-none border-0 bg-transparent hover:bg-transparent"
+          }
+          onClick={() => onTabChange("bracket")}
+        >
+          <Trophy data-icon="inline-start" />
+          Cuadro torneo
         </Button>
         <Button
           type="button"

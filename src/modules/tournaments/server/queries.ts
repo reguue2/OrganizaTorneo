@@ -5,8 +5,15 @@ import type {
   PublicTournamentDetail,
   RegistrationCategory,
   RegistrationTournament,
+  TournamentBracketRow,
 } from "@/modules/tournaments/domain"
 import { VISIBLE_PUBLIC_TOURNAMENT_STATUSES } from "@/modules/tournaments/domain"
+
+export type PublicTournamentBrackets = {
+  tournament: { id: string; title: string; has_categories: boolean }
+  categories: { id: string; name: string }[]
+  brackets: TournamentBracketRow[]
+}
 
 export type TournamentQueryResult<T> = {
   data: T
@@ -118,6 +125,50 @@ export async function getPublicTournamentDetail(tournamentId: string) {
     tournament: tournamentData,
     categories,
   }
+}
+
+export async function getPublicTournamentBrackets(
+  tournamentId: string
+): Promise<PublicTournamentBrackets | null> {
+  const supabase = await createClient()
+
+  const { data: tournament, error } = await supabase
+    .from("tournaments")
+    .select("id,title,has_categories")
+    .eq("id", tournamentId)
+    .in("status", VISIBLE_PUBLIC_TOURNAMENT_STATUSES)
+    .single<{ id: string; title: string; has_categories: boolean }>()
+
+  if (error || !tournament) {
+    return null
+  }
+
+  const { data: bracketsData } = await supabase
+    .from("tournament_brackets")
+    .select(
+      "id,tournament_id,category_id,format,structure,participant_count,created_at,updated_at"
+    )
+    .eq("tournament_id", tournamentId)
+    .returns<TournamentBracketRow[]>()
+
+  const brackets = bracketsData ?? []
+
+  if (brackets.length === 0) {
+    return null
+  }
+
+  let categories: { id: string; name: string }[] = []
+  if (tournament.has_categories) {
+    const { data } = await supabase
+      .from("categories")
+      .select("id,name")
+      .eq("tournament_id", tournamentId)
+      .returns<{ id: string; name: string }[]>()
+
+    categories = data ?? []
+  }
+
+  return { tournament, categories, brackets }
 }
 
 export async function getRegistrationTournamentConfig(tournamentId: string) {
