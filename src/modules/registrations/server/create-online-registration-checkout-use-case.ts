@@ -31,7 +31,7 @@ async function getCheckoutConfig(
   const { data: tournament } = await supabase
     .from("tournaments")
     .select(
-      "title,status,registration_deadline,has_categories,payment_method,entry_price,max_participants"
+      "title,status,date,registration_deadline,has_categories,payment_method,entry_price,max_participants"
     )
     .eq("id", input.tournamentId)
     .maybeSingle()
@@ -48,6 +48,7 @@ async function getCheckoutConfig(
 
   if (
     tournament.status !== "published" ||
+    (tournament.date && new Date(tournament.date).getTime() <= Date.now()) ||
     (tournament.registration_deadline &&
       new Date(tournament.registration_deadline).getTime() < Date.now())
   ) {

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   buildOrganizerTournamentsOverview,
   getOrganizerTournamentCapacity,
+  getOrganizerTournamentOperationalState,
 } from "./my-tournaments"
 import type {
   OrganizerCategoryRow,
@@ -27,6 +28,30 @@ const baseTournament: OrganizerTournamentRow = {
 }
 
 describe("organizer tournament overview", () => {
+  it("derives operational state from dates and persisted status", () => {
+    expect(
+      getOrganizerTournamentOperationalState({
+        date: "2999-01-01T10:00:00.000Z",
+        registration_deadline: "2998-12-20T10:00:00.000Z",
+        status: "published",
+      })
+    ).toBe("registrations_open")
+    expect(
+      getOrganizerTournamentOperationalState({
+        date: "2999-01-01T10:00:00.000Z",
+        registration_deadline: "2020-01-01T10:00:00.000Z",
+        status: "published",
+      })
+    ).toBe("registrations_closed")
+    expect(
+      getOrganizerTournamentOperationalState({
+        date: "2020-01-01T10:00:00.000Z",
+        registration_deadline: "2019-01-01T10:00:00.000Z",
+        status: "closed",
+      })
+    ).toBe("finished")
+  })
+
   it("summarizes registration metrics and revenue", () => {
     const registrations: OrganizerRegistrationRow[] = [
       {
@@ -107,6 +132,11 @@ describe("organizer tournament overview", () => {
         baseTournament,
         { ...baseTournament, id: "tournament-draft", status: "draft" },
         { ...baseTournament, id: "tournament-finished", status: "finished" },
+        {
+          ...baseTournament,
+          id: "tournament-finished-by-date",
+          date: "2020-01-01T10:00:00.000Z",
+        },
         { ...baseTournament, id: "tournament-cancelled", status: "cancelled" },
       ],
     })
@@ -119,6 +149,7 @@ describe("organizer tournament overview", () => {
     ])
     expect(overview.finishedTournaments.map((tournament) => tournament.id)).toEqual([
       "tournament-finished",
+      "tournament-finished-by-date",
     ])
     expect(overview.cancelledTournaments.map((tournament) => tournament.id)).toEqual([
       "tournament-cancelled",

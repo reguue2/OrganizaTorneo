@@ -150,6 +150,22 @@ function createCapacityErrorResult(
   return null
 }
 
+async function hasTournamentStarted(
+  supabase: SupabaseAdminClient,
+  tournamentId: string
+) {
+  const { data: tournament } = await supabase
+    .from("tournaments")
+    .select("date")
+    .eq("id", tournamentId)
+    .maybeSingle<{ date: string | null }>()
+
+  if (!tournament?.date) return false
+
+  const date = new Date(tournament.date)
+  return !Number.isNaN(date.getTime()) && date <= new Date()
+}
+
 export async function createPublicRegistrationRequestUseCase(
   input: CreatePublicRegistrationRequestInput
 ): Promise<UseCaseResult> {
@@ -166,6 +182,15 @@ export async function createPublicRegistrationRequestUseCase(
 
   try {
     const supabase = createAdminClient()
+    if (await hasTournamentStarted(supabase, input.tournamentId)) {
+      return {
+        status: 400,
+        body: createRegistrationErrorPayload(
+          "Tournament is not open for registration"
+        ),
+      }
+    }
+
     const capacityError = createCapacityErrorResult(
       await getCapacityCheckResult(supabase, input)
     )

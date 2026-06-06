@@ -55,6 +55,13 @@ export type OrganizerTournamentMetrics = {
 
 export type OrganizerTournamentView = OrganizerTournamentRow & OrganizerTournamentMetrics
 
+export type OrganizerTournamentOperationalState =
+  | "unpublished"
+  | "registrations_open"
+  | "registrations_closed"
+  | "finished"
+  | "cancelled"
+
 export type OrganizerTournamentTotals = {
   totalTournaments: number
   totalActive: number
@@ -69,6 +76,41 @@ export type OrganizerTournamentsOverview = {
   finishedTournaments: OrganizerTournamentView[]
   cancelledTournaments: OrganizerTournamentView[]
   totals: OrganizerTournamentTotals
+}
+
+export function getOrganizerTournamentOperationalState(
+  tournament: Pick<
+    OrganizerTournamentRow,
+    "date" | "registration_deadline" | "status"
+  >
+): OrganizerTournamentOperationalState {
+  if (tournament.status === "cancelled") return "cancelled"
+  if (tournament.status === "finished") return "finished"
+  if (tournament.status === "draft" || !tournament.status) return "unpublished"
+
+  const tournamentDate = tournament.date ? new Date(tournament.date) : null
+  if (
+    tournamentDate &&
+    !Number.isNaN(tournamentDate.getTime()) &&
+    tournamentDate <= new Date()
+  ) {
+    return "finished"
+  }
+
+  if (tournament.status === "closed") return "registrations_closed"
+
+  const registrationDeadline = tournament.registration_deadline
+    ? new Date(tournament.registration_deadline)
+    : null
+  if (
+    registrationDeadline &&
+    !Number.isNaN(registrationDeadline.getTime()) &&
+    registrationDeadline <= new Date()
+  ) {
+    return "registrations_closed"
+  }
+
+  return "registrations_open"
 }
 
 function sortByDateAsc(a: OrganizerTournamentView, b: OrganizerTournamentView) {
@@ -240,19 +282,31 @@ export function buildOrganizerTournamentsOverview({
   })
 
   const activeTournaments = allTournaments
-    .filter((tournament) => tournament.status === "published" || tournament.status === "closed")
+    .filter((tournament) => {
+      const state = getOrganizerTournamentOperationalState(tournament)
+      return state === "registrations_open" || state === "registrations_closed"
+    })
     .sort(sortByDateAsc)
 
   const unpublishedTournaments = allTournaments
-    .filter((tournament) => tournament.status === "draft")
+    .filter(
+      (tournament) =>
+        getOrganizerTournamentOperationalState(tournament) === "unpublished"
+    )
     .sort(sortByUpdatedDesc)
 
   const finishedTournaments = allTournaments
-    .filter((tournament) => tournament.status === "finished")
+    .filter(
+      (tournament) =>
+        getOrganizerTournamentOperationalState(tournament) === "finished"
+    )
     .sort(sortByDateDesc)
 
   const cancelledTournaments = allTournaments
-    .filter((tournament) => tournament.status === "cancelled")
+    .filter(
+      (tournament) =>
+        getOrganizerTournamentOperationalState(tournament) === "cancelled"
+    )
     .sort(sortByUpdatedDesc)
 
   return {

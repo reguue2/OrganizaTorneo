@@ -1,5 +1,8 @@
 import { Button } from "@/components/ui/button"
-import type { TournamentRow } from "@/modules/organizer/domain"
+import {
+  getOrganizerTournamentOperationalState,
+  type TournamentRow,
+} from "@/modules/organizer/domain"
 
 import { canReopenTournament } from "./display"
 import type { ManageDashboardViewModel } from "./use-manage-dashboard"
@@ -13,9 +16,17 @@ export function TournamentStatusActions({
   tournament: TournamentRow
   updateTournamentStatus: ManageDashboardViewModel["updateTournamentStatus"]
 }) {
+  const operationalState = getOrganizerTournamentOperationalState(tournament)
+  if (
+    operationalState !== "registrations_open" &&
+    operationalState !== "registrations_closed"
+  ) {
+    return null
+  }
+
   return (
     <div className="flex flex-wrap gap-3">
-      {tournament.status === "published" && (
+      {operationalState === "registrations_open" && (
         <Button
           type="button"
           variant="outline"
@@ -27,7 +38,8 @@ export function TournamentStatusActions({
         </Button>
       )}
 
-      {tournament.status === "closed" && (
+      {operationalState === "registrations_closed" &&
+        tournament.status === "closed" && (
         <Button
           type="button"
           variant="outline"
@@ -39,19 +51,8 @@ export function TournamentStatusActions({
         </Button>
       )}
 
-      {(tournament.status === "published" || tournament.status === "closed") && (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => updateTournamentStatus("finished")}
-          disabled={busy === "status:finished"}
-          className="border-sky-200 text-sky-700 hover:bg-sky-50"
-        >
-          {busy === "status:finished" ? "Finalizando..." : "Marcar como finalizado"}
-        </Button>
-      )}
-
-      {(tournament.status === "published" || tournament.status === "closed") && (
+      {(operationalState === "registrations_open" ||
+        operationalState === "registrations_closed") && (
         <Button
           type="button"
           variant="destructive"

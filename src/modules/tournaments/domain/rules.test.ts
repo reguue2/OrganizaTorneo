@@ -32,6 +32,7 @@ describe("tournament domain", () => {
     expect(
       getRegistrationState({
         status: "closed",
+        date: "2999-01-10T00:00:00.000Z",
         registration_deadline: "2999-01-01T00:00:00.000Z",
         payment_method: "cash",
         is_public: true,
@@ -39,6 +40,21 @@ describe("tournament domain", () => {
     ).toMatchObject({
       canJoin: false,
       buttonLabel: "Inscripción cerrada",
+    })
+  })
+
+  it("treats a tournament with a past date as finished", () => {
+    expect(
+      getRegistrationState({
+        status: "published",
+        date: "2020-01-01T00:00:00.000Z",
+        registration_deadline: "2999-01-01T00:00:00.000Z",
+        payment_method: "cash",
+        is_public: true,
+      })
+    ).toMatchObject({
+      canJoin: false,
+      title: "Torneo finalizado",
     })
   })
 

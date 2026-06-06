@@ -26,7 +26,7 @@ export function OperationalSummary({
         <CardTitle>Resumen operativo</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm text-muted-foreground">
-        <SummaryLine label="Estado" value={getStatusLabel(tournament.status)} />
+        <SummaryLine label="Estado" value={getStatusLabel(tournament)} />
         <SummaryLine
           label="Estructura"
           value={tournament.has_categories ? "Con categorías" : "Sin categorías"}

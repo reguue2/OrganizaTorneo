@@ -1,4 +1,4 @@
-import type { TournamentRow, TournamentStatus } from "@/modules/organizer/domain"
+import type { TournamentRow } from "@/modules/organizer/domain"
 
 import {
   canCancelFromDashboard,
@@ -23,7 +23,9 @@ export function useManagementActions({
   setPageError: (value: string | null) => void
   tournament: TournamentRow
 }) {
-  const updateTournamentStatus = async (nextStatus: TournamentStatus) => {
+  const updateTournamentStatus = async (
+    nextStatus: "published" | "closed" | "cancelled"
+  ) => {
     setPageError(null)
 
     if (nextStatus === "published" && !canReopenTournament(tournament)) {

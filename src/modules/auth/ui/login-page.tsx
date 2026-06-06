@@ -1,6 +1,7 @@
 "use client"
 
 import { Suspense, useEffect, useState } from "react"
+import { Eye, EyeOff } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 
 import GoogleIcon from "@/components/icons/GoogleIcon"
@@ -32,6 +33,8 @@ function LoginContent() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<AuthFieldErrors>({})
@@ -236,18 +239,32 @@ function LoginContent() {
 
             <div className="space-y-2">
               <Label htmlFor="auth-password">Contraseña</Label>
-              <Input
-                id="auth-password"
-                type="password"
-                autoComplete={isLogin ? "current-password" : "new-password"}
-                value={password}
-                onChange={(event) => {
-                  setPassword(event.target.value)
-                  clearFieldError("password")
-                  clearFieldError("confirmPassword")
-                }}
-                aria-invalid={Boolean(fieldErrors.password)}
-              />
+              <div className="relative">
+                <Input
+                  id="auth-password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete={isLogin ? "current-password" : "new-password"}
+                  value={password}
+                  className="pr-11"
+                  onChange={(event) => {
+                    setPassword(event.target.value)
+                    clearFieldError("password")
+                    clearFieldError("confirmPassword")
+                  }}
+                  aria-invalid={Boolean(fieldErrors.password)}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-1/2 right-1 -translate-y-1/2"
+                  aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  aria-pressed={showPassword}
+                  onClick={() => setShowPassword((isVisible) => !isVisible)}
+                >
+                  {showPassword ? <EyeOff /> : <Eye />}
+                </Button>
+              </div>
               {fieldErrors.password && (
                 <p className="text-sm text-destructive">{fieldErrors.password}</p>
               )}
@@ -256,17 +273,37 @@ function LoginContent() {
             {!isLogin && (
               <div className="space-y-2">
                 <Label htmlFor="auth-confirm-password">Confirmar contraseña</Label>
-                <Input
-                  id="auth-confirm-password"
-                  type="password"
-                  autoComplete="new-password"
-                  value={confirmPassword}
-                  onChange={(event) => {
-                    setConfirmPassword(event.target.value)
-                    clearFieldError("confirmPassword")
-                  }}
-                  aria-invalid={Boolean(fieldErrors.confirmPassword)}
-                />
+                <div className="relative">
+                  <Input
+                    id="auth-confirm-password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    value={confirmPassword}
+                    className="pr-11"
+                    onChange={(event) => {
+                      setConfirmPassword(event.target.value)
+                      clearFieldError("confirmPassword")
+                    }}
+                    aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-1/2 right-1 -translate-y-1/2"
+                    aria-label={
+                      showConfirmPassword
+                        ? "Ocultar confirmación de contraseña"
+                        : "Mostrar confirmación de contraseña"
+                    }
+                    aria-pressed={showConfirmPassword}
+                    onClick={() =>
+                      setShowConfirmPassword((isVisible) => !isVisible)
+                    }
+                  >
+                    {showConfirmPassword ? <EyeOff /> : <Eye />}
+                  </Button>
+                </div>
                 {fieldErrors.confirmPassword && (
                   <p className="text-sm text-destructive">
                     {fieldErrors.confirmPassword}
@@ -297,6 +334,8 @@ function LoginContent() {
                 setError(null)
                 setFieldErrors({})
                 setConfirmPassword("")
+                setShowPassword(false)
+                setShowConfirmPassword(false)
               }}
             >
               {isLogin ? "Regístrate" : "Inicia sesión"}

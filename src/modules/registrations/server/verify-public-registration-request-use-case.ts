@@ -64,6 +64,35 @@ export async function verifyPublicRegistrationRequestUseCase(
 ): Promise<UseCaseResult> {
   try {
     const supabase = createAdminClient()
+    const { data: pendingRequest } = await supabase
+      .from("registration_requests")
+      .select("tournament_id")
+      .eq("id", input.requestId)
+      .maybeSingle()
+
+    if (pendingRequest?.tournament_id) {
+      const { data: tournament } = await supabase
+        .from("tournaments")
+        .select("date")
+        .eq("id", pendingRequest.tournament_id)
+        .maybeSingle()
+
+      if (tournament?.date) {
+        const tournamentDate = new Date(tournament.date)
+        if (
+          !Number.isNaN(tournamentDate.getTime()) &&
+          tournamentDate <= new Date()
+        ) {
+          return {
+            status: 400,
+            body: createRegistrationErrorPayload(
+              "Tournament is not open for registration"
+            ),
+          }
+        }
+      }
+    }
+
     const { data, error } = await supabase.rpc("verify_public_registration_request", {
       p_request_id: input.requestId,
       p_verification_token: input.verificationToken || undefined,

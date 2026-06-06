@@ -1,17 +1,20 @@
 import type {
   RegistrationRow,
   TournamentRow,
-  TournamentStatus,
 } from "@/modules/organizer/domain"
+import { getOrganizerTournamentOperationalState } from "@/modules/organizer/domain"
 
 import type { RegistrationView } from "./types"
 import { needsOnlineValidation } from "./management-rules"
 
-export function getStatusLabel(status: TournamentStatus | null) {
-  if (status === "published") return "Publicado"
-  if (status === "closed") return "Cerrado"
-  if (status === "finished") return "Finalizado"
-  if (status === "cancelled") return "Cancelado"
+export function getStatusLabel(
+  tournament: Pick<TournamentRow, "date" | "registration_deadline" | "status">
+) {
+  const state = getOrganizerTournamentOperationalState(tournament)
+  if (state === "registrations_open") return "Inscripciones abiertas"
+  if (state === "registrations_closed") return "Inscripciones cerradas"
+  if (state === "finished") return "Finalizado"
+  if (state === "cancelled") return "Cancelado"
   return "No publicado"
 }
 

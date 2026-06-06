@@ -22,8 +22,24 @@ test.describe("public shell", () => {
       page.getByRole("heading", { name: "Iniciar sesión" })
     ).toBeVisible()
     await expect(page.getByLabel("Correo electrónico")).toBeVisible()
-    await expect(page.getByLabel("Contraseña")).toBeVisible()
+    await expect(page.getByLabel("Contraseña", { exact: true })).toBeVisible()
     await expect(page.getByRole("button", { name: "Continuar con Google" })).toBeVisible()
+
+    const passwordInput = page.getByLabel("Contraseña", { exact: true })
+    await expect(passwordInput).toHaveAttribute("type", "password")
+    await page.getByRole("button", { name: "Mostrar contraseña" }).click()
+    await expect(passwordInput).toHaveAttribute("type", "text")
+
+    await page.getByRole("button", { name: "Regístrate" }).click()
+
+    const confirmPasswordInput = page.getByLabel("Confirmar contraseña", {
+      exact: true,
+    })
+    await expect(confirmPasswordInput).toHaveAttribute("type", "password")
+    await page
+      .getByRole("button", { name: "Mostrar confirmación de contraseña" })
+      .click()
+    await expect(confirmPasswordInput).toHaveAttribute("type", "text")
   })
 })
 

@@ -21,6 +21,7 @@ export type PublicTournamentStatusState =
 
 export type PublicTournamentLike = {
   status: TournamentStatus
+  date: string | null
   registration_deadline: string | null
   payment_method: TournamentPaymentMethod
   is_public: boolean | null
@@ -183,9 +184,15 @@ export function getPublicVisibilityLabel(isPublic: boolean | null | undefined) {
 }
 
 export function getExploreStatus(
-  tournament: Pick<PublicTournamentLike, "status" | "registration_deadline">
+  tournament: Pick<PublicTournamentLike, "date" | "status" | "registration_deadline">
 ) {
-  if (tournament.status === "finished") {
+  const tournamentDate = tournament.date ? new Date(tournament.date) : null
+  if (
+    tournament.status === "finished" ||
+    (tournamentDate &&
+      !Number.isNaN(tournamentDate.getTime()) &&
+      tournamentDate <= new Date())
+  ) {
     return {
       label: "Finalizado",
       state: "finished" as const,
@@ -224,9 +231,15 @@ export function getExploreStatus(
 }
 
 export function getSidebarStatus(
-  tournament: Pick<PublicTournamentLike, "status" | "registration_deadline">
+  tournament: Pick<PublicTournamentLike, "date" | "status" | "registration_deadline">
 ) {
-  if (tournament.status === "finished") {
+  const tournamentDate = tournament.date ? new Date(tournament.date) : null
+  if (
+    tournament.status === "finished" ||
+    (tournamentDate &&
+      !Number.isNaN(tournamentDate.getTime()) &&
+      tournamentDate <= new Date())
+  ) {
     return {
       label: "Finalizado",
       state: "finished" as const,
@@ -274,7 +287,13 @@ export function getRegistrationState(tournament: PublicTournamentLike) {
     }
   }
 
-  if (tournament.status === "finished") {
+  const tournamentDate = tournament.date ? new Date(tournament.date) : null
+  if (
+    tournament.status === "finished" ||
+    (tournamentDate &&
+      !Number.isNaN(tournamentDate.getTime()) &&
+      tournamentDate <= new Date())
+  ) {
     return {
       canJoin: false,
       title: "Torneo finalizado",
@@ -328,17 +347,15 @@ export function getRegistrationState(tournament: PublicTournamentLike) {
     return {
       canJoin: true,
       title: "Inscripción disponible",
-      message:
-        "Puedes iniciar tu solicitud ahora. Primero validarás el email y después seguirás el flujo de pago online cuando esté conectado.",
-      buttonLabel: "Inscribirse al torneo",
+      message: "Completa el pago online para confirmar tu inscripción.",
+      buttonLabel: "Pagar e inscribirse",
     }
   }
 
   return {
     canJoin: true,
     title: "Inscripción disponible",
-    message:
-      "Puedes iniciar tu solicitud ahora. Primero validarás el email y después elegirás el canal de pago que corresponda.",
+    message: "Elige entre efectivo con validación por email o pago online.",
     buttonLabel: "Inscribirse al torneo",
   }
 }

@@ -7,12 +7,14 @@ type ManagementUseCaseResult =
   | { status: 200; body: { ok: true } }
   | { status: 400; body: ReturnType<typeof createManagementErrorPayload> }
 
+type ManagedTournamentStatus = "published" | "closed" | "cancelled"
+
 export async function updateManagedTournamentStatusUseCase({
   nextStatus,
   supabase,
   tournamentId,
 }: {
-  nextStatus: "draft" | "published" | "closed" | "finished" | "cancelled"
+  nextStatus: ManagedTournamentStatus
   supabase: SupabaseServerClient
   tournamentId: string
 }): Promise<ManagementUseCaseResult> {

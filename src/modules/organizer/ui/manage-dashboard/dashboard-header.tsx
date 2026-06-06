@@ -24,8 +24,8 @@ export function DashboardHeader({
           <h1 className="text-4xl font-bold tracking-tight text-foreground">
             Panel del torneo
           </h1>
-          <Badge variant={getTournamentStatusVariant(tournament.status)}>
-            {getStatusLabel(tournament.status)}
+          <Badge variant={getTournamentStatusVariant(tournament)}>
+            {getStatusLabel(tournament)}
           </Badge>
         </div>
 

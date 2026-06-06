@@ -31,10 +31,35 @@ function registrationView(
 }
 
 describe("management dashboard labels", () => {
-  it("maps tournament status labels", () => {
-    expect(getStatusLabel("published")).toBe("Publicado")
-    expect(getStatusLabel("closed")).toBe("Cerrado")
-    expect(getStatusLabel(null)).toBe("No publicado")
+  it("maps tournament operational state labels", () => {
+    expect(
+      getStatusLabel({
+        date: "2999-01-01T10:00:00.000Z",
+        registration_deadline: "2998-12-20T10:00:00.000Z",
+        status: "published",
+      })
+    ).toBe("Inscripciones abiertas")
+    expect(
+      getStatusLabel({
+        date: "2999-01-01T10:00:00.000Z",
+        registration_deadline: "2998-12-20T10:00:00.000Z",
+        status: "closed",
+      })
+    ).toBe("Inscripciones cerradas")
+    expect(
+      getStatusLabel({
+        date: null,
+        registration_deadline: null,
+        status: null,
+      })
+    ).toBe("No publicado")
+    expect(
+      getStatusLabel({
+        date: "2020-01-01T10:00:00.000Z",
+        registration_deadline: "2019-12-20T10:00:00.000Z",
+        status: "published",
+      })
+    ).toBe("Finalizado")
   })
 
   it("maps registration labels using status and payment method", () => {

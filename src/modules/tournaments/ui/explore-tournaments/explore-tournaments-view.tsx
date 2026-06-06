@@ -41,7 +41,7 @@ import {
 } from "@/modules/tournaments/domain"
 import { SPAIN_COMMUNITIES, normalizeText } from "@/shared/locations"
 
-const EXPLORE_TOURNAMENTS_PAGE_SIZE = 10
+const EXPLORE_TOURNAMENTS_PAGE_SIZE = 12
 
 type ExploreTournamentsViewProps = {
   initialTournaments: ExploreTournament[]

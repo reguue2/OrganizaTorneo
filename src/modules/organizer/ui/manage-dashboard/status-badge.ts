@@ -1,23 +1,28 @@
 import type { ComponentProps } from "react"
 
 import { Badge } from "@/components/ui/badge"
-import type { TournamentStatus } from "@/modules/organizer/domain"
+import {
+  getOrganizerTournamentOperationalState,
+  type OrganizerTournamentOperationalState,
+  type TournamentRow,
+} from "@/modules/organizer/domain"
 
 import type { RegistrationView } from "./types"
 
 type BadgeVariant = ComponentProps<typeof Badge>["variant"]
 
 const tournamentStatusVariant = {
-  draft: "outline",
-  published: "success",
-  closed: "warning",
+  unpublished: "outline",
+  registrations_open: "success",
+  registrations_closed: "warning",
   finished: "info",
   cancelled: "destructive",
-} satisfies Record<NonNullable<TournamentStatus>, BadgeVariant>
+} satisfies Record<OrganizerTournamentOperationalState, BadgeVariant>
 
-export function getTournamentStatusVariant(status: TournamentStatus | null) {
-  if (!status) return "outline"
-  return tournamentStatusVariant[status]
+export function getTournamentStatusVariant(
+  tournament: Pick<TournamentRow, "date" | "registration_deadline" | "status">
+) {
+  return tournamentStatusVariant[getOrganizerTournamentOperationalState(tournament)]
 }
 
 export function getRegistrationStatusVariant(view: RegistrationView) {

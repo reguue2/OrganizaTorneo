@@ -29,10 +29,8 @@ const RegistrationParamsSchema = z.object({
 })
 
 const TournamentStatusSchema = z.enum([
-  "draft",
   "published",
   "closed",
-  "finished",
   "cancelled",
 ])
 
