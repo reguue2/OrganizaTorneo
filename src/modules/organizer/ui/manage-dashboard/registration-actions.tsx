@@ -3,6 +3,7 @@ import type { TournamentRow } from "@/modules/organizer/domain"
 
 import {
   canCancelFromDashboard,
+  isConfirmedRegistration,
   needsCashValidation,
 } from "./display"
 import type { RegistrationView } from "./types"
@@ -21,6 +22,16 @@ export function RegistrationActions({
   tournament: TournamentRow
   view: RegistrationView
 }) {
+  const isConfirmed = isConfirmedRegistration(view.registration.status)
+  const removing = busy === `cancel:${view.registration.id}`
+  const removeLabel = isConfirmed
+    ? removing
+      ? "Cancelando..."
+      : "Cancelar"
+    : removing
+      ? "Eliminando..."
+      : "Eliminar"
+
   return (
     <div className="flex flex-row flex-wrap items-center justify-end gap-2">
       {needsCashValidation(view, tournament) && (
@@ -31,7 +42,7 @@ export function RegistrationActions({
           onClick={() => confirmCashRegistration(view)}
           disabled={busy === `paid:${view.registration.id}`}
         >
-          {busy === `paid:${view.registration.id}` ? "Guardando..." : "Pagado"}
+          {busy === `paid:${view.registration.id}` ? "Guardando..." : "Validar pago"}
         </Button>
       )}
 
@@ -42,9 +53,9 @@ export function RegistrationActions({
           variant="destructive"
           className="whitespace-nowrap"
           onClick={() => cancelRegistration(view)}
-          disabled={busy === `cancel:${view.registration.id}`}
+          disabled={removing}
         >
-          {busy === `cancel:${view.registration.id}` ? "Eliminando..." : "Eliminar"}
+          {removeLabel}
         </Button>
       )}
     </div>
