@@ -18,14 +18,12 @@ export function RegistrationRow({
   busy,
   cancelRegistration,
   confirmCashRegistration,
-  confirmOnlineRegistration,
   tournament,
   view,
 }: {
   busy: string | null
   cancelRegistration: ManageDashboardViewModel["cancelRegistration"]
   confirmCashRegistration: ManageDashboardViewModel["confirmCashRegistration"]
-  confirmOnlineRegistration: ManageDashboardViewModel["confirmOnlineRegistration"]
   tournament: TournamentRow
   view: RegistrationView
 }) {
@@ -84,7 +82,6 @@ export function RegistrationRow({
           busy={busy}
           cancelRegistration={cancelRegistration}
           confirmCashRegistration={confirmCashRegistration}
-          confirmOnlineRegistration={confirmOnlineRegistration}
           tournament={tournament}
           view={view}
         />

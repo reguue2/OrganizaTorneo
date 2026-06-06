@@ -66,6 +66,12 @@ export function useDashboardDerivedData({
         }
       })
       .sort((a, b) => {
+        const pendingDifference =
+          Number(b.registration.status === "pending_cash_validation") -
+          Number(a.registration.status === "pending_cash_validation")
+
+        if (pendingDifference !== 0) return pendingDifference
+
         const aTime = a.registration.created_at
           ? new Date(a.registration.created_at).getTime()
           : 0

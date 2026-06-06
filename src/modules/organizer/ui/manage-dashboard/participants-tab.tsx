@@ -1,9 +1,7 @@
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import type { TournamentRow } from "@/modules/organizer/domain"
 
 import { SectionBlock, SummaryTile } from "./dashboard-cards"
 import { RegistrationGroupCard } from "./registration-group-card"
-import { TournamentStatusActions } from "./tournament-status-actions"
 import type { ManageDashboardViewModel } from "./use-manage-dashboard"
 
 export function ParticipantsTab({
@@ -17,33 +15,15 @@ export function ParticipantsTab({
     busy,
     cancelledRegistrations,
     groupedViews,
-    pendingOnlinePayments,
     remainingSpots,
     totalCapacity,
-    updateTournamentStatus,
   } = dashboard
 
   return (
     <SectionBlock
-      title="Inscripciones y operaciones"
-      description="Aquí se ve el estado real de cada inscripción: confirmada, pendiente de validación en efectivo, pendiente online, cancelada o caducada."
-      action={
-        <TournamentStatusActions
-          busy={busy}
-          tournament={tournament}
-          updateTournamentStatus={updateTournamentStatus}
-        />
-      }
+      title="Participantes e inscripciones"
+      description="Consulta los datos de contacto, revisa el estado de cada inscripción y valida los pagos recibidos en efectivo."
     >
-      {pendingOnlinePayments.length > 0 && (
-        <Alert variant="info">
-          <AlertDescription>
-            Tienes inscripciones en <strong>pendiente de pago online</strong>. Mientras el
-            pago online siga simulado, puedes confirmarlas manualmente desde este panel.
-          </AlertDescription>
-        </Alert>
-      )}
-
       <div className="grid gap-4 md:grid-cols-3">
         <SummaryTile
           label="Capacidad total"
@@ -63,7 +43,6 @@ export function ParticipantsTab({
             busy={busy}
             cancelRegistration={dashboard.cancelRegistration}
             confirmCashRegistration={dashboard.confirmCashRegistration}
-            confirmOnlineRegistration={dashboard.confirmOnlineRegistration}
             group={group}
             tournament={tournament}
           />

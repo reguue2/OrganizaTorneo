@@ -15,10 +15,11 @@ function useManageDashboard({
 }: ManageDashboardProps) {
   const router = useRouter()
 
-  const [activeTab, setActiveTab] = useState<"participants" | "config">("participants")
+  const [activeTab, setActiveTab] = useState<"overview" | "participants" | "config">(
+    "overview"
+  )
   const [busy, setBusy] = useState<string | null>(null)
   const [pageError, setPageError] = useState<string | null>(null)
-  const [copyOk, setCopyOk] = useState(false)
 
   const [form, setForm] = useState<ConfigForm>({
     title: tournament.title,
@@ -51,26 +52,13 @@ function useManageDashboard({
     tournament,
   })
 
-  const copyPublicLink = async () => {
-    try {
-      const origin = window.location.origin
-      await navigator.clipboard.writeText(`${origin}/torneos/${tournament.id}`)
-      setCopyOk(true)
-      window.setTimeout(() => setCopyOk(false), 1800)
-    } catch {
-      setCopyOk(false)
-    }
-  }
-
   return {
     activeTab,
     busy,
-    copyOk,
     form,
     pageError,
     setActiveTab,
     setForm,
-    copyPublicLink,
     ...actions,
     ...derivedData,
   }

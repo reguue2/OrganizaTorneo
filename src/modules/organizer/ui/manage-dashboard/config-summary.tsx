@@ -1,4 +1,3 @@
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import type { CategoryRow, TournamentRow } from "@/modules/organizer/domain"
 
@@ -16,7 +15,6 @@ export function OperationalSummary({
   const {
     activeRegistrations,
     pendingCashValidations,
-    pendingOnlinePayments,
     totalCapacity,
   } = dashboard
 
@@ -39,18 +37,8 @@ export function OperationalSummary({
           label="Precio base"
           value={tournament.has_categories ? "Por categoría" : formatMoney(tournament.entry_price)}
         />
-        <SummaryLine label="Activas" value={activeRegistrations.length} />
-        <SummaryLine label="Pendientes efectivo" value={pendingCashValidations.length} />
-        <SummaryLine label="Pendientes online" value={pendingOnlinePayments.length} />
-
-        {pendingOnlinePayments.length > 0 && (
-          <Alert variant="info" className="mt-4">
-            <AlertDescription>
-              Mientras el pago online siga simulado, estas inscripciones se confirman manualmente
-              desde el panel.
-            </AlertDescription>
-          </Alert>
-        )}
+        <SummaryLine label="Participantes" value={activeRegistrations.length} />
+        <SummaryLine label="Pendientes de validar" value={pendingCashValidations.length} />
       </CardContent>
     </Card>
   )

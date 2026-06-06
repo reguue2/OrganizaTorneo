@@ -7,50 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
-
-const statToneClassName = {
-  amber: "bg-amber-50 text-amber-700",
-  emerald: "bg-emerald-50 text-emerald-700",
-  indigo: "bg-indigo-50 text-indigo-700",
-  sky: "bg-sky-50 text-sky-700",
-  teal: "bg-teal-50 text-teal-700",
-} as const
-
-type StatTone = keyof typeof statToneClassName
-
-export function StatCard({
-  icon,
-  title,
-  tone,
-  value,
-}: {
-  icon: ReactNode
-  title: string
-  tone: StatTone
-  value: string
-}) {
-  return (
-    <Card>
-      <CardContent className="p-5">
-        <div className="flex items-center gap-4">
-          <div
-            className={cn(
-              "flex size-12 items-center justify-center rounded-lg",
-              statToneClassName[tone]
-            )}
-          >
-            {icon}
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="mt-1 text-2xl font-semibold text-foreground">{value}</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
 
 export function SummaryTile({
   label,

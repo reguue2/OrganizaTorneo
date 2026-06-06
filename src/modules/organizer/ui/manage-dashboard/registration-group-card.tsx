@@ -27,14 +27,12 @@ export function RegistrationGroupCard({
   busy,
   cancelRegistration,
   confirmCashRegistration,
-  confirmOnlineRegistration,
   group,
   tournament,
 }: {
   busy: string | null
   cancelRegistration: ManageDashboardViewModel["cancelRegistration"]
   confirmCashRegistration: ManageDashboardViewModel["confirmCashRegistration"]
-  confirmOnlineRegistration: ManageDashboardViewModel["confirmOnlineRegistration"]
   group: RegistrationGroup
   tournament: TournamentRow
 }) {
@@ -72,7 +70,6 @@ export function RegistrationGroupCard({
           busy={busy}
           cancelRegistration={cancelRegistration}
           confirmCashRegistration={confirmCashRegistration}
-          confirmOnlineRegistration={confirmOnlineRegistration}
           tournament={tournament}
           views={group.views}
         />
@@ -85,14 +82,12 @@ function RegistrationsTable({
   busy,
   cancelRegistration,
   confirmCashRegistration,
-  confirmOnlineRegistration,
   tournament,
   views,
 }: {
   busy: string | null
   cancelRegistration: ManageDashboardViewModel["cancelRegistration"]
   confirmCashRegistration: ManageDashboardViewModel["confirmCashRegistration"]
-  confirmOnlineRegistration: ManageDashboardViewModel["confirmOnlineRegistration"]
   tournament: TournamentRow
   views: RegistrationView[]
 }) {
@@ -116,7 +111,6 @@ function RegistrationsTable({
             busy={busy}
             cancelRegistration={cancelRegistration}
             confirmCashRegistration={confirmCashRegistration}
-            confirmOnlineRegistration={confirmOnlineRegistration}
             tournament={tournament}
             view={view}
           />

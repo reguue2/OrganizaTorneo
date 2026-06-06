@@ -4,8 +4,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 
 import { ConfigTab } from "./config-tab"
 import { DashboardHeader } from "./dashboard-header"
-import { DashboardStats } from "./dashboard-stats"
 import { DashboardTabs } from "./dashboard-tabs"
+import { OverviewTab } from "./overview-tab"
 import { ParticipantsTab } from "./participants-tab"
 import type { ManageDashboardProps } from "./types"
 import { useManageDashboard } from "./use-manage-dashboard"
@@ -15,11 +15,7 @@ export default function ManageDashboard(props: ManageDashboardProps) {
 
   return (
     <div className="space-y-8">
-      <DashboardHeader
-        copyOk={dashboard.copyOk}
-        onCopyPublicLink={dashboard.copyPublicLink}
-        tournament={props.tournament}
-      />
+      <DashboardHeader tournament={props.tournament} />
 
       {dashboard.pageError && (
         <Alert variant="destructive">
@@ -27,11 +23,22 @@ export default function ManageDashboard(props: ManageDashboardProps) {
         </Alert>
       )}
 
-      <DashboardStats dashboard={dashboard} />
+      <DashboardTabs
+        activeTab={dashboard.activeTab}
+        busy={dashboard.busy}
+        onTabChange={dashboard.setActiveTab}
+        participantsCount={dashboard.activeRegistrations.length}
+        tournament={props.tournament}
+        updateTournamentStatus={dashboard.updateTournamentStatus}
+      />
 
-      <DashboardTabs activeTab={dashboard.activeTab} onTabChange={dashboard.setActiveTab} />
-
-      {dashboard.activeTab === "participants" ? (
+      {dashboard.activeTab === "overview" ? (
+        <OverviewTab
+          categories={props.categories}
+          dashboard={dashboard}
+          tournament={props.tournament}
+        />
+      ) : dashboard.activeTab === "participants" ? (
         <ParticipantsTab dashboard={dashboard} tournament={props.tournament} />
       ) : (
         <ConfigTab

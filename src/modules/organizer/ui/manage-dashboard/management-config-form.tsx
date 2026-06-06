@@ -1,3 +1,4 @@
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { DateTimeField } from "@/components/ui/date-time-field"
 import { Input } from "@/components/ui/input"
@@ -18,6 +19,14 @@ export function ManagementConfigForm({
 
   return (
     <div className="space-y-5">
+      {tournament.status !== "published" && (
+        <Alert variant="warning">
+          <AlertDescription>
+            La edición está bloqueada mientras el torneo no tenga las inscripciones abiertas.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="management-title">Título del torneo</Label>
         <Input
@@ -110,7 +119,7 @@ export function ManagementConfigForm({
         <span>
           <span className="block font-medium text-foreground">Visibilidad pública</span>
           <span className="mt-1 block text-sm text-muted-foreground">
-            Si lo desactivas, el torneo no se listará en explorar y solo será accesible por
+            Si lo desactivas, el torneo no será público y solo será accesible por
             enlace directo.
           </span>
         </span>
