@@ -24,7 +24,7 @@ export function mapVerificationErrorMessage(
 export function getVerificationStatusLabel(status: string | null | undefined) {
   if (status === "confirmed") return "Confirmada"
   if (status === "pending_cash_validation") {
-    return "Pendiente de validación en efectivo"
+    return "Pendiente de validación"
   }
   if (status === "pending_online_payment") return "Pendiente de pago online"
   if (status === "cancelled") return "Cancelada"

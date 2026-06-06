@@ -1,12 +1,5 @@
 import {
   AlertTriangle,
-  CalendarDays,
-  Clock3,
-  Eye,
-  Layers3,
-  MapPin,
-  UsersRound,
-  WalletCards,
 } from "lucide-react"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -15,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { CategoryRow, TournamentRow } from "@/modules/organizer/domain"
 
-import { formatDateTime, formatMoney } from "./display"
+import { formatMoney } from "./display"
 import type { ManageDashboardViewModel } from "./use-manage-dashboard"
 
 export function OverviewTab({
@@ -30,29 +23,15 @@ export function OverviewTab({
   return (
     <div className="space-y-6">
       <PendingCashAlert dashboard={dashboard} />
-
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-6">
-          <TournamentInformation tournament={tournament} />
-          {categories.length > 0 && (
-            <CategoryDetails categories={categories} dashboard={dashboard} />
-          )}
-        </div>
-
-        <div className="space-y-6">
-          <KeyDetails dashboard={dashboard} tournament={tournament} />
-          <RegistrationSummary dashboard={dashboard} />
-        </div>
-      </div>
+      <TournamentSituation dashboard={dashboard} tournament={tournament} />
+      {categories.length > 0 && (
+        <CategoryDetails categories={categories} dashboard={dashboard} />
+      )}
     </div>
   )
 }
 
-function PendingCashAlert({
-  dashboard,
-}: {
-  dashboard: ManageDashboardViewModel
-}) {
+function PendingCashAlert({ dashboard }: { dashboard: ManageDashboardViewModel }) {
   if (dashboard.pendingCashValidations.length === 0) return null
 
   return (
@@ -81,151 +60,116 @@ function PendingCashAlert({
   )
 }
 
-function TournamentInformation({ tournament }: { tournament: TournamentRow }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Información pública</CardTitle>
-      </CardHeader>
-      <CardContent className="grid gap-6 md:grid-cols-2">
-        <TextBlock
-          title="Descripción"
-          text={tournament.description}
-          fallback="Todavía no has añadido una descripción."
-        />
-        <TextBlock
-          title="Reglas y normativa"
-          text={tournament.rules}
-          fallback="Todavía no has añadido reglas o normativa."
-        />
-      </CardContent>
-    </Card>
-  )
-}
-
-function TextBlock({
-  fallback,
-  text,
-  title,
-}: {
-  fallback: string
-  text: string | null
-  title: string
-}) {
-  return (
-    <div className="rounded-lg border border-border bg-muted/20 p-4">
-      <h3 className="font-medium text-foreground">{title}</h3>
-      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-        {text || fallback}
-      </p>
-    </div>
-  )
-}
-
-function KeyDetails({
+function TournamentSituation({
   dashboard,
   tournament,
 }: {
   dashboard: ManageDashboardViewModel
   tournament: TournamentRow
 }) {
-  const capacity =
-    dashboard.totalCapacity === null ? "Sin límite" : `${dashboard.totalCapacity} plazas`
-  const price = tournament.has_categories
-    ? "Precio por categoría"
-    : formatMoney(tournament.entry_price)
-
+  const participantCount = dashboard.activeRegistrations.length
+  const capacity = dashboard.totalCapacity
+  const occupancy =
+    capacity === null || capacity <= 0
+      ? null
+      : Math.min(Math.round((participantCount / capacity) * 100), 100)
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Datos clave</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Detail icon={<CalendarDays />} label="Fecha" value={formatDateTime(tournament.date)} />
-        <Detail
-          icon={<Clock3 />}
-          label="Cierre de inscripciones"
-          value={formatDateTime(tournament.registration_deadline)}
-        />
-        <Detail
-          icon={<MapPin />}
-          label="Ubicación"
-          value={[tournament.province, tournament.address].filter(Boolean).join(", ") || "Por definir"}
-        />
-        <Detail
-          icon={<UsersRound />}
-          label="Participación"
-          value={`${capacity} · mínimo ${tournament.min_participants}`}
-        />
-        <Detail
-          icon={<Layers3 />}
-          label="Formato"
-          value={tournament.has_categories ? "Por categorías" : "General"}
-        />
-        <Detail
-          icon={<WalletCards />}
-          label="Pago y precio"
-          value={`${getPaymentMethodLabel(tournament.payment_method)} · ${price}`}
-        />
-        <Detail
-          icon={<Eye />}
-          label="Publicación"
-          value={tournament.is_public ? "Visible en Explorar" : "Solo mediante enlace"}
-        />
+    <Card className="overflow-hidden">
+      <CardContent className="grid p-0 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.6fr)]">
+        <section className="p-5 md:p-6">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Participantes</p>
+            <p className="mt-2 text-4xl font-semibold tracking-tight text-foreground">
+              {participantCount}
+              <span className="ml-2 text-lg font-normal text-muted-foreground">
+                {capacity === null ? "sin límite" : `de ${capacity}`}
+              </span>
+            </p>
+          </div>
+
+          {occupancy !== null && (
+            <div className="mt-5">
+              <div
+                className="h-2 overflow-hidden rounded-full bg-muted"
+                role="progressbar"
+                aria-label="Ocupación del torneo"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={occupancy}
+              >
+                <div
+                  className="h-full rounded-full bg-primary transition-[width]"
+                  style={{ width: `${occupancy}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="mt-6 grid gap-4 border-t border-border pt-5 sm:grid-cols-3">
+            <SituationValue
+              label="Confirmados"
+              value={dashboard.confirmedRegistrations.length}
+            />
+            <SituationValue
+              label="Por validar"
+              value={dashboard.pendingCashValidations.length}
+            />
+            <SituationValue
+              label="Cancelados"
+              value={dashboard.cancelledRegistrations.length}
+            />
+          </div>
+        </section>
+
+        <section className="flex h-full flex-col justify-between border-t border-border bg-muted/10 p-5 md:p-6 lg:border-l lg:border-t-0">
+          <div className="flex flex-1 flex-col justify-center">
+            <p className="text-sm font-medium text-muted-foreground">Total ganado</p>
+            <p className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
+              {formatMoney(dashboard.revenue)}
+            </p>
+          </div>
+          <div className="mt-6 space-y-3 border-t border-border pt-5 text-sm">
+            <InlineDetail
+              label="Método de pago"
+              value={getPaymentMethodLabel(tournament.payment_method)}
+            />
+            <InlineDetail
+              label="Precio"
+              value={
+                tournament.has_categories
+                  ? "Según categoría"
+                  : formatMoney(tournament.entry_price)
+              }
+            />
+          </div>
+        </section>
       </CardContent>
     </Card>
   )
 }
 
-function Detail({
-  icon,
+function SituationValue({
   label,
   value,
 }: {
-  icon: React.ReactNode
   label: string
-  value: string
+  value: number
 }) {
   return (
-    <div className="flex items-start gap-3">
-      <span className="mt-0.5 text-muted-foreground [&_svg]:size-4">{icon}</span>
-      <div className="min-w-0">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {label}
-        </p>
-        <p className="mt-1 text-sm font-medium text-foreground">{value}</p>
-      </div>
+    <div>
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="mt-1 text-xl font-semibold text-foreground">
+        {value}
+      </p>
     </div>
   )
 }
 
-function RegistrationSummary({ dashboard }: { dashboard: ManageDashboardViewModel }) {
+function InlineDetail({ label, value }: { label: string; value: string }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Resumen de inscripciones</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        <SummaryLine label="Participantes activos" value={dashboard.activeRegistrations.length} />
-        <SummaryLine label="Confirmados" value={dashboard.confirmedRegistrations.length} />
-        <SummaryLine label="Pendientes de validar" value={dashboard.pendingCashValidations.length} />
-        <SummaryLine label="Pagos online en proceso" value={dashboard.pendingOnlinePayments.length} />
-        <SummaryLine label="Cancelados" value={dashboard.cancelledRegistrations.length} />
-        <SummaryLine
-          label="Plazas restantes"
-          value={dashboard.remainingSpots === null ? "Sin límite" : dashboard.remainingSpots}
-        />
-        <SummaryLine label="Total cobrado" value={formatMoney(dashboard.revenue)} />
-      </CardContent>
-    </Card>
-  )
-}
-
-function SummaryLine({ label, value }: { label: string; value: number | string }) {
-  return (
-    <div className="flex items-center justify-between gap-4 border-b border-border pb-3 last:border-0 last:pb-0">
+    <div className="flex items-center justify-between gap-3">
       <span className="text-muted-foreground">{label}</span>
-      <strong className="text-foreground">{value}</strong>
+      <span className="font-medium text-foreground">{value}</span>
     </div>
   )
 }
@@ -240,9 +184,9 @@ function CategoryDetails({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Categorías</CardTitle>
+        <CardTitle>Estado por categoría</CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-3 sm:grid-cols-2">
+      <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {categories.map((category) => {
           const group = dashboard.groupedViews.find((item) => item.id === category.id)
           const activeCount =
@@ -251,18 +195,32 @@ function CategoryDetails({
                 (active) => active.registration.id === view.registration.id
               )
             ).length ?? 0
+          const missingForMinimum = Math.max(category.min_participants - activeCount, 0)
 
           return (
             <div key={category.id} className="rounded-lg border border-border p-4">
               <div className="flex items-start justify-between gap-3">
-                <h3 className="font-medium text-foreground">{category.name}</h3>
+                <div>
+                  <h3 className="font-medium text-foreground">{category.name}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {activeCount}{" "}
+                    {category.max_participants === null
+                      ? "inscritos"
+                      : `de ${category.max_participants} inscritos`}
+                  </p>
+                </div>
                 <Badge variant="secondary">{formatMoney(category.price)}</Badge>
               </div>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {activeCount} inscritos · mínimo {category.min_participants} ·{" "}
-                {category.max_participants === null
-                  ? "sin límite máximo"
-                  : `máximo ${category.max_participants}`}
+              <p
+                className={
+                  missingForMinimum === 0
+                    ? "mt-4 text-xs font-medium text-emerald-700"
+                    : "mt-4 text-xs font-medium text-amber-700"
+                }
+              >
+                {missingForMinimum === 0
+                  ? "Mínimo alcanzado"
+                  : `Faltan ${missingForMinimum} para el mínimo`}
               </p>
             </div>
           )

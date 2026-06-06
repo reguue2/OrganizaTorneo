@@ -24,11 +24,11 @@ export function getRegistrationStatusLabel(view: RegistrationView) {
   }
 
   if (view.registration.status === "pending_cash_validation") {
-    return "Pendiente de validación en efectivo"
+    return "Pendiente"
   }
 
   if (view.registration.status === "pending_online_payment") {
-    return "Pendiente de pago online"
+    return "Pendiente"
   }
 
   if (view.registration.status === "expired") return "Caducada"

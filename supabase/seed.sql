@@ -556,6 +556,69 @@ begin
       'cancelado@seed.local',
       null,
       '40000000-0000-4000-8000-000000000007'
+    ),
+    (
+      '30000000-0000-4000-8000-000000000008',
+      'team',
+      'Los Halcones',
+      '600100008',
+      'halcones@seed.local',
+      null,
+      '40000000-0000-4000-8000-000000000008'
+    ),
+    (
+      '30000000-0000-4000-8000-000000000009',
+      'team',
+      'Club Norte',
+      '600100009',
+      'club-norte@seed.local',
+      null,
+      '40000000-0000-4000-8000-000000000009'
+    ),
+    (
+      '30000000-0000-4000-8000-000000000010',
+      'team',
+      'Titanes Madrid',
+      '600100010',
+      'titanes@seed.local',
+      null,
+      '40000000-0000-4000-8000-000000000010'
+    ),
+    (
+      '30000000-0000-4000-8000-000000000011',
+      'team',
+      'Barrio Unido',
+      '600100011',
+      'barrio-unido@seed.local',
+      null,
+      '40000000-0000-4000-8000-000000000011'
+    ),
+    (
+      '30000000-0000-4000-8000-000000000012',
+      'team',
+      'Deportivo Sur',
+      '600100012',
+      'deportivo-sur@seed.local',
+      null,
+      '40000000-0000-4000-8000-000000000012'
+    ),
+    (
+      '30000000-0000-4000-8000-000000000013',
+      'team',
+      'Rayo Azul',
+      '600100013',
+      'rayo-azul@seed.local',
+      null,
+      '40000000-0000-4000-8000-000000000013'
+    ),
+    (
+      '30000000-0000-4000-8000-000000000014',
+      'team',
+      'Unión Central',
+      '600100014',
+      'union-central@seed.local',
+      null,
+      '40000000-0000-4000-8000-000000000014'
     );
 
   insert into public.registrations (
@@ -678,6 +741,111 @@ begin
       extensions.crypt('777777', extensions.gen_salt('bf')),
       public.sha256_hex('seed-cancel-token-007'),
       now() - interval '1 day'
+    ),
+    (
+      '40000000-0000-4000-8000-000000000008',
+      null,
+      'confirmed',
+      'cash',
+      now() - interval '4 days 12 hours',
+      '30000000-0000-4000-8000-000000000008',
+      '10000000-0000-4000-8000-000000000002',
+      'SEED-CASH-002',
+      public.normalize_email('halcones@seed.local'),
+      public.normalize_spanish_phone('600100008'),
+      extensions.crypt('888888', extensions.gen_salt('bf')),
+      public.sha256_hex('seed-cancel-token-008'),
+      null
+    ),
+    (
+      '40000000-0000-4000-8000-000000000009',
+      null,
+      'confirmed',
+      'cash',
+      now() - interval '4 days',
+      '30000000-0000-4000-8000-000000000009',
+      '10000000-0000-4000-8000-000000000002',
+      'SEED-CASH-003',
+      public.normalize_email('club-norte@seed.local'),
+      public.normalize_spanish_phone('600100009'),
+      extensions.crypt('999999', extensions.gen_salt('bf')),
+      public.sha256_hex('seed-cancel-token-009'),
+      null
+    ),
+    (
+      '40000000-0000-4000-8000-000000000010',
+      null,
+      'confirmed',
+      'cash',
+      now() - interval '3 days 12 hours',
+      '30000000-0000-4000-8000-000000000010',
+      '10000000-0000-4000-8000-000000000002',
+      'SEED-CASH-004',
+      public.normalize_email('titanes@seed.local'),
+      public.normalize_spanish_phone('600100010'),
+      extensions.crypt('101010', extensions.gen_salt('bf')),
+      public.sha256_hex('seed-cancel-token-010'),
+      null
+    ),
+    (
+      '40000000-0000-4000-8000-000000000011',
+      null,
+      'confirmed',
+      'cash',
+      now() - interval '3 days',
+      '30000000-0000-4000-8000-000000000011',
+      '10000000-0000-4000-8000-000000000002',
+      'SEED-CASH-005',
+      public.normalize_email('barrio-unido@seed.local'),
+      public.normalize_spanish_phone('600100011'),
+      extensions.crypt('111112', extensions.gen_salt('bf')),
+      public.sha256_hex('seed-cancel-token-011'),
+      null
+    ),
+    (
+      '40000000-0000-4000-8000-000000000012',
+      null,
+      'pending_cash_validation',
+      'cash',
+      now() - interval '2 days',
+      '30000000-0000-4000-8000-000000000012',
+      '10000000-0000-4000-8000-000000000002',
+      'SEED-CASH-006',
+      public.normalize_email('deportivo-sur@seed.local'),
+      public.normalize_spanish_phone('600100012'),
+      extensions.crypt('121212', extensions.gen_salt('bf')),
+      public.sha256_hex('seed-cancel-token-012'),
+      null
+    ),
+    (
+      '40000000-0000-4000-8000-000000000013',
+      null,
+      'pending_cash_validation',
+      'cash',
+      now() - interval '1 day',
+      '30000000-0000-4000-8000-000000000013',
+      '10000000-0000-4000-8000-000000000002',
+      'SEED-CASH-007',
+      public.normalize_email('rayo-azul@seed.local'),
+      public.normalize_spanish_phone('600100013'),
+      extensions.crypt('131313', extensions.gen_salt('bf')),
+      public.sha256_hex('seed-cancel-token-013'),
+      null
+    ),
+    (
+      '40000000-0000-4000-8000-000000000014',
+      null,
+      'cancelled',
+      'cash',
+      now() - interval '6 days',
+      '30000000-0000-4000-8000-000000000014',
+      '10000000-0000-4000-8000-000000000002',
+      'SEED-CASH-008',
+      public.normalize_email('union-central@seed.local'),
+      public.normalize_spanish_phone('600100014'),
+      extensions.crypt('141414', extensions.gen_salt('bf')),
+      public.sha256_hex('seed-cancel-token-014'),
+      now() - interval '12 hours'
     );
 
   insert into public.payments (
@@ -768,6 +936,83 @@ begin
       null,
       null,
       now() - interval '7 days'
+    ),
+    (
+      '50000000-0000-4000-8000-000000000008',
+      '40000000-0000-4000-8000-000000000008',
+      25,
+      'eur',
+      'cash',
+      'paid',
+      null,
+      now() - interval '4 days 12 hours',
+      now() - interval '4 days 12 hours'
+    ),
+    (
+      '50000000-0000-4000-8000-000000000009',
+      '40000000-0000-4000-8000-000000000009',
+      25,
+      'eur',
+      'cash',
+      'paid',
+      null,
+      now() - interval '4 days',
+      now() - interval '4 days'
+    ),
+    (
+      '50000000-0000-4000-8000-000000000010',
+      '40000000-0000-4000-8000-000000000010',
+      25,
+      'eur',
+      'cash',
+      'paid',
+      null,
+      now() - interval '3 days 12 hours',
+      now() - interval '3 days 12 hours'
+    ),
+    (
+      '50000000-0000-4000-8000-000000000011',
+      '40000000-0000-4000-8000-000000000011',
+      25,
+      'eur',
+      'cash',
+      'paid',
+      null,
+      now() - interval '3 days',
+      now() - interval '3 days'
+    ),
+    (
+      '50000000-0000-4000-8000-000000000012',
+      '40000000-0000-4000-8000-000000000012',
+      25,
+      'eur',
+      'cash',
+      'pending',
+      null,
+      null,
+      now() - interval '2 days'
+    ),
+    (
+      '50000000-0000-4000-8000-000000000013',
+      '40000000-0000-4000-8000-000000000013',
+      25,
+      'eur',
+      'cash',
+      'pending',
+      null,
+      null,
+      now() - interval '1 day'
+    ),
+    (
+      '50000000-0000-4000-8000-000000000014',
+      '40000000-0000-4000-8000-000000000014',
+      25,
+      'eur',
+      'cash',
+      'refunded',
+      null,
+      null,
+      now() - interval '6 days'
     );
 
   insert into public.registration_requests (
@@ -816,4 +1061,3 @@ begin
       now() - interval '5 minutes'
     );
 end $$;
-

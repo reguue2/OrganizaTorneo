@@ -7,6 +7,7 @@ import { DashboardHeader } from "./dashboard-header"
 import { DashboardTabs } from "./dashboard-tabs"
 import { OverviewTab } from "./overview-tab"
 import { ParticipantsTab } from "./participants-tab"
+import { TournamentFacts } from "./tournament-facts"
 import type { ManageDashboardProps } from "./types"
 import { useManageDashboard } from "./use-manage-dashboard"
 
@@ -16,6 +17,8 @@ export default function ManageDashboard(props: ManageDashboardProps) {
   return (
     <div className="space-y-8">
       <DashboardHeader tournament={props.tournament} />
+
+      <TournamentFacts tournament={props.tournament} />
 
       {dashboard.pageError && (
         <Alert variant="destructive">

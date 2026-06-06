@@ -22,15 +22,16 @@ export function RegistrationActions({
   view: RegistrationView
 }) {
   return (
-    <div className="flex flex-col items-end gap-2">
+    <div className="flex flex-row flex-wrap items-center justify-end gap-2">
       {needsCashValidation(view, tournament) && (
         <Button
           type="button"
           size="sm"
+          className="whitespace-nowrap"
           onClick={() => confirmCashRegistration(view)}
           disabled={busy === `paid:${view.registration.id}`}
         >
-          {busy === `paid:${view.registration.id}` ? "Guardando..." : "Validar efectivo"}
+          {busy === `paid:${view.registration.id}` ? "Guardando..." : "Pagado"}
         </Button>
       )}
 
@@ -39,10 +40,11 @@ export function RegistrationActions({
           type="button"
           size="sm"
           variant="destructive"
+          className="whitespace-nowrap"
           onClick={() => cancelRegistration(view)}
           disabled={busy === `cancel:${view.registration.id}`}
         >
-          {busy === `cancel:${view.registration.id}` ? "Cancelando..." : "Cancelar"}
+          {busy === `cancel:${view.registration.id}` ? "Eliminando..." : "Eliminar"}
         </Button>
       )}
     </div>

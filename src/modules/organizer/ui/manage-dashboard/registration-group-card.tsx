@@ -39,8 +39,6 @@ export function RegistrationGroupCard({
   const activeGroupCount = group.views.filter((view) =>
     isActiveRegistration(view.registration.status)
   ).length
-  const remainingGroupSpots =
-    group.capacity === null ? null : Math.max(group.capacity - activeGroupCount, 0)
 
   return (
     <Card className="overflow-hidden">
@@ -49,8 +47,8 @@ export function RegistrationGroupCard({
           <CardTitle>{group.name}</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
             {group.capacity === null
-              ? `${activeGroupCount} activas · sin límite`
-              : `${activeGroupCount}/${group.capacity} activas · ${remainingGroupSpots} plazas restantes`}
+              ? `${activeGroupCount} activas`
+              : `${activeGroupCount}/${group.capacity} activas`}
           </p>
         </div>
 
@@ -92,16 +90,17 @@ function RegistrationsTable({
   views: RegistrationView[]
 }) {
   return (
-    <Table className="min-w-[980px]">
+    <Table className="min-w-[820px]">
       <TableHeader>
         <TableRow>
-          <TableHead className="normal-case">Participante</TableHead>
-          <TableHead className="normal-case">Contacto</TableHead>
-          <TableHead className="normal-case">Estado</TableHead>
-          <TableHead className="normal-case">Pago</TableHead>
-          <TableHead className="normal-case">Referencia</TableHead>
-          <TableHead className="normal-case">Alta</TableHead>
-          <TableHead className="text-right normal-case">Acciones</TableHead>
+          <TableHead className="text-center normal-case">Participante</TableHead>
+          <TableHead className="text-center normal-case">Teléfono</TableHead>
+          <TableHead className="text-center normal-case">Email</TableHead>
+          <TableHead className="text-center normal-case">Estado</TableHead>
+          <TableHead className="text-center normal-case">Pago</TableHead>
+          <TableHead className="text-center">
+            <span className="sr-only">Acciones</span>
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

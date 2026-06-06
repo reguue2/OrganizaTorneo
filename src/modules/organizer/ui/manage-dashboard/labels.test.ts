@@ -69,12 +69,12 @@ describe("management dashboard labels", () => {
     expect(
       getRegistrationStatusLabel(registrationView("pending_cash_validation", "cash"))
     ).toBe(
-      "Pendiente de validación en efectivo"
+      "Pendiente"
     )
     expect(
       getRegistrationStatusLabel(registrationView("pending_online_payment", "online"))
     ).toBe(
-      "Pendiente de pago online"
+      "Pendiente"
     )
   })
 
