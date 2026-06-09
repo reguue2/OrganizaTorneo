@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { getPublicTournamentDetail } from "@/modules/tournaments/server"
 import { PublicTournamentPage } from "@/modules/tournaments/ui"
+import { getPublicOrganizerContact } from "@/modules/profile/server"
 
 export default async function TorneoPublicoPage({
   params,
@@ -8,7 +9,10 @@ export default async function TorneoPublicoPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const publicTournament = await getPublicTournamentDetail(id)
+  const [publicTournament, contact] = await Promise.all([
+    getPublicTournamentDetail(id),
+    getPublicOrganizerContact(id),
+  ])
 
   if (!publicTournament) {
     notFound()
@@ -18,6 +22,7 @@ export default async function TorneoPublicoPage({
     <PublicTournamentPage
       tournament={publicTournament.tournament}
       categories={publicTournament.categories}
+      contact={contact}
     />
   )
 }

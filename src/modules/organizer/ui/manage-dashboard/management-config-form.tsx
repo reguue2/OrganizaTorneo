@@ -3,7 +3,6 @@
 import {
   Eye,
   ImageIcon,
-  Info,
   LockKeyhole,
   MapPin,
   Save,
@@ -42,7 +41,6 @@ export function ManagementConfigForm({
   tournament: TournamentRow
 }) {
   const {
-    activeRegistrations,
     brackets,
     busy,
     form,
@@ -100,6 +98,7 @@ export function ManagementConfigForm({
 
   const submit = async () => {
     const saved = await saveConfig({ poster: posterFile, posterAction })
+    window.scrollTo({ top: 0, behavior: "smooth" })
     if (saved) {
       setPosterFile(null)
       setPosterFileName("")
@@ -118,24 +117,7 @@ export function ManagementConfigForm({
         </Alert>
       )}
 
-      {canEdit && activeRegistrations.length > 0 && (
-        <Alert variant="info">
-          <AlertTitle>
-            Hay {activeRegistrations.length} inscripciones activas
-          </AlertTitle>
-          <AlertDescription>
-            Los cambios públicos se mostrarán inmediatamente a los participantes. Los
-            precios y formatos con inscripciones quedan protegidos, y nunca podrás
-            reducir plazas por debajo de la ocupación actual.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <ConfigCard
-        icon={ImageIcon}
-        title="Publicación y cartel"
-        description="Controla cómo se presenta y dónde aparece el torneo."
-      >
+      <ConfigCard icon={ImageIcon} title="Publicación y cartel">
         <ManagementConfigPoster
           disabled={!canEdit}
           fileName={posterFileName}
@@ -165,11 +147,7 @@ export function ManagementConfigForm({
         </label>
       </ConfigCard>
 
-      <ConfigCard
-        icon={MapPin}
-        title="Información pública"
-        description="Datos que verán las personas antes y después de inscribirse."
-      >
+      <ConfigCard icon={MapPin} title="Información pública">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
             <Field label="Título del torneo">
@@ -224,24 +202,12 @@ export function ManagementConfigForm({
         </div>
       </ConfigCard>
 
-      <ConfigCard
-        icon={Settings2}
-        title="Inscripción y plazas"
-        description="Ajusta capacidad y condiciones. Protegemos lo que afectaría a inscripciones existentes."
-      >
-        {registrationSettingsLocked && (
-          <LockedNotice>
-            El método de pago
-            {!tournament.has_categories && ", el precio y el formato"} ya no se pueden
-            cambiar porque existen inscripciones.
-          </LockedNotice>
-        )}
-
+      <ConfigCard icon={Settings2} title="Inscripción y plazas">
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Método de pago">
             <Select
               value={form.payment_method}
-              disabled={!canEdit || registrationSettingsLocked}
+              disabled={!canEdit}
               onChange={(event) =>
                 updateForm(
                   "payment_method",
@@ -297,9 +263,6 @@ export function ManagementConfigForm({
                       updateForm("no_max_participants", checked)
                     }
                   />
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Mínimo permitido ahora: {activeRegistrations.length}
-                  </p>
                 </Field>
               </div>
             </>
@@ -317,11 +280,7 @@ export function ManagementConfigForm({
         )}
       </ConfigCard>
 
-      <ConfigCard
-        icon={Trophy}
-        title="Premios y normas"
-        description="Mantén claras las condiciones y lo que está en juego."
-      >
+      <ConfigCard icon={Trophy} title="Premios y normas">
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Modalidad de premios">
             <Select
@@ -341,12 +300,6 @@ export function ManagementConfigForm({
               )}
             </Select>
           </Field>
-          <div className="flex items-end">
-            <p className="flex items-center gap-2 pb-2 text-sm text-muted-foreground">
-              <Info className="size-4" />
-              Cambiar premios afecta a la información pública del torneo.
-            </p>
-          </div>
         </div>
 
         {form.prize_mode === "global" && (
@@ -381,12 +334,7 @@ export function ManagementConfigForm({
       </ConfigCard>
 
       <div className="sticky bottom-4 z-10 flex flex-col gap-3 rounded-xl border border-border bg-card/95 p-4 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="font-medium text-foreground">Guarda todos los cambios juntos</p>
-          <p className="text-sm text-muted-foreground">
-            Revisaremos capacidades, categorías, cartel y condiciones antes de aplicar.
-          </p>
-        </div>
+        <p className="font-medium text-foreground">Guarda todos los cambios juntos</p>
         <Button
           type="button"
           size="lg"
@@ -403,12 +351,10 @@ export function ManagementConfigForm({
 
 function ConfigCard({
   children,
-  description,
   icon: Icon,
   title,
 }: {
   children: ReactNode
-  description: string
   icon: LucideIcon
   title: string
 }) {
@@ -419,25 +365,10 @@ function ConfigCard({
           <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <Icon className="size-4" />
           </span>
-          <div>
-            <CardTitle>{title}</CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-          </div>
+          <CardTitle>{title}</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="space-y-5 p-5">{children}</CardContent>
     </Card>
-  )
-}
-
-function LockedNotice({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200">
-      <LockKeyhole className="mt-0.5 size-4 shrink-0" />
-      <div>
-        <p className="font-medium">Condiciones protegidas</p>
-        <p className="mt-1 opacity-90">{children}</p>
-      </div>
-    </div>
   )
 }

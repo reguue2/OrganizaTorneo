@@ -65,9 +65,6 @@ function RoundColumn({
 
   return (
     <div className={cn("flex flex-col", withConnectors && "pr-7")}>
-      <h4 className="mb-3 h-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {round.name}
-      </h4>
       <div className="flex flex-1 flex-col">
         {round.matches.map((match, index) => (
           <div
@@ -86,9 +83,6 @@ function RoundColumn({
 function ChampionColumn() {
   return (
     <div className="flex flex-col">
-      <h4 className="mb-3 h-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Campeón
-      </h4>
       <div className="flex flex-1 flex-col">
         <div className="relative flex min-h-20 flex-1 items-center">
           <div className="flex w-44 items-center gap-2 rounded-lg border border-primary/40 bg-primary/5 px-3 py-2 shadow-sm">
@@ -110,7 +104,7 @@ export function EliminationColumns({ rounds }: { rounds: BracketRound[] }) {
   return (
     <div className="space-y-4">
       <div className="overflow-x-auto pb-2">
-        <div className="flex min-w-max items-stretch">
+        <div className="mx-auto flex w-max items-stretch">
           {mainRounds.map((round) => (
             <RoundColumn key={round.name} round={round} withConnectors />
           ))}

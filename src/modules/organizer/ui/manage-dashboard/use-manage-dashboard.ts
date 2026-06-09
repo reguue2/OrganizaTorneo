@@ -1,8 +1,8 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 
 import { toDateTimeLocal } from "./display"
-import type { ConfigForm, ManageDashboardProps } from "./types"
+import type { ConfigForm, ManageDashboardProps, SaveNotice } from "./types"
 import { useDashboardDerivedData } from "./use-dashboard-derived-data"
 import { useManagementActions } from "./use-management-actions"
 
@@ -58,6 +58,7 @@ function useManageDashboard({
   >("overview")
   const [busy, setBusy] = useState<string | null>(null)
   const [pageError, setPageError] = useState<string | null>(null)
+  const [saveNotice, setSaveNotice] = useState<SaveNotice | null>(null)
 
   const [form, setForm] = useState<ConfigForm>(() =>
     createConfigForm({ categories, tournament })
@@ -75,12 +76,20 @@ function useManageDashboard({
     router.refresh()
   }
 
+  useEffect(() => {
+    if (!saveNotice) return
+
+    const timeout = window.setTimeout(() => setSaveNotice(null), 4500)
+    return () => window.clearTimeout(timeout)
+  }, [saveNotice])
+
   const actions = useManagementActions({
     form,
     refresh,
     setBusy,
     setForm,
     setPageError,
+    setSaveNotice,
     tournament,
   })
 
@@ -90,6 +99,7 @@ function useManageDashboard({
     busy,
     form,
     pageError,
+    saveNotice,
     setActiveTab,
     setForm,
     ...actions,

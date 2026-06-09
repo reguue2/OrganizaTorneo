@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
-import { LogOut, Menu, Trophy, UserRound, X } from "lucide-react"
+import { LogOut, Menu, Trophy, UserRound, Wallet, X } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -77,6 +77,12 @@ export default function Navbar() {
     router.refresh()
   }
 
+  const handleNavigate = (path: string) => {
+    setUserMenuOpen(false)
+    setMobileOpen(false)
+    router.push(path)
+  }
+
   const userInitial = user?.email?.charAt(0).toUpperCase() ?? "U"
 
   return (
@@ -132,14 +138,32 @@ export default function Navbar() {
                       <p className="text-xs text-muted-foreground">Organizador</p>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="mt-1 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition hover:bg-muted"
-                  >
-                    <LogOut className="size-4" aria-hidden="true" />
-                    Cerrar sesión
-                  </button>
+                  <div className="mt-1 space-y-0.5">
+                    <button
+                      type="button"
+                      onClick={() => handleNavigate("/perfil")}
+                      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition hover:bg-muted"
+                    >
+                      <UserRound className="size-4" aria-hidden="true" />
+                      Perfil
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleNavigate("/perfil?tab=monedero")}
+                      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition hover:bg-muted"
+                    >
+                      <Wallet className="size-4" aria-hidden="true" />
+                      Monedero
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition hover:bg-muted"
+                    >
+                      <LogOut className="size-4" aria-hidden="true" />
+                      Cerrar sesión
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -185,14 +209,32 @@ export default function Navbar() {
                 Comenzar
               </Button>
             ) : (
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-sm font-medium text-foreground transition hover:bg-muted"
-              >
-                <LogOut className="size-4" aria-hidden="true" />
-                Cerrar sesión
-              </button>
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => handleNavigate("/perfil")}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-sm font-medium text-foreground transition hover:bg-muted"
+                >
+                  <UserRound className="size-4" aria-hidden="true" />
+                  Perfil
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNavigate("/perfil?tab=monedero")}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-sm font-medium text-foreground transition hover:bg-muted"
+                >
+                  <Wallet className="size-4" aria-hidden="true" />
+                  Monedero
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-sm font-medium text-foreground transition hover:bg-muted"
+                >
+                  <LogOut className="size-4" aria-hidden="true" />
+                  Cerrar sesión
+                </button>
+              </div>
             )}
           </div>
         </div>

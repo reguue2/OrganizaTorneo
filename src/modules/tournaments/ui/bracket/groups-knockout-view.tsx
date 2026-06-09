@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge"
 import type { GroupsKnockoutBody } from "@/modules/tournaments/domain"
 
 import { EliminationColumns } from "./elimination-view"
@@ -10,12 +9,7 @@ export function GroupsKnockoutView({ body }: { body: GroupsKnockoutBody }) {
       <div className="grid gap-4 md:grid-cols-2">
         {body.groups.map((group) => (
           <div key={group.name} className="rounded-lg border border-border p-4">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="font-semibold text-foreground">{group.name}</h3>
-              <Badge variant="secondary">
-                {group.participants.length} participantes
-              </Badge>
-            </div>
+            <h3 className="font-semibold text-foreground">{group.name}</h3>
 
             <ol className="mt-3 space-y-1 text-sm">
               {group.participants.map((participant, index) => (

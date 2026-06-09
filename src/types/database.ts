@@ -464,7 +464,9 @@ export type Database = {
           id: string
           name: string | null
           phone: string | null
+          public_contact: boolean
           stripe_account_id: string | null
+          whatsapp: string | null
         }
         Insert: {
           created_at?: string | null
@@ -472,7 +474,9 @@ export type Database = {
           id: string
           name?: string | null
           phone?: string | null
+          public_contact?: boolean
           stripe_account_id?: string | null
+          whatsapp?: string | null
         }
         Update: {
           created_at?: string | null
@@ -480,7 +484,9 @@ export type Database = {
           id?: string
           name?: string | null
           phone?: string | null
+          public_contact?: boolean
           stripe_account_id?: string | null
+          whatsapp?: string | null
         }
         Relationships: []
       }
@@ -507,6 +513,15 @@ export type Database = {
         Returns: Json
       }
       cleanup_old_drafts: { Args: { days_old?: number }; Returns: number }
+      get_public_organizer_contact: {
+        Args: { p_tournament_id: string }
+        Returns: {
+          email: string
+          name: string
+          phone: string
+          whatsapp: string
+        }[]
+      }
       create_and_publish_tournament: {
         Args: {
           p_address: string

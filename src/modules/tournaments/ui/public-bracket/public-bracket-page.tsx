@@ -24,6 +24,7 @@ export function PublicBracketPage({
           <ShareTournamentButton
             path={`/torneos/${tournament.id}/cuadro`}
             title={`Cuadro · ${tournament.title}`}
+            label="Compartir cuadro"
           />
         }
       />

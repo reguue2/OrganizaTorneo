@@ -1,9 +1,5 @@
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  BRACKET_FORMAT_LABELS,
-  type TournamentBracketRow,
-} from "@/modules/tournaments/domain"
+import type { TournamentBracketRow } from "@/modules/tournaments/domain"
 
 import { BracketView } from "./bracket-view"
 
@@ -31,12 +27,8 @@ export function BracketSections({
 
         return (
           <Card key={bracket.id}>
-            <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <CardHeader>
               <CardTitle>{title}</CardTitle>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="secondary">{BRACKET_FORMAT_LABELS[bracket.format]}</Badge>
-                <Badge variant="outline">{bracket.participant_count} participantes</Badge>
-              </div>
             </CardHeader>
             <CardContent>
               <BracketView structure={bracket.structure} />

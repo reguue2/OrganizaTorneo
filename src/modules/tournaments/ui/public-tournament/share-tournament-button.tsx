@@ -16,13 +16,15 @@ import { Input } from "@/components/ui/input"
 type ShareTournamentButtonProps = {
   path: string
   title: string
-  variant?: "icon" | "full"
+  variant?: "icon" | "full" | "inline"
+  label?: string
 }
 
 function ShareTournamentButton({
   path,
   title,
   variant = "full",
+  label = "Compartir torneo",
 }: ShareTournamentButtonProps) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -89,15 +91,15 @@ function ShareTournamentButton({
     <>
       <Button
         type="button"
-        variant={variant === "icon" ? "outline" : "secondary"}
+        variant={variant === "full" ? "secondary" : "outline"}
         size={variant === "icon" ? "icon-lg" : "lg"}
         className={variant === "full" ? "w-full" : undefined}
-        aria-label="Compartir torneo"
-        title="Compartir torneo"
+        aria-label={label}
+        title={label}
         onClick={shareTournament}
       >
         <Share2 className="size-4" />
-        {variant === "full" && <span>Compartir torneo</span>}
+        {variant !== "icon" && <span>{label}</span>}
       </Button>
 
       {open && (

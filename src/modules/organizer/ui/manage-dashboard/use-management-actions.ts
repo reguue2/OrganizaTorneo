@@ -13,7 +13,7 @@ import {
   requestManagementAction,
   requestManagementConfigUpdate,
 } from "./management-client"
-import type { BracketConfig, ConfigForm, RegistrationView } from "./types"
+import type { BracketConfig, ConfigForm, RegistrationView, SaveNotice } from "./types"
 
 export function useManagementActions({
   form,
@@ -21,6 +21,7 @@ export function useManagementActions({
   setBusy,
   setForm,
   setPageError,
+  setSaveNotice,
   tournament,
 }: {
   form: ConfigForm
@@ -28,6 +29,7 @@ export function useManagementActions({
   setBusy: (value: string | null) => void
   setForm: React.Dispatch<React.SetStateAction<ConfigForm>>
   setPageError: (value: string | null) => void
+  setSaveNotice: (value: SaveNotice | null) => void
   tournament: TournamentRow
 }) {
   const updateTournamentStatus = async (
@@ -65,20 +67,23 @@ export function useManagementActions({
     posterAction: "keep" | "remove" | "replace"
   }) => {
     setPageError(null)
+    setSaveNotice(null)
+
+    const fail = (message: string) => {
+      setSaveNotice({ message, variant: "destructive" })
+      return false
+    }
 
     if (!form.title.trim()) {
-      setPageError("El título es obligatorio.")
-      return false
+      return fail("El título es obligatorio.")
     }
 
     if (!canEditTournamentConfig(tournament)) {
-      setPageError("No puedes editar un torneo finalizado o cancelado.")
-      return false
+      return fail("No puedes editar un torneo finalizado o cancelado.")
     }
 
     if (!form.province.trim() || !form.address.trim() || !form.date || !form.registration_deadline) {
-      setPageError("Completa provincia, dirección y fechas antes de guardar.")
-      return false
+      return fail("Completa provincia, dirección y fechas antes de guardar.")
     }
 
     const entryPrice = Number(form.entry_price)
@@ -87,26 +92,22 @@ export function useManagementActions({
       : Number(form.max_participants)
 
     if (!Number.isFinite(entryPrice) || entryPrice < 0) {
-      setPageError("El precio de inscripción no es válido.")
-      return false
+      return fail("El precio de inscripción no es válido.")
     }
 
     if (
       maxParticipants !== null &&
       (!Number.isInteger(maxParticipants) || maxParticipants < 1)
     ) {
-      setPageError("Las plazas disponibles deben ser un número mayor que cero.")
-      return false
+      return fail("Las plazas disponibles deben ser un número mayor que cero.")
     }
 
     if (form.prize_mode === "global" && !form.prizes.trim()) {
-      setPageError("Describe los premios globales antes de guardar.")
-      return false
+      return fail("Describe los premios globales antes de guardar.")
     }
 
     if (tournament.has_categories && form.categories.length === 0) {
-      setPageError("El torneo debe conservar al menos una categoría.")
-      return false
+      return fail("El torneo debe conservar al menos una categoría.")
     }
 
     const invalidCategory = form.categories.find((category) => {
@@ -125,10 +126,9 @@ export function useManagementActions({
     })
 
     if (invalidCategory) {
-      setPageError(
+      return fail(
         "Revisa el nombre, precio, plazas y premios de todas las categorías."
       )
-      return false
     }
 
     setBusy("save-config")
@@ -173,8 +173,7 @@ export function useManagementActions({
     setBusy(null)
 
     if (result.error) {
-      setPageError(mapManagementError(result.error, result.errorCode))
-      return false
+      return fail(mapManagementError(result.error, result.errorCode))
     }
 
     setForm((previous) => ({
@@ -183,6 +182,10 @@ export function useManagementActions({
         category.id === null ? { ...category, id: category.key } : category
       ),
     }))
+    setSaveNotice({
+      message: "Cambios guardados correctamente.",
+      variant: "success",
+    })
     refresh()
     return true
   }

@@ -1,7 +1,6 @@
-import { LockKeyhole, Plus, Trash2, UsersRound } from "lucide-react"
+import { ChevronDown, Plus, Trash2 } from "lucide-react"
+import { useState } from "react"
 
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DateTimeField } from "@/components/ui/date-time-field"
 import { Input } from "@/components/ui/input"
@@ -11,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea"
 import type { RegistrationRow } from "@/modules/organizer/domain"
 import type { TournamentBracketRow } from "@/modules/tournaments/domain"
 
-import { isActiveRegistration } from "./display"
 import type { ConfigCategoryForm, ConfigForm } from "./types"
 
 export function ManagementConfigCategories({
@@ -28,6 +26,7 @@ export function ManagementConfigCategories({
   setForm: React.Dispatch<React.SetStateAction<ConfigForm>>
 }) {
   const canAddCategory = canEdit && brackets.length === 0
+  const [openCategories, setOpenCategories] = useState<Set<string>>(() => new Set())
 
   const updateCategory = (
     key: string,
@@ -43,6 +42,7 @@ export function ManagementConfigCategories({
 
   const addCategory = () => {
     const key = crypto.randomUUID()
+    setOpenCategories((previous) => new Set(previous).add(key))
     setForm((previous) => ({
       ...previous,
       categories: [
@@ -64,6 +64,11 @@ export function ManagementConfigCategories({
   }
 
   const removeCategory = (key: string) => {
+    setOpenCategories((previous) => {
+      const next = new Set(previous)
+      next.delete(key)
+      return next
+    })
     setForm((previous) => ({
       ...previous,
       categories: previous.categories.filter((category) => category.key !== key),
@@ -73,12 +78,7 @@ export function ManagementConfigCategories({
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h3 className="font-medium text-foreground">Categorías</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Puedes ajustar nombres, horarios, ubicaciones, premios y plazas.
-          </p>
-        </div>
+        <h3 className="font-medium text-foreground">Categorías</h3>
         <Button
           type="button"
           variant="outline"
@@ -90,15 +90,6 @@ export function ManagementConfigCategories({
         </Button>
       </div>
 
-      {brackets.length > 0 && (
-        <Alert variant="info">
-          <AlertDescription>
-            Ya existe un cuadro. Puedes editar las categorías actuales, pero no añadir
-            nuevas ni eliminar categorías incluidas en cuadros.
-          </AlertDescription>
-        </Alert>
-      )}
-
       <div className="space-y-4">
         {form.categories.map((category, index) => {
           const categoryRegistrations = category.id
@@ -106,9 +97,6 @@ export function ManagementConfigCategories({
                 (registration) => registration.category_id === category.id
               )
             : []
-          const activeCount = categoryRegistrations.filter((registration) =>
-            isActiveRegistration(registration.status)
-          ).length
           const hasBracket = category.id
             ? brackets.some((bracket) => bracket.category_id === category.id)
             : false
@@ -120,153 +108,140 @@ export function ManagementConfigCategories({
             !hasBracket
 
           return (
-            <div
+            <details
               key={category.key}
-              className="rounded-xl border border-border bg-card p-4 shadow-xs"
+              open={openCategories.has(category.key)}
+              onToggle={(event) => {
+                const isOpen = event.currentTarget.open
+                setOpenCategories((previous) => {
+                  const next = new Set(previous)
+                  if (isOpen) next.add(category.key)
+                  else next.delete(category.key)
+                  return next
+                })
+              }}
+              className="group rounded-xl border border-border bg-card shadow-xs"
             >
-              <div className="mb-4 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium text-foreground">
-                      {category.name.trim() || `Categoría ${index + 1}`}
-                    </p>
-                    {category.id ? (
-                      <Badge variant="outline">{activeCount} activas</Badge>
-                    ) : (
-                      <Badge variant="info">Nueva</Badge>
-                    )}
-                    {registrationSettingsLocked && (
-                      <Badge variant="warning">
-                        <LockKeyhole className="mr-1 size-3" />
-                        Precio y formato protegidos
-                      </Badge>
-                    )}
-                  </div>
-                  {categoryRegistrations.length > 0 && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Tiene {categoryRegistrations.length} inscripciones históricas.
-                    </p>
-                  )}
-                </div>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  disabled={!canRemove}
-                  onClick={() => removeCategory(category.key)}
-                  title={
-                    canRemove
-                      ? "Quitar categoría al guardar"
-                      : "Solo puedes quitar categorías sin inscripciones ni cuadro"
-                  }
-                >
-                  <Trash2 className="size-4" />
-                  Quitar
-                </Button>
-              </div>
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 [&::-webkit-details-marker]:hidden">
+                <span className="min-w-0 truncate font-medium text-foreground">
+                  {category.name.trim() || `Categoría ${index + 1}`}
+                </span>
+                <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+              </summary>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Nombre">
-                  <Input
-                    value={category.name}
-                    disabled={!canEdit}
-                    onChange={(event) =>
-                      updateCategory(category.key, { name: event.target.value })
-                    }
-                  />
-                </Field>
-
-                <Field label="Plazas disponibles">
-                  <CapacityInput
-                    capacity={category.max_participants}
-                    disabled={!canEdit}
-                    noMax={category.no_max_participants}
-                    onCapacityChange={(value) =>
-                      updateCategory(category.key, { max_participants: value })
-                    }
-                    onNoMaxChange={(checked) =>
-                      updateCategory(category.key, {
-                        no_max_participants: checked,
-                      })
-                    }
-                  />
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Mínimo permitido ahora: {activeCount}
-                  </p>
-                </Field>
-
-                <Field label="Formato de inscripción">
-                  <Select
-                    value={category.participant_type}
-                    disabled={!canEdit || registrationSettingsLocked}
-                    onChange={(event) =>
-                      updateCategory(category.key, {
-                        participant_type: event.target.value as "individual" | "team",
-                      })
+              <div className="border-t border-border p-4">
+                <div className="mb-4 flex justify-end">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    disabled={!canRemove}
+                    onClick={() => removeCategory(category.key)}
+                    title={
+                      canRemove
+                        ? "Quitar categoría al guardar"
+                        : "Solo puedes quitar categorías sin inscripciones ni cuadro"
                     }
                   >
-                    <option value="individual">Individual</option>
-                    <option value="team">Equipos</option>
-                  </Select>
-                </Field>
+                    <Trash2 className="size-4" />
+                    Quitar
+                  </Button>
+                </div>
 
-                <Field label="Precio">
-                  <MoneyInput
-                    value={category.price}
-                    disabled={!canEdit || registrationSettingsLocked}
-                    onChange={(value) =>
-                      updateCategory(category.key, { price: value })
-                    }
-                  />
-                </Field>
-
-                <Field label="Fecha propia de la categoría">
-                  <DateTimeField
-                    value={category.start_at}
-                    disabled={!canEdit}
-                    onChange={(value) =>
-                      updateCategory(category.key, { start_at: value })
-                    }
-                    placeholder="Usar fecha general"
-                  />
-                </Field>
-
-                <Field label="Ubicación propia de la categoría">
-                  <Input
-                    value={category.address}
-                    disabled={!canEdit}
-                    onChange={(event) =>
-                      updateCategory(category.key, { address: event.target.value })
-                    }
-                    placeholder="Usar ubicación general"
-                  />
-                </Field>
-              </div>
-
-              {form.prize_mode === "per_category" && (
-                <div className="mt-4">
-                  <Field label="Premios de esta categoría">
-                    <Textarea
-                      value={category.prizes}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="Nombre">
+                    <Input
+                      value={category.name}
                       disabled={!canEdit}
-                      className="min-h-24 resize-none"
                       onChange={(event) =>
-                        updateCategory(category.key, { prizes: event.target.value })
+                        updateCategory(category.key, { name: event.target.value })
                       }
                     />
                   </Field>
+
+                  <Field label="Plazas disponibles">
+                    <CapacityInput
+                      capacity={category.max_participants}
+                      disabled={!canEdit}
+                      noMax={category.no_max_participants}
+                      onCapacityChange={(value) =>
+                        updateCategory(category.key, { max_participants: value })
+                      }
+                      onNoMaxChange={(checked) =>
+                        updateCategory(category.key, {
+                          no_max_participants: checked,
+                        })
+                      }
+                    />
+                  </Field>
+
+                  <Field label="Formato de inscripción">
+                    <Select
+                      value={category.participant_type}
+                      disabled={!canEdit || registrationSettingsLocked}
+                      onChange={(event) =>
+                        updateCategory(category.key, {
+                          participant_type: event.target.value as "individual" | "team",
+                        })
+                      }
+                    >
+                      <option value="individual">Individual</option>
+                      <option value="team">Equipos</option>
+                    </Select>
+                  </Field>
+
+                  <Field label="Precio">
+                    <MoneyInput
+                      value={category.price}
+                      disabled={!canEdit || registrationSettingsLocked}
+                      onChange={(value) =>
+                        updateCategory(category.key, { price: value })
+                      }
+                    />
+                  </Field>
+
+                  <Field label="Fecha propia de la categoría">
+                    <DateTimeField
+                      value={category.start_at}
+                      disabled={!canEdit}
+                      onChange={(value) =>
+                        updateCategory(category.key, { start_at: value })
+                      }
+                      placeholder="Usar fecha general"
+                    />
+                  </Field>
+
+                  <Field label="Ubicación propia de la categoría">
+                    <Input
+                      value={category.address}
+                      disabled={!canEdit}
+                      onChange={(event) =>
+                        updateCategory(category.key, { address: event.target.value })
+                      }
+                      placeholder="Usar ubicación general"
+                    />
+                  </Field>
                 </div>
-              )}
-            </div>
+
+                {form.prize_mode === "per_category" && (
+                  <div className="mt-4">
+                    <Field label="Premios de esta categoría">
+                      <Textarea
+                        value={category.prizes}
+                        disabled={!canEdit}
+                        className="min-h-24 resize-none"
+                        onChange={(event) =>
+                          updateCategory(category.key, { prizes: event.target.value })
+                        }
+                      />
+                    </Field>
+                  </div>
+                )}
+              </div>
+            </details>
           )
         })}
       </div>
-
-      <p className="flex items-center gap-2 text-xs text-muted-foreground">
-        <UsersRound className="size-3.5" />
-        Los precios y formatos se bloquean por categoría cuando reciben su primera
-        inscripción.
-      </p>
     </div>
   )
 }

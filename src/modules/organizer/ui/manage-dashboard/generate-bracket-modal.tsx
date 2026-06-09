@@ -4,7 +4,6 @@ import { type FormEvent, useEffect, useState } from "react"
 import { X } from "lucide-react"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -54,6 +53,10 @@ function initialRow(target: BracketTarget): RowState {
 function parsePositiveInt(value: string): number | undefined {
   const parsed = Number.parseInt(value, 10)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
+}
+
+function digitsOnly(value: string): string {
+  return value.replace(/\D/g, "")
 }
 
 function optionsFor(row: RowState): BracketConfig["options"] {
@@ -150,9 +153,9 @@ export function GenerateBracketModal({
           role="dialog"
           aria-modal="true"
           aria-labelledby="generate-bracket-title"
-          className="relative flex max-h-[90vh] w-full max-w-lg flex-col shadow-2xl"
+          className="relative flex max-h-[85vh] w-full max-w-md flex-col shadow-2xl"
         >
-          <CardHeader className="shrink-0 pr-16">
+          <CardHeader className="shrink-0 p-4 pr-14">
             <CardTitle id="generate-bracket-title">{title}</CardTitle>
             {hasCategories && (
               <p className="mt-1 text-sm text-muted-foreground">
@@ -171,8 +174,8 @@ export function GenerateBracketModal({
             </Button>
           </CardHeader>
 
-          <CardContent className="flex min-h-0 flex-auto flex-col">
-            <form className="flex min-h-0 flex-auto flex-col gap-4" onSubmit={handleSubmit}>
+          <CardContent className="flex min-h-0 flex-auto flex-col p-4 pt-0">
+            <form className="flex min-h-0 flex-auto flex-col gap-3" onSubmit={handleSubmit}>
               {totalPending > 0 && (
                 <Alert variant="warning" className="shrink-0">
                   <AlertDescription>
@@ -274,11 +277,6 @@ function TargetRow({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="font-medium text-foreground">{target.name}</span>
-            {target.hasBracket && <Badge variant="secondary">Ya generado</Badge>}
-            <span className="text-xs text-muted-foreground">
-              {target.confirmedCount}{" "}
-              {target.confirmedCount === 1 ? "confirmado" : "confirmados"}
-            </span>
             {target.pendingCount > 0 && (
               <span className="text-xs text-amber-700">
                 {target.pendingCount} sin validar
@@ -359,23 +357,21 @@ function FormatOptions({
         <Label htmlFor={`groups-${keyOf(target)}`}>Número de grupos</Label>
         <Input
           id={`groups-${keyOf(target)}`}
-          type="number"
-          min={2}
+          type="text"
           inputMode="numeric"
           placeholder="Automático"
           value={row.groupCount}
-          onChange={(event) => onChange({ groupCount: event.target.value })}
+          onChange={(event) => onChange({ groupCount: digitsOnly(event.target.value) })}
         />
       </div>
       <div className="space-y-1.5">
         <Label htmlFor={`qualifiers-${keyOf(target)}`}>Clasifican por grupo</Label>
         <Input
           id={`qualifiers-${keyOf(target)}`}
-          type="number"
-          min={1}
+          type="text"
           inputMode="numeric"
           value={row.qualifiers}
-          onChange={(event) => onChange({ qualifiers: event.target.value })}
+          onChange={(event) => onChange({ qualifiers: digitsOnly(event.target.value) })}
         />
       </div>
     </div>

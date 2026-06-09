@@ -21,7 +21,7 @@ const managementErrorMessages: Record<ManagementErrorCode, string> = {
   MANAGEMENT_CATEGORY_CAPACITY_TOO_LOW:
     "Las plazas de una categoría no pueden quedar por debajo de sus inscripciones activas.",
   MANAGEMENT_REGISTRATION_CONFIG_LOCKED:
-    "El precio, método de pago y formato quedan bloqueados cuando ya existen inscripciones.",
+    "El precio y el formato quedan bloqueados cuando ya existen inscripciones.",
   MANAGEMENT_TOURNAMENT_CAPACITY_TOO_LOW:
     "Las plazas del torneo no pueden quedar por debajo de sus inscripciones activas.",
   TOURNAMENT_CANCEL_NOT_ALLOWED: "Solo puedes cancelar torneos publicados o cerrados.",

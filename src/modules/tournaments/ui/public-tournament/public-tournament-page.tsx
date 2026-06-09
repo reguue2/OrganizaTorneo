@@ -4,6 +4,8 @@ import { PublicPage } from "@/components/layout"
 import {
   getRegistrationState,
 } from "@/modules/tournaments/domain"
+import type { OrganizerPublicContact } from "@/modules/profile/domain"
+import { OrganizerContactCard } from "@/modules/profile/ui/organizer-contact-card"
 import { cn } from "@/lib/utils"
 
 import { TournamentCategoriesCard } from "./categories-card"
@@ -15,10 +17,17 @@ import type { PublicTournamentViewData } from "./types"
 function PublicTournamentPage({
   tournament,
   categories,
-}: PublicTournamentViewData) {
+  contact,
+}: PublicTournamentViewData & {
+  contact?: OrganizerPublicContact | null
+}) {
   return (
     <PublicPage size="wide" className="py-6 md:py-8">
-      <PublicTournamentContent tournament={tournament} categories={categories} />
+      <PublicTournamentContent
+        tournament={tournament}
+        categories={categories}
+        contact={contact}
+      />
     </PublicPage>
   )
 }
@@ -26,8 +35,10 @@ function PublicTournamentPage({
 function PublicTournamentContent({
   tournament,
   categories,
+  contact,
   showRegistrationSidebar = true,
 }: PublicTournamentViewData & {
+  contact?: OrganizerPublicContact | null
   showRegistrationSidebar?: boolean
 }) {
   const registrationState = getRegistrationState(tournament)
@@ -92,6 +103,13 @@ function PublicTournamentContent({
 
           {tournament.has_categories && categories.length > 0 && (
             <TournamentCategoriesCard categories={categories} />
+          )}
+
+          {contact && (
+            <OrganizerContactCard
+              contact={contact}
+              tournamentTitle={tournament.title}
+            />
           )}
         </div>
 

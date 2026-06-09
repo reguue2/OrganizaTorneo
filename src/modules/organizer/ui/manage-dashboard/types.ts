@@ -66,3 +66,8 @@ export type ConfigCategoryForm = {
   address: string
   prizes: string
 }
+
+export type SaveNotice = {
+  message: string
+  variant: "destructive" | "success"
+}

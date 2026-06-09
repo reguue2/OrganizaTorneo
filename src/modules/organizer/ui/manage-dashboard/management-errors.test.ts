@@ -31,7 +31,7 @@ describe("management errors", () => {
         "Registration pricing and format cannot change after registrations exist",
         "MANAGEMENT_REGISTRATION_CONFIG_LOCKED"
       )
-    ).toContain("quedan bloqueados")
+    ).toBe("El precio y el formato quedan bloqueados cuando ya existen inscripciones.")
 
     expect(
       mapManagementError(

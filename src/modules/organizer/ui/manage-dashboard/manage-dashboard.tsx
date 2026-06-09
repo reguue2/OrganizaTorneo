@@ -17,15 +17,21 @@ export default function ManageDashboard(props: ManageDashboardProps) {
 
   return (
     <div className="space-y-8">
-      <DashboardHeader tournament={props.tournament} />
-
-      <TournamentFacts tournament={props.tournament} />
+      {dashboard.saveNotice && (
+        <Alert variant={dashboard.saveNotice.variant}>
+          <AlertDescription>{dashboard.saveNotice.message}</AlertDescription>
+        </Alert>
+      )}
 
       {dashboard.pageError && (
         <Alert variant="destructive">
           <AlertDescription>{dashboard.pageError}</AlertDescription>
         </Alert>
       )}
+
+      <DashboardHeader tournament={props.tournament} />
+
+      <TournamentFacts tournament={props.tournament} />
 
       <DashboardTabs
         activeTab={dashboard.activeTab}
@@ -52,7 +58,6 @@ export default function ManageDashboard(props: ManageDashboardProps) {
         />
       ) : (
         <ConfigTab
-          categories={props.categories}
           dashboard={dashboard}
           tournament={props.tournament}
         />
