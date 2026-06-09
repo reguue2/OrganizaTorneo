@@ -120,6 +120,9 @@ export function useDashboardDerivedData({
           id: "general",
           name: "Inscripciones del torneo",
           capacity: tournament.max_participants,
+          categoryId: null as string | null,
+          price: Number(tournament.entry_price ?? 0),
+          participantType: tournament.participant_type,
           views: registrationViews,
         },
       ]
@@ -129,6 +132,9 @@ export function useDashboardDerivedData({
       id: category.id,
       name: category.name,
       capacity: category.max_participants,
+      categoryId: category.id as string | null,
+      price: Number(category.price ?? 0),
+      participantType: category.participant_type,
       views: registrationViews.filter((view) => view.registration.category_id === category.id),
     }))
   }, [tournament, categories, registrationViews])
@@ -140,6 +146,7 @@ export function useDashboardDerivedData({
     groupedViews,
     pendingCashValidations,
     pendingOnlinePayments,
+    registrationViews,
     remainingSpots,
     revenue,
     totalCapacity,

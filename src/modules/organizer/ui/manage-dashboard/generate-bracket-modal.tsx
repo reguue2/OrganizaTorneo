@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { type FormEvent, useEffect, useState } from "react"
 import { X } from "lucide-react"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,44 +13,76 @@ import { Select } from "@/components/ui/select"
 import {
   BRACKET_FORMAT_LABELS,
   type BracketFormat,
-  type BracketOptions,
 } from "@/modules/tournaments/domain"
 
+import type { BracketConfig } from "./types"
+
 const MIN_PARTICIPANTS = 2
+
+export type BracketTarget = {
+  categoryId: string | null
+  name: string
+  confirmedCount: number
+  pendingCount: number
+  hasBracket: boolean
+}
+
+type RowState = {
+  included: boolean
+  format: BracketFormat
+  thirdPlace: boolean
+  doubleRound: boolean
+  groupCount: string
+  qualifiers: string
+}
+
+function keyOf(target: BracketTarget) {
+  return target.categoryId ?? "__general__"
+}
+
+function initialRow(target: BracketTarget): RowState {
+  return {
+    included: target.confirmedCount >= MIN_PARTICIPANTS,
+    format: "single_elimination",
+    thirdPlace: false,
+    doubleRound: false,
+    groupCount: "",
+    qualifiers: "2",
+  }
+}
 
 function parsePositiveInt(value: string): number | undefined {
   const parsed = Number.parseInt(value, 10)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
 }
 
+function optionsFor(row: RowState): BracketConfig["options"] {
+  if (row.format === "single_elimination") return { thirdPlace: row.thirdPlace }
+  if (row.format === "round_robin") return { doubleRound: row.doubleRound }
+  return {
+    groupCount: parsePositiveInt(row.groupCount),
+    qualifiersPerGroup: parsePositiveInt(row.qualifiers),
+  }
+}
+
 export function GenerateBracketModal({
   busy,
-  confirmedCount,
   hasCategories,
-  hasExistingBracket,
   onClose,
   onGenerate,
-  open,
-  pendingCount,
+  targets,
 }: {
   busy: boolean
-  confirmedCount: number
   hasCategories: boolean
-  hasExistingBracket: boolean
   onClose: () => void
-  onGenerate: (format: BracketFormat, options: BracketOptions) => void
-  open: boolean
-  pendingCount: number
+  onGenerate: (configs: BracketConfig[]) => void
+  targets: BracketTarget[]
 }) {
-  const [format, setFormat] = useState<BracketFormat>("single_elimination")
-  const [thirdPlace, setThirdPlace] = useState(false)
-  const [doubleRound, setDoubleRound] = useState(false)
-  const [groupCount, setGroupCount] = useState("")
-  const [qualifiersPerGroup, setQualifiersPerGroup] = useState("2")
+  const [rows, setRows] = useState<Record<string, RowState>>(() =>
+    Object.fromEntries(targets.map((target) => [keyOf(target), initialRow(target)]))
+  )
 
   useEffect(() => {
-    if (!open) return
-
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = "hidden"
 
@@ -63,25 +96,45 @@ export function GenerateBracketModal({
       document.body.style.overflow = previousOverflow
       document.removeEventListener("keydown", onEscape)
     }
-  }, [open, onClose])
+  }, [onClose])
 
-  if (!open) return null
+  const update = (key: string, patch: Partial<RowState>) =>
+    setRows((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }))
 
-  const notEnoughParticipants = confirmedCount < MIN_PARTICIPANTS
+  const eligible = targets.filter((target) => target.confirmedCount >= MIN_PARTICIPANTS)
+  const selectedCount = eligible.filter((target) => rows[keyOf(target)]?.included).length
+  const allEligibleSelected = eligible.length > 0 && selectedCount === eligible.length
+  const totalPending = targets.reduce((sum, target) => sum + target.pendingCount, 0)
 
-  function handleGenerate() {
-    const options: BracketOptions =
-      format === "single_elimination"
-        ? { thirdPlace }
-        : format === "round_robin"
-          ? { doubleRound }
-          : {
-              groupCount: parsePositiveInt(groupCount),
-              qualifiersPerGroup: parsePositiveInt(qualifiersPerGroup),
-            }
-
-    onGenerate(format, options)
+  function toggleAll() {
+    setRows((prev) => {
+      const next = { ...prev }
+      for (const target of eligible) {
+        next[keyOf(target)] = { ...next[keyOf(target)], included: !allEligibleSelected }
+      }
+      return next
+    })
   }
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+
+    const configs: BracketConfig[] = []
+    for (const target of targets) {
+      const row = rows[keyOf(target)]
+      if (!row?.included || target.confirmedCount < MIN_PARTICIPANTS) continue
+      configs.push({
+        categoryId: target.categoryId,
+        format: row.format,
+        options: optionsFor(row),
+      })
+    }
+
+    if (configs.length === 0) return
+    onGenerate(configs)
+  }
+
+  const title = hasCategories ? "Generar cuadros" : "Generar cuadro del torneo"
 
   return (
     <div className="fixed inset-0 z-50">
@@ -97,10 +150,15 @@ export function GenerateBracketModal({
           role="dialog"
           aria-modal="true"
           aria-labelledby="generate-bracket-title"
-          className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto shadow-2xl"
+          className="relative flex max-h-[90vh] w-full max-w-lg flex-col shadow-2xl"
         >
-          <CardHeader className="pr-16">
-            <CardTitle id="generate-bracket-title">Generar cuadro del torneo</CardTitle>
+          <CardHeader className="shrink-0 pr-16">
+            <CardTitle id="generate-bracket-title">{title}</CardTitle>
+            {hasCategories && (
+              <p className="mt-1 text-sm text-muted-foreground">
+                Elige las categorías y el formato de cada cuadro.
+              </p>
+            )}
             <Button
               type="button"
               variant="ghost"
@@ -113,119 +171,212 @@ export function GenerateBracketModal({
             </Button>
           </CardHeader>
 
-          <CardContent className="space-y-5">
-            <Alert variant={notEnoughParticipants ? "warning" : "info"}>
-              <AlertDescription>
-                {notEnoughParticipants ? (
-                  <>
-                    Necesitas al menos {MIN_PARTICIPANTS} participantes confirmados para
-                    generar el cuadro. Ahora mismo hay {confirmedCount}.
-                  </>
-                ) : (
-                  <>
-                    El cuadro se generará con{" "}
-                    <strong>
-                      {confirmedCount}{" "}
-                      {confirmedCount === 1 ? "participante confirmado" : "participantes confirmados"}
-                    </strong>
-                    .
-                    {pendingCount > 0 && (
-                      <>
-                        {" "}
-                        {pendingCount}{" "}
-                        {pendingCount === 1
-                          ? "inscripción sin confirmar no se incluirá"
-                          : "inscripciones sin confirmar no se incluirán"}
-                        .
-                      </>
-                    )}
-                    {hasCategories && " Se generará un cuadro por cada categoría."}
-                  </>
-                )}
-              </AlertDescription>
-            </Alert>
+          <CardContent className="flex min-h-0 flex-auto flex-col">
+            <form className="flex min-h-0 flex-auto flex-col gap-4" onSubmit={handleSubmit}>
+              {totalPending > 0 && (
+                <Alert variant="warning" className="shrink-0">
+                  <AlertDescription>
+                    {totalPending}{" "}
+                    {totalPending === 1
+                      ? "inscripción pendiente de validar no entrará"
+                      : "inscripciones pendientes de validar no entrarán"}{" "}
+                    en el cuadro. Valídalas en «Inscripciones» para incluirlas.
+                  </AlertDescription>
+                </Alert>
+              )}
 
-            <div className="space-y-2">
-              <Label htmlFor="bracket-format">Formato</Label>
-              <Select
-                id="bracket-format"
-                value={format}
-                onChange={(event) => setFormat(event.target.value as BracketFormat)}
-              >
-                <option value="single_elimination">
-                  {BRACKET_FORMAT_LABELS.single_elimination}
-                </option>
-                <option value="round_robin">
-                  {BRACKET_FORMAT_LABELS.round_robin}
-                </option>
-                <option value="groups_knockout">
-                  {BRACKET_FORMAT_LABELS.groups_knockout}
-                </option>
-              </Select>
-            </div>
-
-            {format === "single_elimination" && (
-              <CheckboxRow
-                checked={thirdPlace}
-                onChange={setThirdPlace}
-                label="Incluir partido por el 3.er y 4.º puesto"
-              />
-            )}
-
-            {format === "round_robin" && (
-              <CheckboxRow
-                checked={doubleRound}
-                onChange={setDoubleRound}
-                label="Ida y vuelta (cada cruce se juega dos veces)"
-              />
-            )}
-
-            {format === "groups_knockout" && (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="bracket-groups">Número de grupos</Label>
-                  <Input
-                    id="bracket-groups"
-                    type="number"
-                    min={2}
-                    inputMode="numeric"
-                    placeholder="Automático"
-                    value={groupCount}
-                    onChange={(event) => setGroupCount(event.target.value)}
-                  />
+              {hasCategories && eligible.length > 1 && (
+                <div className="flex shrink-0 items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    {selectedCount} de {eligible.length} categorías seleccionadas
+                  </p>
+                  <Button type="button" size="sm" variant="ghost" onClick={toggleAll}>
+                    {allEligibleSelected ? "Quitar todas" : "Seleccionar todas"}
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bracket-qualifiers">Clasifican por grupo</Label>
-                  <Input
-                    id="bracket-qualifiers"
-                    type="number"
-                    min={1}
-                    inputMode="numeric"
-                    value={qualifiersPerGroup}
-                    onChange={(event) => setQualifiersPerGroup(event.target.value)}
+              )}
+
+              <div className="-mr-1 min-h-0 flex-auto space-y-2 overflow-y-auto pr-1">
+                {targets.map((target) => (
+                  <TargetRow
+                    key={keyOf(target)}
+                    hasCategories={hasCategories}
+                    onChange={(patch) => update(keyOf(target), patch)}
+                    row={rows[keyOf(target)]}
+                    target={target}
                   />
-                </div>
+                ))}
               </div>
-            )}
 
-            <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
-              <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
-                Cancelar
-              </Button>
-              <Button
-                type="button"
-                onClick={handleGenerate}
-                disabled={busy || notEnoughParticipants}
-              >
-                {busy
-                  ? "Generando..."
-                  : hasExistingBracket
-                    ? "Regenerar cuadro"
-                    : "Generar cuadro"}
-              </Button>
-            </div>
+              {eligible.length === 0 && (
+                <Alert variant="warning" className="shrink-0">
+                  <AlertDescription>
+                    Necesitas al menos {MIN_PARTICIPANTS} participantes confirmados
+                    {hasCategories ? " en alguna categoría" : ""} para generar el cuadro.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="flex shrink-0 flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
+                <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={busy || selectedCount === 0}>
+                  {busy
+                    ? "Generando..."
+                    : selectedCount > 1
+                      ? `Generar ${selectedCount} cuadros`
+                      : "Generar cuadro"}
+                </Button>
+              </div>
+            </form>
           </CardContent>
         </Card>
+      </div>
+    </div>
+  )
+}
+
+function TargetRow({
+  hasCategories,
+  onChange,
+  row,
+  target,
+}: {
+  hasCategories: boolean
+  onChange: (patch: Partial<RowState>) => void
+  row: RowState
+  target: BracketTarget
+}) {
+  const enoughParticipants = target.confirmedCount >= MIN_PARTICIPANTS
+  const active = enoughParticipants && (!hasCategories || row.included)
+
+  return (
+    <div
+      className={
+        active
+          ? "rounded-lg border border-border p-3"
+          : "rounded-lg border border-border bg-muted/30 p-3"
+      }
+    >
+      <div className="flex items-start gap-3">
+        {hasCategories && (
+          <input
+            type="checkbox"
+            className="mt-1 size-4 accent-primary"
+            checked={row.included}
+            disabled={!enoughParticipants}
+            onChange={(event) => onChange({ included: event.target.checked })}
+            aria-label={`Generar cuadro de ${target.name}`}
+          />
+        )}
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="font-medium text-foreground">{target.name}</span>
+            {target.hasBracket && <Badge variant="secondary">Ya generado</Badge>}
+            <span className="text-xs text-muted-foreground">
+              {target.confirmedCount}{" "}
+              {target.confirmedCount === 1 ? "confirmado" : "confirmados"}
+            </span>
+            {target.pendingCount > 0 && (
+              <span className="text-xs text-amber-700">
+                {target.pendingCount} sin validar
+              </span>
+            )}
+          </div>
+
+          {!enoughParticipants ? (
+            <p className="mt-1 text-xs text-amber-700">
+              Necesita al menos {MIN_PARTICIPANTS} confirmados.
+            </p>
+          ) : (
+            active && (
+              <div className="mt-3 space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor={`format-${keyOf(target)}`}>Formato</Label>
+                  <Select
+                    id={`format-${keyOf(target)}`}
+                    value={row.format}
+                    onChange={(event) =>
+                      onChange({ format: event.target.value as BracketFormat })
+                    }
+                  >
+                    <option value="single_elimination">
+                      {BRACKET_FORMAT_LABELS.single_elimination}
+                    </option>
+                    <option value="round_robin">
+                      {BRACKET_FORMAT_LABELS.round_robin}
+                    </option>
+                    <option value="groups_knockout">
+                      {BRACKET_FORMAT_LABELS.groups_knockout}
+                    </option>
+                  </Select>
+                </div>
+
+                <FormatOptions onChange={onChange} row={row} target={target} />
+              </div>
+            )
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FormatOptions({
+  onChange,
+  row,
+  target,
+}: {
+  onChange: (patch: Partial<RowState>) => void
+  row: RowState
+  target: BracketTarget
+}) {
+  if (row.format === "single_elimination") {
+    return (
+      <CheckboxRow
+        checked={row.thirdPlace}
+        label="Incluir partido por el 3.er y 4.º puesto"
+        onChange={(thirdPlace) => onChange({ thirdPlace })}
+      />
+    )
+  }
+
+  if (row.format === "round_robin") {
+    return (
+      <CheckboxRow
+        checked={row.doubleRound}
+        label="Ida y vuelta (cada cruce se juega dos veces)"
+        onChange={(doubleRound) => onChange({ doubleRound })}
+      />
+    )
+  }
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <div className="space-y-1.5">
+        <Label htmlFor={`groups-${keyOf(target)}`}>Número de grupos</Label>
+        <Input
+          id={`groups-${keyOf(target)}`}
+          type="number"
+          min={2}
+          inputMode="numeric"
+          placeholder="Automático"
+          value={row.groupCount}
+          onChange={(event) => onChange({ groupCount: event.target.value })}
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor={`qualifiers-${keyOf(target)}`}>Clasifican por grupo</Label>
+        <Input
+          id={`qualifiers-${keyOf(target)}`}
+          type="number"
+          min={1}
+          inputMode="numeric"
+          value={row.qualifiers}
+          onChange={(event) => onChange({ qualifiers: event.target.value })}
+        />
       </div>
     </div>
   )

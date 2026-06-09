@@ -7,6 +7,7 @@ import {
   approveManagedCashRegistrationUseCase,
   cancelManagedRegistrationUseCase,
   confirmManagedOnlineRegistrationUseCase,
+  createManualRegistrationUseCase,
   updateManagedTournamentConfigUseCase,
   updateManagedTournamentStatusUseCase,
 } from "./management-actions-use-cases"
@@ -38,15 +39,49 @@ const UpdateTournamentStatusSchema = z.object({
   nextStatus: TournamentStatusSchema,
 })
 
+const CreateManualRegistrationSchema = z.object({
+  displayName: z.string().trim().min(1),
+  categoryId: z.string().uuid().optional(),
+  contactPhone: z.string().trim().optional(),
+  contactEmail: z
+    .string()
+    .trim()
+    .optional()
+    .refine((value) => !value || z.string().email().safeParse(value).success, {
+      message: "Invalid email",
+    }),
+  markAsPaid: z.boolean(),
+})
+
 const UpdateTournamentConfigSchema = z.object({
   title: z.string().trim().min(1),
   description: z.string().trim().optional(),
   rules: z.string().trim().optional(),
-  province: z.string().trim().optional(),
-  address: z.string().trim().optional(),
-  date: z.string().trim().optional(),
-  registrationDeadline: z.string().trim().optional(),
+  province: z.string().trim().min(1),
+  address: z.string().trim().min(1),
+  date: z.string().trim().min(1),
+  registrationDeadline: z.string().trim().min(1),
   isPublic: z.boolean(),
+  paymentMethod: z.enum(["cash", "online", "both"]),
+  participantType: z.enum(["individual", "team"]).nullable(),
+  entryPrice: z.number().nonnegative(),
+  maxParticipants: z.number().int().positive().nullable(),
+  prizeMode: z.enum(["none", "global", "per_category"]),
+  prizes: z.string().trim().optional(),
+  posterAction: z.enum(["keep", "remove", "replace"]),
+  categories: z.array(
+    z.object({
+      id: z.string().uuid(),
+      isNew: z.boolean(),
+      name: z.string().trim().min(1),
+      participantType: z.enum(["individual", "team"]),
+      price: z.number().nonnegative(),
+      maxParticipants: z.number().int().positive().nullable(),
+      startAt: z.string().trim().nullable(),
+      address: z.string().trim().nullable(),
+      prizes: z.string().trim().nullable(),
+    })
+  ),
 })
 
 async function requireAuthenticatedClient(): Promise<AuthenticatedClientResult> {
@@ -138,7 +173,28 @@ export async function updateManagedTournamentConfig(
     )
   }
 
-  const rawBody = await readJson(request)
+  let formData: FormData
+  try {
+    formData = await request.formData()
+  } catch {
+    return NextResponse.json(
+      createManagementErrorPayload(
+        "Los datos de configuraciÃ³n no son vÃ¡lidos.",
+        "MANAGEMENT_VALIDATION_ERROR"
+      ),
+      { status: 400 }
+    )
+  }
+
+  const configEntry = formData.get("config")
+  let rawBody: unknown = null
+  if (typeof configEntry === "string") {
+    try {
+      rawBody = JSON.parse(configEntry)
+    } catch {
+      rawBody = null
+    }
+  }
   const body = UpdateTournamentConfigSchema.safeParse(rawBody)
 
   if (!body.success) {
@@ -154,16 +210,83 @@ export async function updateManagedTournamentConfig(
   const auth = await requireAuthenticatedClient()
   if (auth.response) return auth.response
 
+  const posterEntry = formData.get("poster")
+  const poster =
+    posterEntry instanceof File && posterEntry.size > 0 ? posterEntry : null
+
+  if (body.data.posterAction === "replace" && !poster) {
+    return NextResponse.json(
+      createManagementErrorPayload(
+        "El cartel debe ser una imagen vÃ¡lida.",
+        "MANAGEMENT_VALIDATION_ERROR"
+      ),
+      { status: 400 }
+    )
+  }
+
   const result = await updateManagedTournamentConfigUseCase({
-    address: emptyToUndefined(body.data.address),
-    date: emptyToUndefined(body.data.date),
+    address: body.data.address,
+    categories: body.data.categories,
+    date: body.data.date,
     description: emptyToUndefined(body.data.description),
+    entryPrice: body.data.entryPrice,
     isPublic: body.data.isPublic,
-    province: emptyToUndefined(body.data.province),
-    registrationDeadline: emptyToUndefined(body.data.registrationDeadline),
+    maxParticipants: body.data.maxParticipants,
+    participantType: body.data.participantType,
+    paymentMethod: body.data.paymentMethod,
+    poster,
+    posterAction: body.data.posterAction,
+    prizeMode: body.data.prizeMode,
+    prizes: emptyToUndefined(body.data.prizes),
+    province: body.data.province,
+    registrationDeadline: body.data.registrationDeadline,
     rules: emptyToUndefined(body.data.rules),
     supabase: auth.supabase,
     title: body.data.title,
+    tournamentId: params.data.tournamentId,
+  })
+
+  return NextResponse.json(result.body, { status: result.status })
+}
+
+export async function createManualRegistration(
+  request: Request,
+  context: RouteContext<{ tournamentId: string }>
+) {
+  const params = TournamentParamsSchema.safeParse(await context.params)
+  if (!params.success) {
+    return NextResponse.json(
+      createManagementErrorPayload(
+        "El torneo no es válido.",
+        "MANAGEMENT_TOURNAMENT_INVALID"
+      ),
+      { status: 400 }
+    )
+  }
+
+  const rawBody = await readJson(request)
+  const body = CreateManualRegistrationSchema.safeParse(rawBody)
+
+  if (!body.success) {
+    return NextResponse.json(
+      createManagementErrorPayload(
+        "Los datos de la inscripción no son válidos.",
+        "MANAGEMENT_VALIDATION_ERROR"
+      ),
+      { status: 400 }
+    )
+  }
+
+  const auth = await requireAuthenticatedClient()
+  if (auth.response) return auth.response
+
+  const result = await createManualRegistrationUseCase({
+    categoryId: body.data.categoryId,
+    contactEmail: emptyToUndefined(body.data.contactEmail),
+    contactPhone: emptyToUndefined(body.data.contactPhone),
+    displayName: body.data.displayName,
+    markAsPaid: body.data.markAsPaid,
+    supabase: auth.supabase,
     tournamentId: params.data.tournamentId,
   })
 

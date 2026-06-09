@@ -47,7 +47,11 @@ export async function getManagedTournamentDashboard(
       is_public,
       min_participants,
       max_participants,
-      entry_price
+      entry_price,
+      participant_type,
+      poster_url,
+      prize_mode,
+      prizes
     `)
     .eq("id", tournamentId)
     .single<TournamentRow & { organizer_id: string }>()
@@ -58,7 +62,7 @@ export async function getManagedTournamentDashboard(
 
   const { data: categoriesData, error: categoriesError } = await supabase
     .from("categories")
-    .select("id,tournament_id,name,price,min_participants,max_participants")
+    .select("id,tournament_id,name,price,min_participants,max_participants,participant_type,start_at,address,prizes")
     .eq("tournament_id", tournamentId)
     .order("name", { ascending: true })
     .returns<CategoryRow[]>()

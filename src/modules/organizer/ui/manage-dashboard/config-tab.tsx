@@ -1,6 +1,6 @@
 import type { CategoryRow, TournamentRow } from "@/modules/organizer/domain"
 
-import { Card, CardContent, CardHeader, CardTitle, SectionBlock } from "./dashboard-cards"
+import { SectionBlock } from "./dashboard-cards"
 import { CategoriesSummary, OperationalSummary } from "./config-summary"
 import { ManagementConfigForm } from "./management-config-form"
 import type { ManageDashboardViewModel } from "./use-manage-dashboard"
@@ -17,19 +17,12 @@ export function ConfigTab({
   return (
     <SectionBlock
       title="Configuración"
-      description="Edita la información pública del torneo y su visibilidad."
+      description="Actualiza la publicación, las condiciones y la estructura operativa del torneo."
     >
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <Card>
-          <CardHeader className="border-b border-border">
-            <CardTitle>Editar información pública</CardTitle>
-          </CardHeader>
-          <CardContent className="p-5">
-            <ManagementConfigForm dashboard={dashboard} tournament={tournament} />
-          </CardContent>
-        </Card>
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <ManagementConfigForm dashboard={dashboard} tournament={tournament} />
 
-        <div className="space-y-4">
+        <div className="space-y-4 xl:sticky xl:top-6">
           <OperationalSummary dashboard={dashboard} tournament={tournament} />
           {categories.length > 0 && <CategoriesSummary categories={categories} />}
         </div>

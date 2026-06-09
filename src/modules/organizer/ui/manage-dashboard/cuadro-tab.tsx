@@ -18,14 +18,22 @@ export function CuadroTab({
   if (!hasBracket) {
     return (
       <div className="mx-auto max-w-md">
-        <TournamentBracketPanel dashboard={dashboard} tournament={tournament} />
+        <TournamentBracketPanel
+          categories={categories}
+          dashboard={dashboard}
+          tournament={tournament}
+        />
       </div>
     )
   }
 
   return (
     <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)] xl:items-start">
-      <TournamentBracketPanel dashboard={dashboard} tournament={tournament} />
+      <TournamentBracketPanel
+        categories={categories}
+        dashboard={dashboard}
+        tournament={tournament}
+      />
       <BracketSections brackets={dashboard.brackets} categories={categories} />
     </div>
   )

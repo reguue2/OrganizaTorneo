@@ -40,6 +40,18 @@ describe("generateSingleElimination", () => {
     expect(countByes(body.rounds[0].matches)).toBe(3)
   })
 
+  it("advances bye winners into the next round instead of leaving placeholders", () => {
+    const body = generateSingleElimination(makeParticipants(5))
+    const semis = body.rounds[1]
+    expect(semis.name).toBe("Semifinales")
+    // The 3 contenders who drew a bye in round 1 are carried into the semis.
+    const advanced = semis.matches
+      .flatMap((match) => [match.slotA, match.slotB])
+      .filter((slot) => slot.kind === "participant")
+    expect(advanced).toHaveLength(3)
+    expect(countByes(semis.matches)).toBe(0)
+  })
+
   it("appends a third place match when requested", () => {
     const body = generateSingleElimination(makeParticipants(4), { thirdPlace: true })
     expect(body.rounds.at(-1)?.name).toBe("Tercer y cuarto puesto")
@@ -79,6 +91,26 @@ describe("generateGroupsKnockout", () => {
     expect(body.groups[1].participants).toHaveLength(4)
     // 2 groups x 2 qualifiers = 4 entrants -> semifinals + final.
     expect(body.knockout.map((round) => round.name)).toEqual(["Semifinales", "Final"])
+  })
+
+  it("advances seeded byes when the qualifier count is not a power of two", () => {
+    const body = generateGroupsKnockout(makeParticipants(12), {
+      groupCount: 3,
+      qualifiersPerGroup: 2,
+    })
+    // 3 groups x 2 qualifiers = 6 entrants -> bracket of 8 with 2 byes.
+    const quarters = body.knockout[0]
+    expect(quarters.name).toBe("Cuartos de final")
+    expect(countByes(quarters.matches)).toBe(2)
+
+    const semis = body.knockout[1]
+    expect(semis.name).toBe("Semifinales")
+    expect(countByes(semis.matches)).toBe(0)
+    // The two seeded slots that drew a bye carry their group label forward.
+    const advanced = semis.matches
+      .flatMap((match) => [match.slotA, match.slotB])
+      .filter((slot) => slot.kind === "placeholder" && slot.label !== "Por definir")
+    expect(advanced).toHaveLength(2)
   })
 })
 

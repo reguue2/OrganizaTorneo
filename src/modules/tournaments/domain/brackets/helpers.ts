@@ -1,4 +1,9 @@
-import type { BracketParticipant, BracketRound, BracketSlot } from "./types"
+import type {
+  BracketMatch,
+  BracketParticipant,
+  BracketRound,
+  BracketSlot,
+} from "./types"
 
 export function shuffle<T>(items: readonly T[], rng: () => number = Math.random): T[] {
   const result = [...items]
@@ -62,9 +67,25 @@ export function groupLetter(index: number): string {
 }
 
 /**
+ * The winner of a match that is already decided without being played: a side
+ * facing a `bye` advances automatically. Returns `null` for real matches (two
+ * contenders), so the caller leaves a "Por definir" placeholder.
+ */
+function decidedWinner(match: BracketMatch): BracketSlot | null {
+  const aBye = match.slotA.kind === "bye"
+  const bBye = match.slotB.kind === "bye"
+  if (aBye && bBye) return { kind: "bye" }
+  if (aBye) return match.slotB
+  if (bBye) return match.slotA
+  return null
+}
+
+/**
  * Builds every round of a single-elimination bracket from the slots of the
  * first round (length must be a power of two). The first round keeps the real
- * slots; later rounds use "Por definir" placeholders (no results in v1).
+ * slots; later rounds use "Por definir" placeholders, except where a side
+ * advanced via a bye — that contender is carried into the next round so the
+ * bracket reads correctly (no stray "Libre" / "Por definir").
  */
 export function buildEliminationRounds(
   firstRoundSlots: BracketSlot[],
@@ -72,9 +93,8 @@ export function buildEliminationRounds(
   options: { thirdPlace?: boolean } = {}
 ): BracketRound[] {
   const size = firstRoundSlots.length
-  const rounds: BracketRound[] = []
 
-  const firstMatches = []
+  const firstMatches: BracketMatch[] = []
   for (let i = 0; i < size / 2; i += 1) {
     firstMatches.push({
       id: `${idPrefix}-r1-m${i + 1}`,
@@ -82,22 +102,38 @@ export function buildEliminationRounds(
       slotB: firstRoundSlots[i * 2 + 1],
     })
   }
-  rounds.push({ name: roundNameForSlots(size), matches: firstMatches })
+
+  const rounds: BracketRound[] = [
+    { name: roundNameForSlots(size), matches: firstMatches },
+  ]
 
   let roundIndex = 2
   let matchCount = size / 4
   while (matchCount >= 1) {
-    const matches = []
+    const matches: BracketMatch[] = []
     for (let i = 0; i < matchCount; i += 1) {
       matches.push({
         id: `${idPrefix}-r${roundIndex}-m${i + 1}`,
-        slotA: { kind: "placeholder", label: "Por definir" } as BracketSlot,
-        slotB: { kind: "placeholder", label: "Por definir" } as BracketSlot,
+        slotA: { kind: "placeholder", label: "Por definir" },
+        slotB: { kind: "placeholder", label: "Por definir" },
       })
     }
     rounds.push({ name: roundNameForSlots(matchCount * 2), matches })
     roundIndex += 1
     matchCount /= 2
+  }
+
+  // Advance decided sides (byes) into the round they feed: match `i` of round
+  // `r` flows into match `floor(i / 2)` of round `r + 1` — slot A when `i` is
+  // even, slot B when odd.
+  for (let r = 0; r < rounds.length - 1; r += 1) {
+    rounds[r].matches.forEach((match, i) => {
+      const winner = decidedWinner(match)
+      if (!winner) return
+      const target = rounds[r + 1].matches[Math.floor(i / 2)]
+      if (i % 2 === 0) target.slotA = winner
+      else target.slotB = winner
+    })
   }
 
   if (options.thirdPlace && size >= 4) {

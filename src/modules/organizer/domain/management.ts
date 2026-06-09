@@ -31,6 +31,10 @@ export type TournamentRow = {
   min_participants: number
   max_participants: number | null
   entry_price: number
+  participant_type: "individual" | "team" | null
+  poster_url: string | null
+  prize_mode: "none" | "global" | "per_category"
+  prizes: string | null
 }
 
 export type CategoryRow = {
@@ -40,6 +44,10 @@ export type CategoryRow = {
   price: number
   min_participants: number
   max_participants: number | null
+  participant_type: "individual" | "team"
+  start_at: string | null
+  address: string | null
+  prizes: string | null
 }
 
 export type RegistrationRow = {

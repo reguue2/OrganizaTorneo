@@ -6,6 +6,15 @@ export type ManagementErrorCode =
   | "MANAGEMENT_REGISTRATION_INVALID"
   | "MANAGEMENT_TOURNAMENT_INVALID"
   | "MANAGEMENT_VALIDATION_ERROR"
+  | "MANAGEMENT_REGISTRATION_DUPLICATE"
+  | "MANAGEMENT_REGISTRATION_WINDOW_CLOSED"
+  | "MANAGEMENT_CATEGORY_FULL"
+  | "MANAGEMENT_TOURNAMENT_FULL"
+  | "MANAGEMENT_CATEGORY_ADD_NOT_ALLOWED"
+  | "MANAGEMENT_CATEGORY_DELETE_NOT_ALLOWED"
+  | "MANAGEMENT_CATEGORY_CAPACITY_TOO_LOW"
+  | "MANAGEMENT_REGISTRATION_CONFIG_LOCKED"
+  | "MANAGEMENT_TOURNAMENT_CAPACITY_TOO_LOW"
   | "TOURNAMENT_CANCEL_NOT_ALLOWED"
   | "TOURNAMENT_CONFIG_NOT_ALLOWED"
   | "TOURNAMENT_FINISH_NOT_ALLOWED"
@@ -30,6 +39,15 @@ const managementErrorCodes = new Set<ManagementErrorCode>([
   "MANAGEMENT_REGISTRATION_INVALID",
   "MANAGEMENT_TOURNAMENT_INVALID",
   "MANAGEMENT_VALIDATION_ERROR",
+  "MANAGEMENT_REGISTRATION_DUPLICATE",
+  "MANAGEMENT_REGISTRATION_WINDOW_CLOSED",
+  "MANAGEMENT_CATEGORY_FULL",
+  "MANAGEMENT_TOURNAMENT_FULL",
+  "MANAGEMENT_CATEGORY_ADD_NOT_ALLOWED",
+  "MANAGEMENT_CATEGORY_DELETE_NOT_ALLOWED",
+  "MANAGEMENT_CATEGORY_CAPACITY_TOO_LOW",
+  "MANAGEMENT_REGISTRATION_CONFIG_LOCKED",
+  "MANAGEMENT_TOURNAMENT_CAPACITY_TOO_LOW",
   "TOURNAMENT_CANCEL_NOT_ALLOWED",
   "TOURNAMENT_CONFIG_NOT_ALLOWED",
   "TOURNAMENT_FINISH_NOT_ALLOWED",
@@ -80,11 +98,57 @@ const managementErrorMatchers: Array<{
     matches: [
       "Draft tournaments must be managed from the creation flow",
       "Only published tournaments can be edited from this panel",
+      "Only published or closed tournaments can be edited from this panel",
     ],
   },
   {
     code: "MANAGEMENT_REGISTRATION_FORBIDDEN",
     matches: ["You cannot manage this registration"],
+  },
+  {
+    code: "MANAGEMENT_REGISTRATION_DUPLICATE",
+    matches: ["A registration already exists with this email or phone"],
+  },
+  {
+    code: "MANAGEMENT_REGISTRATION_WINDOW_CLOSED",
+    matches: ["Tournament status does not allow new registrations"],
+  },
+  {
+    code: "MANAGEMENT_CATEGORY_FULL",
+    matches: ["Category is full"],
+  },
+  {
+    code: "MANAGEMENT_TOURNAMENT_FULL",
+    matches: ["Tournament is full"],
+  },
+  {
+    code: "MANAGEMENT_CATEGORY_ADD_NOT_ALLOWED",
+    matches: ["Categories cannot be added after a bracket exists"],
+  },
+  {
+    code: "MANAGEMENT_CATEGORY_DELETE_NOT_ALLOWED",
+    matches: [
+      "Category cannot be deleted after requests, registrations, or a bracket exist",
+      "Category cannot be deleted after registrations or a bracket exist",
+    ],
+  },
+  {
+    code: "MANAGEMENT_CATEGORY_CAPACITY_TOO_LOW",
+    matches: ["Category capacity cannot be lower than active registrations"],
+  },
+  {
+    code: "MANAGEMENT_REGISTRATION_CONFIG_LOCKED",
+    matches: [
+      "Registration pricing and format cannot change after registrations exist",
+      "Tournament registration config cannot change after requests or registrations exist",
+      "Category registration config cannot change after requests or registrations exist",
+      "Cannot change price after registrations exist",
+      "Cannot change entry price after registrations exist",
+    ],
+  },
+  {
+    code: "MANAGEMENT_TOURNAMENT_CAPACITY_TOO_LOW",
+    matches: ["Tournament capacity cannot be lower than active registrations"],
   },
   {
     code: "REGISTRATION_CASH_APPROVAL_NOT_ALLOWED",

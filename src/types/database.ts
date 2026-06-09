@@ -532,6 +532,17 @@ export type Database = {
         }
         Returns: string
       }
+      create_manual_registration: {
+        Args: {
+          p_category_id?: string
+          p_contact_email?: string
+          p_contact_phone?: string
+          p_display_name: string
+          p_mark_as_paid?: boolean
+          p_tournament_id: string
+        }
+        Returns: Json
+      }
       create_public_registration_request: {
         Args: {
           p_category_id?: string
@@ -574,6 +585,30 @@ export type Database = {
           p_province?: string
           p_registration_deadline?: string
           p_rules?: string
+          p_title: string
+          p_tournament_id: string
+        }
+        Returns: string
+      }
+      update_tournament_management_settings: {
+        Args: {
+          p_address: string
+          p_categories: Json
+          p_date: string
+          p_description: string | null
+          p_entry_price: number
+          p_is_public: boolean
+          p_max_participants: number | null
+          p_participant_type:
+            | Database["public"]["Enums"]["participant_type"]
+            | null
+          p_payment_method: Database["public"]["Enums"]["payment_method_enum"]
+          p_poster_url: string | null
+          p_prize_mode: Database["public"]["Enums"]["prize_mode"]
+          p_prizes: string | null
+          p_province: string
+          p_registration_deadline: string
+          p_rules: string | null
           p_title: string
           p_tournament_id: string
         }

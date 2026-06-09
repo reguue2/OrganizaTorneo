@@ -8,9 +8,25 @@ const managementErrorMessages: Record<ManagementErrorCode, string> = {
   MANAGEMENT_REGISTRATION_INVALID: "La inscripción no es válida.",
   MANAGEMENT_TOURNAMENT_INVALID: "El torneo no es válido.",
   MANAGEMENT_VALIDATION_ERROR: "Los datos enviados no son válidos.",
+  MANAGEMENT_REGISTRATION_DUPLICATE:
+    "Ya existe una inscripción activa con ese teléfono o email.",
+  MANAGEMENT_REGISTRATION_WINDOW_CLOSED:
+    "Solo puedes añadir inscripciones mientras el torneo esté publicado o cerrado.",
+  MANAGEMENT_CATEGORY_FULL: "La categoría ya está completa.",
+  MANAGEMENT_TOURNAMENT_FULL: "El torneo ya está completo.",
+  MANAGEMENT_CATEGORY_ADD_NOT_ALLOWED:
+    "No puedes añadir categorías después de generar un cuadro.",
+  MANAGEMENT_CATEGORY_DELETE_NOT_ALLOWED:
+    "No puedes eliminar una categoría que tenga solicitudes pendientes, inscripciones o un cuadro.",
+  MANAGEMENT_CATEGORY_CAPACITY_TOO_LOW:
+    "Las plazas de una categoría no pueden quedar por debajo de sus inscripciones activas.",
+  MANAGEMENT_REGISTRATION_CONFIG_LOCKED:
+    "El precio, método de pago y formato quedan bloqueados cuando ya existen inscripciones.",
+  MANAGEMENT_TOURNAMENT_CAPACITY_TOO_LOW:
+    "Las plazas del torneo no pueden quedar por debajo de sus inscripciones activas.",
   TOURNAMENT_CANCEL_NOT_ALLOWED: "Solo puedes cancelar torneos publicados o cerrados.",
   TOURNAMENT_CONFIG_NOT_ALLOWED:
-    "Solo puedes editar la configuración mientras el torneo siga publicado.",
+    "Solo puedes editar la configuración de torneos publicados o cerrados.",
   TOURNAMENT_FINISH_NOT_ALLOWED:
     "Solo puedes finalizar torneos publicados o cerrados.",
   TOURNAMENT_REOPEN_DEADLINE_PASSED:

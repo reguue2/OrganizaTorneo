@@ -8,6 +8,7 @@ import {
 } from "./display"
 import { RegistrationActions } from "./registration-actions"
 import { getRegistrationStatusVariant } from "./status-badge"
+import { TruncatedText } from "./truncated-text"
 import type { RegistrationView } from "./types"
 import type { ManageDashboardViewModel } from "./use-manage-dashboard"
 
@@ -26,18 +27,23 @@ export function RegistrationRow({
 }) {
   return (
     <TableRow>
-      <TableCell className="text-center align-middle">
-        <span className="font-medium text-foreground">
-          {view.participant?.display_name ?? "Participante eliminado"}
-        </span>
+      <TableCell className="align-middle">
+        <TruncatedText
+          className="font-medium text-foreground"
+          maxWidthClassName="max-w-[15rem]"
+          text={view.participant?.display_name ?? "Participante eliminado"}
+        />
       </TableCell>
 
       <TableCell className="text-center align-middle text-muted-foreground">
         {view.participant?.contact_phone ?? "Sin teléfono"}
       </TableCell>
 
-      <TableCell className="text-center align-middle text-muted-foreground">
-        {view.participant?.contact_email ?? "Sin email"}
+      <TableCell className="align-middle text-muted-foreground">
+        <TruncatedText
+          maxWidthClassName="max-w-[14rem]"
+          text={view.participant?.contact_email ?? "Sin email"}
+        />
       </TableCell>
 
       <TableCell className="text-center align-middle">

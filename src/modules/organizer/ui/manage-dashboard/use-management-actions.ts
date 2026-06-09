@@ -1,27 +1,32 @@
 import type { TournamentRow } from "@/modules/organizer/domain"
-import type { BracketFormat, BracketOptions } from "@/modules/tournaments/domain"
 
 import {
   areRegistrationsClosed,
   canCancelFromDashboard,
+  canEditTournamentConfig,
   canReopenTournament,
   mapManagementError,
   needsCashValidation,
   needsOnlineValidation,
 } from "./display"
-import { requestManagementAction } from "./management-client"
-import type { ConfigForm, RegistrationView } from "./types"
+import {
+  requestManagementAction,
+  requestManagementConfigUpdate,
+} from "./management-client"
+import type { BracketConfig, ConfigForm, RegistrationView } from "./types"
 
 export function useManagementActions({
   form,
   refresh,
   setBusy,
+  setForm,
   setPageError,
   tournament,
 }: {
   form: ConfigForm
   refresh: () => void
   setBusy: (value: string | null) => void
+  setForm: React.Dispatch<React.SetStateAction<ConfigForm>>
   setPageError: (value: string | null) => void
   tournament: TournamentRow
 }) {
@@ -52,17 +57,78 @@ export function useManagementActions({
     refresh()
   }
 
-  const saveConfig = async () => {
+  const saveConfig = async ({
+    poster,
+    posterAction,
+  }: {
+    poster: File | null
+    posterAction: "keep" | "remove" | "replace"
+  }) => {
     setPageError(null)
 
     if (!form.title.trim()) {
       setPageError("El título es obligatorio.")
-      return
+      return false
     }
 
-    if (tournament.status !== "published") {
-      setPageError("Solo puedes editar la configuración mientras el torneo siga publicado.")
-      return
+    if (!canEditTournamentConfig(tournament)) {
+      setPageError("No puedes editar un torneo finalizado o cancelado.")
+      return false
+    }
+
+    if (!form.province.trim() || !form.address.trim() || !form.date || !form.registration_deadline) {
+      setPageError("Completa provincia, dirección y fechas antes de guardar.")
+      return false
+    }
+
+    const entryPrice = Number(form.entry_price)
+    const maxParticipants = form.no_max_participants
+      ? null
+      : Number(form.max_participants)
+
+    if (!Number.isFinite(entryPrice) || entryPrice < 0) {
+      setPageError("El precio de inscripción no es válido.")
+      return false
+    }
+
+    if (
+      maxParticipants !== null &&
+      (!Number.isInteger(maxParticipants) || maxParticipants < 1)
+    ) {
+      setPageError("Las plazas disponibles deben ser un número mayor que cero.")
+      return false
+    }
+
+    if (form.prize_mode === "global" && !form.prizes.trim()) {
+      setPageError("Describe los premios globales antes de guardar.")
+      return false
+    }
+
+    if (tournament.has_categories && form.categories.length === 0) {
+      setPageError("El torneo debe conservar al menos una categoría.")
+      return false
+    }
+
+    const invalidCategory = form.categories.find((category) => {
+      const price = Number(category.price)
+      const capacity = category.no_max_participants
+        ? null
+        : Number(category.max_participants)
+
+      return (
+        !category.name.trim() ||
+        !Number.isFinite(price) ||
+        price < 0 ||
+        (capacity !== null && (!Number.isInteger(capacity) || capacity < 1)) ||
+        (form.prize_mode === "per_category" && !category.prizes.trim())
+      )
+    })
+
+    if (invalidCategory) {
+      setPageError(
+        "Revisa el nombre, precio, plazas y premios de todas las categorías."
+      )
+      return false
     }
 
     setBusy("save-config")
@@ -71,26 +137,85 @@ export function useManagementActions({
       title: form.title.trim(),
       description: form.description.trim() || undefined,
       rules: form.rules.trim() || undefined,
-      province: form.province.trim() || undefined,
-      address: form.address.trim() || undefined,
-      date: form.date || undefined,
-      registrationDeadline: form.registration_deadline || undefined,
+      province: form.province.trim(),
+      address: form.address.trim(),
+      date: form.date,
+      registrationDeadline: form.registration_deadline,
       isPublic: form.is_public,
+      paymentMethod: form.payment_method,
+      participantType: form.participant_type,
+      entryPrice,
+      maxParticipants,
+      prizeMode: form.prize_mode,
+      prizes: form.prizes.trim() || undefined,
+      posterAction,
+      categories: form.categories.map((category) => ({
+        id: category.id ?? category.key,
+        isNew: category.id === null,
+        name: category.name.trim(),
+        participantType: category.participant_type,
+        price: Number(category.price),
+        maxParticipants: category.no_max_participants
+          ? null
+          : Number(category.max_participants),
+        startAt: category.start_at || null,
+        address: category.address.trim() || null,
+        prizes: category.prizes.trim() || null,
+      })),
     }
 
-    const result = await requestManagementAction(
+    const result = await requestManagementConfigUpdate(
       `/api/organizer/tournaments/${tournament.id}/management/config`,
-      payload
+      payload,
+      poster
     )
 
     setBusy(null)
 
     if (result.error) {
       setPageError(mapManagementError(result.error, result.errorCode))
-      return
+      return false
+    }
+
+    setForm((previous) => ({
+      ...previous,
+      categories: previous.categories.map((category) =>
+        category.id === null ? { ...category, id: category.key } : category
+      ),
+    }))
+    refresh()
+    return true
+  }
+
+  const createManualRegistration = async (input: {
+    displayName: string
+    categoryId?: string
+    contactPhone?: string
+    contactEmail?: string
+    markAsPaid: boolean
+  }): Promise<{ ok: boolean; error?: string }> => {
+    setPageError(null)
+    setBusy("registration:create")
+
+    const result = await requestManagementAction(
+      `/api/organizer/tournaments/${tournament.id}/registrations`,
+      {
+        displayName: input.displayName,
+        categoryId: input.categoryId,
+        contactPhone: input.contactPhone,
+        contactEmail: input.contactEmail,
+        markAsPaid: input.markAsPaid,
+      }
+    )
+
+    setBusy(null)
+
+    if (result.error) {
+      return { ok: false, error: mapManagementError(result.error, result.errorCode) }
     }
 
     refresh()
+    return { ok: true }
   }
 
   const confirmCashRegistration = async (view: RegistrationView) => {
@@ -169,10 +294,7 @@ export function useManagementActions({
     refresh()
   }
 
-  const generateBracket = async (
-    format: BracketFormat,
-    options: BracketOptions
-  ) => {
+  const generateBracket = async (configs: BracketConfig[]) => {
     setPageError(null)
 
     if (!areRegistrationsClosed(tournament)) {
@@ -180,11 +302,16 @@ export function useManagementActions({
       return
     }
 
+    if (configs.length === 0) {
+      setPageError("Selecciona al menos una categoría para generar el cuadro.")
+      return
+    }
+
     setBusy("bracket:generate")
 
     const result = await requestManagementAction(
       `/api/organizer/tournaments/${tournament.id}/bracket`,
-      { format, options }
+      { brackets: configs }
     )
 
     setBusy(null)
@@ -222,6 +349,7 @@ export function useManagementActions({
     cancelRegistration,
     confirmCashRegistration,
     confirmOnlineRegistration,
+    createManualRegistration,
     deleteBracket,
     generateBracket,
     saveConfig,

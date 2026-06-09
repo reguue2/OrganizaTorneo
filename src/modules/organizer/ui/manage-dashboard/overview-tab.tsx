@@ -195,7 +195,6 @@ function CategoryDetails({
                 (active) => active.registration.id === view.registration.id
               )
             ).length ?? 0
-          const missingForMinimum = Math.max(category.min_participants - activeCount, 0)
 
           return (
             <div key={category.id} className="rounded-lg border border-border p-4">
@@ -211,17 +210,6 @@ function CategoryDetails({
                 </div>
                 <Badge variant="secondary">{formatMoney(category.price)}</Badge>
               </div>
-              <p
-                className={
-                  missingForMinimum === 0
-                    ? "mt-4 text-xs font-medium text-emerald-700"
-                    : "mt-4 text-xs font-medium text-amber-700"
-                }
-              >
-                {missingForMinimum === 0
-                  ? "Mínimo alcanzado"
-                  : `Faltan ${missingForMinimum} para el mínimo`}
-              </p>
             </div>
           )
         })}

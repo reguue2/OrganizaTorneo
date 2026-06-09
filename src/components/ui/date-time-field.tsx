@@ -14,6 +14,7 @@ import { Select } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
 type DateTimeFieldProps = {
+  disabled?: boolean
   id?: string
   value: string
   onChange: (value: string) => void
@@ -91,7 +92,13 @@ function isBeforeDay(left: Date, right: Date) {
   return getStartOfDay(left) < getStartOfDay(right)
 }
 
-function DateTimeField({ id, value, onChange, placeholder }: DateTimeFieldProps) {
+function DateTimeField({
+  disabled = false,
+  id,
+  value,
+  onChange,
+  placeholder,
+}: DateTimeFieldProps) {
   const selectedDate = parseDateTime(value)
   const [open, setOpen] = useState(false)
   const [visibleMonth, setVisibleMonth] = useState(() =>
@@ -156,6 +163,7 @@ function DateTimeField({ id, value, onChange, placeholder }: DateTimeFieldProps)
         type="button"
         id={id}
         variant="outline"
+        disabled={disabled}
         className={cn(
           "h-10 w-full justify-start gap-2 px-3 text-left font-normal",
           !selectedDate && "text-muted-foreground"

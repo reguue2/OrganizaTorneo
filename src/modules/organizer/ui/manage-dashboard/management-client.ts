@@ -36,3 +36,36 @@ export async function requestManagementAction(
 
   return { error: "No se pudo completar la operación.", errorCode: null }
 }
+
+export async function requestManagementConfigUpdate(
+  path: string,
+  config: unknown,
+  poster: File | null
+): Promise<ManagementActionResult> {
+  const formData = new FormData()
+  formData.set("config", JSON.stringify(config))
+  if (poster) formData.set("poster", poster)
+
+  const response = await fetch(path, {
+    method: "POST",
+    body: formData,
+  })
+
+  if (response.ok) {
+    return { error: null }
+  }
+
+  try {
+    const payload = (await response.json()) as { code?: unknown; error?: unknown }
+    if (typeof payload.error === "string") {
+      return {
+        error: payload.error,
+        errorCode: isManagementErrorCode(payload.code) ? payload.code : null,
+      }
+    }
+  } catch {
+    // Keep a stable UI error if the server response is not JSON.
+  }
+
+  return { error: "No se pudo guardar la configuración.", errorCode: null }
+}

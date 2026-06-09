@@ -16,7 +16,8 @@ const TournamentParamsSchema = z.object({
   tournamentId: z.string().uuid(),
 })
 
-const GenerateBracketSchema = z.object({
+const BracketConfigSchema = z.object({
+  categoryId: z.string().uuid().nullable(),
   format: z.enum(["single_elimination", "round_robin", "groups_knockout"]),
   options: z
     .object({
@@ -26,6 +27,10 @@ const GenerateBracketSchema = z.object({
       qualifiersPerGroup: z.number().int().positive().max(64).optional(),
     })
     .optional(),
+})
+
+const GenerateBracketSchema = z.object({
+  brackets: z.array(BracketConfigSchema).min(1).max(64),
 })
 
 async function readJson(request: Request) {
@@ -89,8 +94,11 @@ export async function generateTournamentBracket(
   if (auth.response) return auth.response
 
   const result = await generateTournamentBracketsUseCase({
-    format: body.data.format,
-    options: body.data.options ?? {},
+    configs: body.data.brackets.map((bracket) => ({
+      categoryId: bracket.categoryId,
+      format: bracket.format,
+      options: bracket.options ?? {},
+    })),
     supabase: auth.supabase,
     tournamentId: params.data.tournamentId,
   })

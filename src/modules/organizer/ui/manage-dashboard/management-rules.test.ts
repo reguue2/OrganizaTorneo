@@ -4,6 +4,7 @@ import type { CategoryRow, TournamentRow } from "@/modules/organizer/domain"
 
 import {
   canCancelFromDashboard,
+  canEditTournamentConfig,
   getCapacityForTournament,
   needsCashValidation,
   needsOnlineValidation,
@@ -26,6 +27,10 @@ const baseTournament: TournamentRow = {
   min_participants: 1,
   max_participants: 32,
   entry_price: 10,
+  participant_type: "individual",
+  poster_url: null,
+  prize_mode: "none",
+  prizes: null,
 }
 
 const baseRegistrationView: RegistrationView = {
@@ -56,6 +61,10 @@ describe("management dashboard rules", () => {
         price: 10,
         min_participants: 1,
         max_participants: 16,
+        participant_type: "individual",
+        start_at: null,
+        address: null,
+        prizes: null,
       },
       {
         id: "category-b",
@@ -64,6 +73,10 @@ describe("management dashboard rules", () => {
         price: 8,
         min_participants: 1,
         max_participants: 8,
+        participant_type: "individual",
+        start_at: null,
+        address: null,
+        prizes: null,
       },
     ]
 
@@ -87,6 +100,10 @@ describe("management dashboard rules", () => {
             price: 10,
             min_participants: 1,
             max_participants: null,
+            participant_type: "individual",
+            start_at: null,
+            address: null,
+            prizes: null,
           },
         ]
       )
@@ -126,6 +143,19 @@ describe("management dashboard rules", () => {
         ...baseTournament,
         status: "finished",
       })
+    ).toBe(false)
+  })
+
+  it("allows config editing while registrations are open or closed", () => {
+    expect(canEditTournamentConfig(baseTournament)).toBe(true)
+    expect(
+      canEditTournamentConfig({ ...baseTournament, status: "closed" })
+    ).toBe(true)
+    expect(
+      canEditTournamentConfig({ ...baseTournament, status: "finished" })
+    ).toBe(false)
+    expect(
+      canEditTournamentConfig({ ...baseTournament, status: "cancelled" })
     ).toBe(false)
   })
 })

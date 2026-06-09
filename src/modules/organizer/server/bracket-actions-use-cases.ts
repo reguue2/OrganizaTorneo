@@ -21,52 +21,37 @@ function fail(message: string, code?: ManagementErrorCode): BracketUseCaseResult
   return { status: 400, body: createManagementErrorPayload(message, code) }
 }
 
-type GroupedConfirmed = {
+/** One bracket to (re)generate: a category, or the whole tournament (`null`). */
+export type BracketGenerationConfig = {
   categoryId: string | null
-  participants: BracketParticipant[]
+  format: BracketFormat
+  options: BracketOptions
 }
 
-function groupConfirmedParticipants({
-  hasCategories,
-  participantsById,
-  registrations,
-}: {
-  hasCategories: boolean
-  participantsById: Map<string, string>
-  registrations: { participant_id: string; category_id: string | null }[]
-}): GroupedConfirmed[] {
-  const byCategory = new Map<string | null, BracketParticipant[]>()
-
-  for (const registration of registrations) {
-    const name = participantsById.get(registration.participant_id)
-    if (!name) continue
-
-    const key = hasCategories ? registration.category_id : null
-    const current = byCategory.get(key) ?? []
-    current.push({ id: registration.participant_id, name })
-    byCategory.set(key, current)
-  }
-
-  return [...byCategory.entries()].map(([categoryId, participants]) => ({
-    categoryId,
-    participants,
-  }))
+type BracketInsertRow = {
+  tournament_id: string
+  category_id: string | null
+  format: BracketFormat
+  participant_count: number
+  structure: Json
 }
 
 export async function generateTournamentBracketsUseCase({
-  format,
-  options,
+  configs,
   supabase,
   tournamentId,
 }: {
-  format: BracketFormat
-  options: BracketOptions
+  configs: BracketGenerationConfig[]
   supabase: SupabaseServerClient
   tournamentId: string
 }): Promise<BracketUseCaseResult> {
+  if (configs.length === 0) {
+    return fail("Selecciona al menos una categoría para generar el cuadro.")
+  }
+
   const { data: tournament, error: tournamentError } = await supabase
     .from("tournaments")
-    .select("id,organizer_id,status,has_categories")
+    .select("id,status,has_categories")
     .eq("id", tournamentId)
     .single()
 
@@ -75,10 +60,44 @@ export async function generateTournamentBracketsUseCase({
   }
 
   if (tournament.status !== "closed" && tournament.status !== "finished") {
-    return fail(
-      "Cierra las inscripciones antes de generar el cuadro del torneo."
-    )
+    return fail("Cierra las inscripciones antes de generar el cuadro del torneo.")
   }
+
+  // Validate that the requested configs match the tournament structure.
+  const categoryNames = new Map<string, string>()
+
+  if (tournament.has_categories) {
+    const { data: categories, error: categoriesError } = await supabase
+      .from("categories")
+      .select("id,name")
+      .eq("tournament_id", tournamentId)
+
+    if (categoriesError) {
+      return fail(categoriesError.message)
+    }
+
+    for (const category of categories ?? []) {
+      categoryNames.set(category.id, category.name)
+    }
+
+    for (const config of configs) {
+      if (!config.categoryId || !categoryNames.has(config.categoryId)) {
+        return fail(
+          "Una de las categorías seleccionadas no es válida.",
+          "MANAGEMENT_VALIDATION_ERROR"
+        )
+      }
+    }
+  } else if (configs.length !== 1 || configs[0].categoryId !== null) {
+    return fail("La configuración del cuadro no es válida.", "MANAGEMENT_VALIDATION_ERROR")
+  }
+
+  // Last config wins if a category is listed twice.
+  const byCategory = new Map<string | null, BracketGenerationConfig>()
+  for (const config of configs) {
+    byCategory.set(config.categoryId, config)
+  }
+  const selected = [...byCategory.values()]
 
   const { data: registrations, error: registrationsError } = await supabase
     .from("registrations")
@@ -93,8 +112,8 @@ export async function generateTournamentBracketsUseCase({
   const confirmed = registrations ?? []
   const participantIds = [...new Set(confirmed.map((row) => row.participant_id))]
 
-  if (participantIds.length < 2) {
-    return fail("No hay suficientes participantes confirmados para generar el cuadro.")
+  if (participantIds.length === 0) {
+    return fail("No hay participantes confirmados para generar el cuadro.")
   }
 
   const { data: participants, error: participantsError } = await supabase
@@ -106,50 +125,83 @@ export async function generateTournamentBracketsUseCase({
     return fail(participantsError.message)
   }
 
-  const participantsById = new Map(
+  const nameById = new Map(
     (participants ?? []).map((participant) => [participant.id, participant.display_name])
   )
 
-  const groups = groupConfirmedParticipants({
-    hasCategories: tournament.has_categories,
-    participantsById,
-    registrations: confirmed,
-  }).filter((group) => group.participants.length >= 2)
-
-  if (groups.length === 0) {
-    return fail(
-      "Cada bloque necesita al menos 2 participantes confirmados para generar el cuadro."
-    )
+  const participantsForCategory = (categoryId: string | null): BracketParticipant[] => {
+    const seen = new Set<string>()
+    const result: BracketParticipant[] = []
+    for (const registration of confirmed) {
+      if (tournament.has_categories && registration.category_id !== categoryId) continue
+      if (seen.has(registration.participant_id)) continue
+      const name = nameById.get(registration.participant_id)
+      if (!name) continue
+      seen.add(registration.participant_id)
+      result.push({ id: registration.participant_id, name })
+    }
+    return result
   }
 
-  const rows = groups.map((group) => {
+  const rows: BracketInsertRow[] = []
+  for (const config of selected) {
+    const groupParticipants = participantsForCategory(config.categoryId)
+
+    if (groupParticipants.length < 2) {
+      const label = config.categoryId
+        ? categoryNames.get(config.categoryId) ?? "La categoría"
+        : "El torneo"
+      return fail(
+        `«${label}» necesita al menos 2 participantes confirmados para generar el cuadro.`
+      )
+    }
+
     const structure = buildBracketStructure({
-      format,
-      options,
-      participants: group.participants,
+      format: config.format,
+      options: config.options,
+      participants: groupParticipants,
     })
 
-    return {
+    rows.push({
       tournament_id: tournamentId,
-      category_id: group.categoryId,
-      format,
-      participant_count: group.participants.length,
+      category_id: config.categoryId,
+      format: config.format,
+      participant_count: groupParticipants.length,
       structure: structure as unknown as Json,
-    }
-  })
-
-  const { error: deleteError } = await supabase
-    .from("tournament_brackets")
-    .delete()
-    .eq("tournament_id", tournamentId)
-
-  if (deleteError) {
-    return fail(deleteError.message)
+    })
   }
 
-  const { error: insertError } = await supabase
-    .from("tournament_brackets")
-    .insert(rows)
+  // Delete only the brackets we are regenerating so other categories survive.
+  const categoryIdsToReplace = selected
+    .map((config) => config.categoryId)
+    .filter((id): id is string => id !== null)
+  const replacesGeneral = selected.some((config) => config.categoryId === null)
+
+  if (categoryIdsToReplace.length > 0) {
+    const { error } = await supabase
+      .from("tournament_brackets")
+      .delete()
+      .eq("tournament_id", tournamentId)
+      .in("category_id", categoryIdsToReplace)
+
+    if (error) {
+      return fail(error.message)
+    }
+  }
+
+  if (replacesGeneral) {
+    const { error } = await supabase
+      .from("tournament_brackets")
+      .delete()
+      .eq("tournament_id", tournamentId)
+      .is("category_id", null)
+
+    if (error) {
+      return fail(error.message)
+    }
+  }
+
+  const { error: insertError } = await supabase.from("tournament_brackets").insert(rows)
 
   if (insertError) {
     return fail(insertError.message)

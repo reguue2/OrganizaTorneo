@@ -7,6 +7,19 @@ declare
   v_seed_user uuid := '00000000-0000-4000-8000-000000000001';
   v_seed_email text := 'seed.organizer@example.com';
   v_seed_password text := 'Password123!';
+  v_target record;
+  v_index integer;
+  v_bulk_index integer := 0;
+  v_participant_id uuid;
+  v_registration_id uuid;
+  v_payment_id uuid;
+  v_registration_status public.registration_status;
+  v_registration_payment_method public.registration_payment_method;
+  v_payment_status public.payment_status;
+  v_created_at timestamp with time zone;
+  v_display_name text;
+  v_contact_phone text;
+  v_contact_email text;
 begin
   -- Local login user for the organizer panel:
   --   email: seed.organizer@example.com
@@ -1014,6 +1027,243 @@ begin
       null,
       now() - interval '6 days'
     );
+
+  -- Add enough registrations to exercise participant lists, filters, counters,
+  -- categories and brackets in representative seeded tournaments. Some
+  -- published and closed tournaments intentionally remain empty so structural
+  -- configuration and manual-registration flows can still be tested after a
+  -- reset. The capacity trigger is disabled only for this controlled block so
+  -- full tournaments can also keep historical cancelled and expired records.
+  alter table public.registrations disable trigger check_registration_before_insert;
+
+  for v_target in
+    select *
+    from (
+      select
+        t.id as tournament_id,
+        null::uuid as category_id,
+        t.title as target_name,
+        t.participant_type,
+        t.payment_method,
+        t.status as tournament_status,
+        t.entry_price as price,
+        case
+          when t.status = 'cancelled' then 0
+          else least(
+            6,
+            greatest(
+              coalesce(t.max_participants, count(r.id)::integer + 6) - count(r.id)::integer,
+              0
+            )
+          )
+        end as active_slots
+      from public.tournaments t
+      left join public.registrations r
+        on r.tournament_id = t.id
+        and r.category_id is null
+        and r.status not in ('cancelled', 'expired')
+      where t.organizer_id = v_seed_user
+        and not t.has_categories
+      group by
+        t.id,
+        t.title,
+        t.participant_type,
+        t.payment_method,
+        t.entry_price,
+        t.max_participants,
+        t.status
+
+      union all
+
+      select
+        t.id as tournament_id,
+        c.id as category_id,
+        t.title || ' / ' || c.name as target_name,
+        c.participant_type,
+        t.payment_method,
+        t.status as tournament_status,
+        c.price,
+        case
+          when t.status = 'cancelled' then 0
+          else least(
+            6,
+            greatest(
+              coalesce(c.max_participants, count(r.id)::integer + 6) - count(r.id)::integer,
+              0
+            )
+          )
+        end as active_slots
+      from public.tournaments t
+      join public.categories c on c.tournament_id = t.id
+      left join public.registrations r
+        on r.category_id = c.id
+        and r.status not in ('cancelled', 'expired')
+      where t.organizer_id = v_seed_user
+        and t.has_categories
+      group by
+        t.id,
+        c.id,
+        t.title,
+        c.name,
+        c.participant_type,
+        t.payment_method,
+        c.price,
+        c.max_participants,
+        t.status
+    ) targets
+    where tournament_id in (
+      '10000000-0000-4000-8000-000000000001',
+      '10000000-0000-4000-8000-000000000002',
+      '10000000-0000-4000-8000-000000000003',
+      '10000000-0000-4000-8000-000000000004',
+      '10000000-0000-4000-8000-000000000005',
+      '10000000-0000-4000-8000-000000000007',
+      '10000000-0000-4000-8000-000000000008',
+      '10000000-0000-4000-8000-000000000010',
+      '10000000-0000-4000-8000-000000000012'
+    )
+    order by tournament_id, category_id nulls first
+  loop
+    for v_index in 1..10
+    loop
+      v_bulk_index := v_bulk_index + 1;
+      v_participant_id := md5('seed-bulk-participant-' || v_bulk_index::text)::uuid;
+      v_registration_id := md5('seed-bulk-registration-' || v_bulk_index::text)::uuid;
+      v_payment_id := md5('seed-bulk-payment-' || v_bulk_index::text)::uuid;
+      v_created_at := now() - make_interval(days => 15 - v_index);
+      v_contact_phone := '610' || lpad(v_bulk_index::text, 6, '0');
+      v_contact_email := 'bulk-' || lpad(v_bulk_index::text, 3, '0') || '@seed.local';
+      v_display_name :=
+        case
+          when v_target.participant_type = 'team' then 'Seed Equipo '
+          else 'Seed Participante '
+        end
+        || lpad(v_index::text, 2, '0')
+        || ' - '
+        || v_target.target_name;
+
+      if v_target.payment_method = 'both' then
+        v_registration_payment_method :=
+          case
+            when mod(v_index, 2) = 0 then 'online'::public.registration_payment_method
+            else 'cash'::public.registration_payment_method
+          end;
+      else
+        v_registration_payment_method :=
+          v_target.payment_method::text::public.registration_payment_method;
+      end if;
+
+      if v_index > v_target.active_slots then
+        v_registration_status :=
+          case
+            when mod(v_index, 2) = 0 then 'expired'::public.registration_status
+            else 'cancelled'::public.registration_status
+          end;
+      elsif v_target.tournament_status = 'finished'::public.tournament_status then
+        v_registration_status := 'confirmed'::public.registration_status;
+      elsif mod(v_index, 4) = 0 then
+        v_registration_status :=
+          case
+            when v_registration_payment_method = 'online'
+              then 'pending_online_payment'::public.registration_status
+            else 'pending_cash_validation'::public.registration_status
+          end;
+      else
+        v_registration_status := 'confirmed'::public.registration_status;
+      end if;
+
+      v_payment_status :=
+        case
+          when v_registration_status = 'confirmed' then 'paid'::public.payment_status
+          when v_registration_status = 'cancelled' then 'refunded'::public.payment_status
+          else 'pending'::public.payment_status
+        end;
+
+      insert into public.participants (
+        id,
+        type,
+        display_name,
+        contact_phone,
+        contact_email,
+        players,
+        created_at,
+        source_registration_id
+      )
+      values (
+        v_participant_id,
+        v_target.participant_type,
+        v_display_name,
+        v_contact_phone,
+        v_contact_email,
+        null,
+        v_created_at,
+        v_registration_id
+      );
+
+      insert into public.registrations (
+        id,
+        category_id,
+        status,
+        payment_method,
+        created_at,
+        participant_id,
+        tournament_id,
+        public_reference,
+        contact_email_normalized,
+        contact_phone_normalized,
+        cancel_code_hash,
+        cancel_token_hash,
+        cancelled_at
+      )
+      values (
+        v_registration_id,
+        v_target.category_id,
+        v_registration_status,
+        v_registration_payment_method,
+        v_created_at,
+        v_participant_id,
+        v_target.tournament_id,
+        'SEED-BULK-' || lpad(v_bulk_index::text, 3, '0'),
+        public.normalize_email(v_contact_email),
+        public.normalize_spanish_phone(v_contact_phone),
+        null,
+        public.sha256_hex('seed-bulk-cancel-token-' || v_bulk_index::text),
+        case
+          when v_registration_status = 'cancelled' then v_created_at + interval '2 days'
+          else null
+        end
+      );
+
+      insert into public.payments (
+        id,
+        registration_id,
+        amount,
+        currency,
+        payment_method,
+        status,
+        stripe_payment_intent_id,
+        paid_at,
+        created_at
+      )
+      values (
+        v_payment_id,
+        v_registration_id,
+        v_target.price,
+        'eur',
+        v_registration_payment_method,
+        v_payment_status,
+        case
+          when v_payment_status = 'paid' and v_registration_payment_method = 'online'
+            then 'pi_seed_bulk_' || lpad(v_bulk_index::text, 3, '0')
+          else null
+        end,
+        case when v_payment_status = 'paid' then v_created_at else null end,
+        v_created_at
+      );
+    end loop;
+  end loop;
+
+  alter table public.registrations enable trigger check_registration_before_insert;
 
   insert into public.registration_requests (
     id,

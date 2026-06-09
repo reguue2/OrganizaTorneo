@@ -14,9 +14,9 @@ function FixtureRow({ match }: { match: BracketMatch }) {
 
   return (
     <li className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-sm">
-      <SlotLabel slot={match.slotA} className="justify-self-end text-right" />
+      <SlotLabel slot={match.slotA} className="text-right" />
       <span className="shrink-0 text-xs text-muted-foreground">vs</span>
-      <SlotLabel slot={match.slotB} className="justify-self-start text-left" />
+      <SlotLabel slot={match.slotB} className="text-left" />
     </li>
   )
 }

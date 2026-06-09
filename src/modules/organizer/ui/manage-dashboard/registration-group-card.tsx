@@ -1,3 +1,9 @@
+"use client"
+
+import { useCallback, useState } from "react"
+import { UserPlus } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -7,6 +13,7 @@ import {
 } from "@/components/ui/table"
 import type { TournamentRow } from "@/modules/organizer/domain"
 
+import { AddRegistrationModal } from "./add-registration-modal"
 import {
   Card,
   CardContent,
@@ -27,18 +34,26 @@ export function RegistrationGroupCard({
   busy,
   cancelRegistration,
   confirmCashRegistration,
+  createManualRegistration,
   group,
   tournament,
 }: {
   busy: string | null
   cancelRegistration: ManageDashboardViewModel["cancelRegistration"]
   confirmCashRegistration: ManageDashboardViewModel["confirmCashRegistration"]
+  createManualRegistration: ManageDashboardViewModel["createManualRegistration"]
   group: RegistrationGroup
   tournament: TournamentRow
 }) {
+  const [addOpen, setAddOpen] = useState(false)
+  const closeAdd = useCallback(() => setAddOpen(false), [])
+
   const activeGroupCount = group.views.filter((view) =>
     isActiveRegistration(view.registration.status)
   ).length
+
+  const canAddRegistration =
+    tournament.status === "published" || tournament.status === "closed"
 
   return (
     <Card className="overflow-hidden">
@@ -52,11 +67,26 @@ export function RegistrationGroupCard({
           </p>
         </div>
 
-        {tournament.has_categories && group.views.length > 0 && (
-          <p className="text-sm text-muted-foreground">
-            Precio: {formatMoney(group.views[0]?.category?.price ?? 0)}
-          </p>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {tournament.has_categories && (
+            <p className="text-sm text-muted-foreground">
+              Precio: {formatMoney(group.price)}
+            </p>
+          )}
+
+          {canAddRegistration && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="whitespace-nowrap"
+              onClick={() => setAddOpen(true)}
+            >
+              <UserPlus className="size-4" />
+              Añadir inscripción
+            </Button>
+          )}
+        </div>
       </CardHeader>
 
       {group.views.length === 0 ? (
@@ -70,6 +100,23 @@ export function RegistrationGroupCard({
           confirmCashRegistration={confirmCashRegistration}
           tournament={tournament}
           views={group.views}
+        />
+      )}
+
+      {addOpen && (
+        <AddRegistrationModal
+          busy={busy === "registration:create"}
+          groupName={group.name}
+          hasCategories={tournament.has_categories}
+          onClose={closeAdd}
+          onSubmit={(input) =>
+            createManualRegistration({
+              ...input,
+              categoryId: group.categoryId ?? undefined,
+            })
+          }
+          participantType={group.participantType}
+          price={group.price}
         />
       )}
     </Card>

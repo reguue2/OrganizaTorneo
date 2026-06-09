@@ -10,7 +10,7 @@ export function SlotLabel({
 }) {
   if (slot.kind === "participant") {
     return (
-      <span className={cn("truncate font-medium text-foreground", className)}>
+      <span className={cn("block min-w-0 truncate font-medium text-foreground", className)}>
         {slot.name}
       </span>
     )
@@ -18,14 +18,14 @@ export function SlotLabel({
 
   if (slot.kind === "bye") {
     return (
-      <span className={cn("truncate italic text-muted-foreground", className)}>
+      <span className={cn("block min-w-0 truncate italic text-muted-foreground", className)}>
         Libre
       </span>
     )
   }
 
   return (
-    <span className={cn("truncate text-muted-foreground", className)}>
+    <span className={cn("block min-w-0 truncate text-muted-foreground", className)}>
       {slot.label}
     </span>
   )

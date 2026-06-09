@@ -46,6 +46,10 @@ export function canReopenTournament(tournament: TournamentRow) {
   return deadline > new Date()
 }
 
+export function canEditTournamentConfig(tournament: TournamentRow) {
+  return tournament.status === "published" || tournament.status === "closed"
+}
+
 export function isActiveRegistration(status: RegistrationStatus | null) {
   if (!status) return false
   return ACTIVE_REGISTRATION_STATUSES.includes(status)

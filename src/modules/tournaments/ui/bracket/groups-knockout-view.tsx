@@ -23,7 +23,7 @@ export function GroupsKnockoutView({ body }: { body: GroupsKnockoutBody }) {
                   <span className="w-5 shrink-0 text-right text-xs text-muted-foreground">
                     {index + 1}.
                   </span>
-                  <span className="truncate font-medium text-foreground">
+                  <span className="min-w-0 flex-1 truncate font-medium text-foreground">
                     {participant.name}
                   </span>
                 </li>

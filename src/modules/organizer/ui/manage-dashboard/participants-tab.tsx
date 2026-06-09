@@ -23,6 +23,7 @@ export function ParticipantsTab({
           busy={busy}
           cancelRegistration={dashboard.cancelRegistration}
           confirmCashRegistration={dashboard.confirmCashRegistration}
+          createManualRegistration={dashboard.createManualRegistration}
           group={group}
           tournament={tournament}
         />
