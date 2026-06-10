@@ -110,12 +110,23 @@ export function buildEliminationRounds(
   let roundIndex = 2
   let matchCount = size / 4
   while (matchCount >= 1) {
+    // Each match `m` of this round is fed by matches `2m` (slot A) and `2m + 1`
+    // (slot B) of the round we just built; record that link as the slot source.
+    const feederRound = rounds[rounds.length - 1]
     const matches: BracketMatch[] = []
     for (let i = 0; i < matchCount; i += 1) {
       matches.push({
         id: `${idPrefix}-r${roundIndex}-m${i + 1}`,
-        slotA: { kind: "placeholder", label: "Por definir" },
-        slotB: { kind: "placeholder", label: "Por definir" },
+        slotA: {
+          kind: "placeholder",
+          label: "Por definir",
+          source: { type: "winner", matchId: feederRound.matches[i * 2].id },
+        },
+        slotB: {
+          kind: "placeholder",
+          label: "Por definir",
+          source: { type: "winner", matchId: feederRound.matches[i * 2 + 1].id },
+        },
       })
     }
     rounds.push({ name: roundNameForSlots(matchCount * 2), matches })
@@ -137,13 +148,27 @@ export function buildEliminationRounds(
   }
 
   if (options.thirdPlace && size >= 4) {
+    // The 3rd place match is contested by the two semifinal losers.
+    const semifinals = rounds.find((round) => round.matches.length === 2)
     rounds.push({
       name: "Tercer y cuarto puesto",
       matches: [
         {
           id: `${idPrefix}-third`,
-          slotA: { kind: "placeholder", label: "Perdedor semifinal 1" },
-          slotB: { kind: "placeholder", label: "Perdedor semifinal 2" },
+          slotA: {
+            kind: "placeholder",
+            label: "Perdedor semifinal 1",
+            source: semifinals
+              ? { type: "loser", matchId: semifinals.matches[0].id }
+              : undefined,
+          },
+          slotB: {
+            kind: "placeholder",
+            label: "Perdedor semifinal 2",
+            source: semifinals
+              ? { type: "loser", matchId: semifinals.matches[1].id }
+              : undefined,
+          },
         },
       ],
     })

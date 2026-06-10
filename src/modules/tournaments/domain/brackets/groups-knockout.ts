@@ -44,21 +44,31 @@ function buildKnockoutSkeleton(
   groupNames: string[],
   qualifiersPerGroup: number
 ): BracketRound[] {
-  const ranked: string[] = []
+  const ranked: { label: string; group: string; position: number }[] = []
   for (let position = 1; position <= qualifiersPerGroup; position += 1) {
     // Alternate group order per position so 1st and 2nd of the same group
     // are placed on opposite sides of the bracket.
     const order = position % 2 === 1 ? groupNames : [...groupNames].reverse()
     for (const name of order) {
-      ranked.push(`${position}º ${name}`)
+      ranked.push({ label: `${position}º ${name}`, group: name, position })
     }
   }
 
   const size = nextPowerOfTwo(Math.max(ranked.length, 2))
   const order = seedOrder(size)
   const firstRoundSlots: BracketSlot[] = order.map((seed) => {
-    const label = ranked[seed - 1]
-    return label ? { kind: "placeholder", label } : { kind: "bye" }
+    const entry = ranked[seed - 1]
+    return entry
+      ? {
+          kind: "placeholder",
+          label: entry.label,
+          source: {
+            type: "group_qualifier",
+            group: entry.group,
+            position: entry.position,
+          },
+        }
+      : { kind: "bye" }
   })
 
   return buildEliminationRounds(firstRoundSlots, "gko")

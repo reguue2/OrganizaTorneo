@@ -5,9 +5,14 @@ import {
 } from "@/modules/organizer/domain"
 import {
   buildBracketStructure,
+  findMatchById,
+  resolveBracket,
+  setMatchResult,
   type BracketFormat,
   type BracketOptions,
   type BracketParticipant,
+  type BracketStructure,
+  type MatchResult,
 } from "@/modules/tournaments/domain"
 import type { Json } from "@/types/database"
 
@@ -205,6 +210,92 @@ export async function generateTournamentBracketsUseCase({
 
   if (insertError) {
     return fail(insertError.message)
+  }
+
+  return { status: 200, body: { ok: true } }
+}
+
+export async function setBracketMatchResultUseCase({
+  bracketId,
+  matchId,
+  result,
+  supabase,
+  tournamentId,
+}: {
+  bracketId: string
+  matchId: string
+  result: MatchResult | null
+  supabase: SupabaseServerClient
+  tournamentId: string
+}): Promise<BracketUseCaseResult> {
+  const { data: bracket, error } = await supabase
+    .from("tournament_brackets")
+    .select("id,structure")
+    .eq("id", bracketId)
+    .eq("tournament_id", tournamentId)
+    .single()
+
+  if (error || !bracket) {
+    return fail("No se encontró el cuadro.", "MANAGEMENT_TOURNAMENT_INVALID")
+  }
+
+  const { data: tournament, error: tournamentError } = await supabase
+    .from("tournaments")
+    .select("status")
+    .eq("id", tournamentId)
+    .single()
+
+  if (tournamentError || !tournament) {
+    return fail("No se encontró el torneo.", "MANAGEMENT_TOURNAMENT_INVALID")
+  }
+
+  if (tournament.status !== "closed" && tournament.status !== "finished") {
+    return fail("Cierra las inscripciones antes de registrar resultados.")
+  }
+
+  const structure = bracket.structure as unknown as BracketStructure
+
+  if (!findMatchById(structure.body, matchId)) {
+    return fail("El partido no existe en el cuadro.", "MANAGEMENT_VALIDATION_ERROR")
+  }
+
+  // Can only record a result once both contenders are known.
+  if (result !== null) {
+    const resolvedMatch = findMatchById(resolveBracket(structure).body, matchId)
+    if (
+      !resolvedMatch ||
+      resolvedMatch.slotA.kind !== "participant" ||
+      resolvedMatch.slotB.kind !== "participant"
+    ) {
+      return fail("Este partido aún no tiene definidos sus dos participantes.")
+    }
+  }
+
+  let nextStructure: BracketStructure
+  try {
+    nextStructure = setMatchResult(structure, matchId, result)
+  } catch (cause) {
+    console.error("[bracket:setResult] failed to apply result", { matchId, cause })
+    return fail("No se pudo registrar el resultado.", "MANAGEMENT_VALIDATION_ERROR")
+  }
+
+  const { data: updated, error: updateError } = await supabase
+    .from("tournament_brackets")
+    .update({ structure: nextStructure as unknown as Json })
+    .eq("id", bracketId)
+    .select("id")
+
+  if (updateError) {
+    console.error("[bracket:setResult] failed to persist structure", {
+      bracketId,
+      message: updateError.message,
+    })
+    return fail(updateError.message)
+  }
+
+  if (!updated || updated.length === 0) {
+    console.error("[bracket:setResult] update affected no rows", { bracketId })
+    return fail("No se pudo guardar el resultado. Vuelve a intentarlo.")
   }
 
   return { status: 200, body: { ok: true } }

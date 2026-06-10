@@ -11,9 +11,12 @@ import { cn } from "@/lib/utils"
 import type { CategoryRow, TournamentRow } from "@/modules/organizer/domain"
 import {
   BRACKET_FORMAT_LABELS,
+  setMatchResult,
+  type BracketStructure,
+  type MatchResult,
   type TournamentBracketRow,
 } from "@/modules/tournaments/domain"
-import { BracketView } from "@/modules/tournaments/ui/bracket"
+import { BracketResultsProvider, BracketView } from "@/modules/tournaments/ui/bracket"
 import { ShareTournamentButton } from "@/modules/tournaments/ui/public-tournament/share-tournament-button"
 
 import { areRegistrationsClosed } from "./display"
@@ -36,6 +39,8 @@ export function CuadroTab({
   const [modalOpen, setModalOpen] = useState(false)
   const [warning, setWarning] = useState<string | null>(null)
   const [activeKey, setActiveKey] = useState<string | null>(null)
+  const [overrides, setOverrides] = useState<Record<string, BracketStructure>>({})
+  const [savingMatchId, setSavingMatchId] = useState<string | null>(null)
 
   const closed = areRegistrationsClosed(tournament)
   const brackets = dashboard.brackets
@@ -93,6 +98,47 @@ export function CuadroTab({
   const ordered = [...brackets].sort((a, b) => nameFor(a).localeCompare(nameFor(b)))
   const active =
     ordered.find((bracket) => bracketKey(bracket.category_id) === activeKey) ?? ordered[0]
+
+  const activeStructure: BracketStructure | null = active
+    ? overrides[active.id] ?? active.structure
+    : null
+
+  async function handleSaveResult(
+    matchId: string,
+    result: MatchResult | null
+  ): Promise<{ ok: boolean; error?: string }> {
+    if (!active || !activeStructure) {
+      return { ok: false, error: "No hay ningún cuadro activo." }
+    }
+    const bracketId = active.id
+
+    // Apply the change optimistically with the same pure function the server
+    // uses, so the score and any winner advancement appear instantly.
+    let optimistic: BracketStructure
+    try {
+      optimistic = setMatchResult(activeStructure, matchId, result)
+    } catch {
+      return { ok: false, error: "No se pudo aplicar el resultado al cuadro." }
+    }
+
+    setOverrides((prev) => ({ ...prev, [bracketId]: optimistic }))
+    setSavingMatchId(matchId)
+
+    const response = await dashboard.saveMatchResult(bracketId, matchId, result)
+
+    setSavingMatchId(null)
+
+    if (!response.ok) {
+      setOverrides((prev) => {
+        const next = { ...prev }
+        delete next[bracketId]
+        return next
+      })
+      return { ok: false, error: response.error }
+    }
+
+    return { ok: true }
+  }
 
   function openModal() {
     if (!closed) {
@@ -230,10 +276,23 @@ export function CuadroTab({
 
       <Card>
         <CardContent className="space-y-3 p-4">
-          <div className="flex justify-end">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              {closed
+                ? "Toca un partido para registrar el resultado."
+                : "Cierra las inscripciones para poder registrar resultados."}
+            </p>
             <Badge variant="secondary">{BRACKET_FORMAT_LABELS[active.format]}</Badge>
           </div>
-          <BracketView structure={active.structure} />
+          {activeStructure && (
+            <BracketResultsProvider
+              canEdit={closed}
+              savingMatchId={savingMatchId}
+              onSaveResult={handleSaveResult}
+            >
+              <BracketView structure={activeStructure} />
+            </BracketResultsProvider>
+          )}
         </CardContent>
       </Card>
 

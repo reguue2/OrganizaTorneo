@@ -1,1313 +1,1306 @@
--- Development seed data for public registration and organizer flows.
--- Safe to rerun: it replaces only tournaments owned by the seed organizer and
--- participant records using the @seed.local test domain.
+-- Local development seed for OrganizaTorneo.
+--
+-- Run from the repository root with:
+--   pnpm exec supabase db reset
+--
+-- Test organizer accounts:
+--   seed.organizer@example.com / Password123!
+--   marina.organizer@example.com / Password123!
+--
+-- Predictable public-flow secrets:
+--   Pending verification request code: 123456
+--   Registration cancellation code:    654321
 
-do $$
-declare
-  v_seed_user uuid := '00000000-0000-4000-8000-000000000001';
-  v_seed_email text := 'seed.organizer@example.com';
-  v_seed_password text := 'Password123!';
-  v_target record;
-  v_index integer;
-  v_bulk_index integer := 0;
-  v_participant_id uuid;
-  v_registration_id uuid;
-  v_payment_id uuid;
-  v_registration_status public.registration_status;
-  v_registration_payment_method public.registration_payment_method;
-  v_payment_status public.payment_status;
-  v_created_at timestamp with time zone;
-  v_display_name text;
-  v_contact_phone text;
-  v_contact_email text;
-begin
-  -- Local login user for the organizer panel:
-  --   email: seed.organizer@example.com
-  --   password: Password123!
-  insert into auth.users (
-    instance_id,
-    id,
-    aud,
-    role,
-    email,
-    encrypted_password,
-    email_confirmed_at,
-    raw_app_meta_data,
-    raw_user_meta_data,
-    created_at,
-    updated_at,
-    confirmation_token,
-    email_change,
-    email_change_token_new,
-    recovery_token
-  )
-  values (
+select set_config('app.bypass_registration_window', 'on', false);
+
+-- ---------------------------------------------------------------------------
+-- Organizer accounts
+-- ---------------------------------------------------------------------------
+
+insert into auth.users (
+  instance_id,
+  id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  created_at,
+  updated_at,
+  confirmation_token,
+  recovery_token,
+  email_change_token_new,
+  email_change
+)
+values
+  (
     '00000000-0000-0000-0000-000000000000',
-    v_seed_user,
+    '10000000-0000-4000-8000-000000000001',
     'authenticated',
     'authenticated',
-    v_seed_email,
-    extensions.crypt(v_seed_password, extensions.gen_salt('bf')),
-    now(),
+    'seed.organizer@example.com',
+    extensions.crypt('Password123!', extensions.gen_salt('bf')),
+    now() - interval '180 days',
     '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"name":"Organizador Seed"}'::jsonb,
-    now(),
-    now(),
+    '{"name":"Daniel Romero"}'::jsonb,
+    now() - interval '180 days',
+    now() - interval '2 hours',
     '',
     '',
     '',
     ''
-  )
-  on conflict (id) do update
-  set
-    email = excluded.email,
-    encrypted_password = excluded.encrypted_password,
-    email_confirmed_at = excluded.email_confirmed_at,
-    raw_app_meta_data = excluded.raw_app_meta_data,
-    raw_user_meta_data = excluded.raw_user_meta_data,
-    updated_at = now();
-
-  insert into auth.identities (
-    id,
-    user_id,
-    identity_data,
-    provider,
-    provider_id,
-    last_sign_in_at,
-    created_at,
-    updated_at
-  )
-  values (
-    '00000000-0000-4000-8000-000000000002',
-    v_seed_user,
-    jsonb_build_object(
-      'sub', v_seed_user::text,
-      'email', v_seed_email,
-      'email_verified', true,
-      'phone_verified', false
-    ),
-    'email',
-    v_seed_email,
-    now(),
-    now(),
-    now()
-  )
-  on conflict (provider_id, provider) do update
-  set
-    user_id = excluded.user_id,
-    identity_data = excluded.identity_data,
-    updated_at = now();
-
-  insert into public.users (id, email, name, phone, created_at)
-  values (
-    v_seed_user,
-    v_seed_email,
-    'Organizador Seed',
-    '+34 600 000 000',
-    now()
-  )
-  on conflict (id) do update
-  set
-    email = excluded.email,
-    name = excluded.name,
-    phone = excluded.phone;
-
-  delete from public.registration_requests
-  where tournament_id in (
-    select id from public.tournaments where organizer_id = v_seed_user
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '10000000-0000-4000-8000-000000000002',
+    'authenticated',
+    'authenticated',
+    'marina.organizer@example.com',
+    extensions.crypt('Password123!', extensions.gen_salt('bf')),
+    now() - interval '90 days',
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{"name":"Marina Torres"}'::jsonb,
+    now() - interval '90 days',
+    now() - interval '1 day',
+    '',
+    '',
+    '',
+    ''
   );
 
-  delete from public.tournaments
-  where organizer_id = v_seed_user;
+insert into auth.identities (
+  id,
+  user_id,
+  provider_id,
+  identity_data,
+  provider,
+  last_sign_in_at,
+  created_at,
+  updated_at
+)
+values
+  (
+    '11000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000001',
+    '{"sub":"10000000-0000-4000-8000-000000000001","email":"seed.organizer@example.com","email_verified":true}'::jsonb,
+    'email',
+    now() - interval '2 hours',
+    now() - interval '180 days',
+    now() - interval '2 hours'
+  ),
+  (
+    '11000000-0000-4000-8000-000000000002',
+    '10000000-0000-4000-8000-000000000002',
+    '10000000-0000-4000-8000-000000000002',
+    '{"sub":"10000000-0000-4000-8000-000000000002","email":"marina.organizer@example.com","email_verified":true}'::jsonb,
+    'email',
+    now() - interval '1 day',
+    now() - interval '90 days',
+    now() - interval '1 day'
+  );
 
-  delete from public.participants
-  where contact_email ilike '%@seed.local';
+update public.users
+set
+  name = 'Daniel Romero',
+  phone = '+34 952 410 286',
+  whatsapp = '+34 611 240 873',
+  public_contact = true,
+  stripe_account_id = 'acct_seed_daniel'
+where id = '10000000-0000-4000-8000-000000000001';
 
-  insert into public.tournaments (
-    id,
-    organizer_id,
-    title,
-    description,
-    poster_url,
-    prizes,
-    rules,
-    province,
-    address,
-    date,
-    max_participants,
-    registration_deadline,
-    payment_method,
-    is_public,
-    status,
-    has_categories,
-    min_participants,
-    prize_mode,
-    entry_price,
-    participant_type
-  )
-  values
-    (
-      '10000000-0000-4000-8000-000000000001',
-      v_seed_user,
-      '[Seed] Individual gratis, efectivo',
-      'Caso base: sin categorias, individual, gratis y pago en efectivo.',
-      null,
-      null,
-      'Llega 10 minutos antes del inicio.',
-      'Madrid',
-      'Centro Deportivo Municipal, pista 1',
-      now() + interval '21 days',
-      32,
-      now() + interval '14 days',
-      'cash',
-      true,
-      'published',
-      false,
-      1,
-      'none',
-      0,
-      'individual'
-    ),
-    (
-      '10000000-0000-4000-8000-000000000002',
-      v_seed_user,
-      '[Seed] Equipos, efectivo',
-      'Sin categorias, equipos, precio fijo y validacion manual en efectivo.',
-      null,
-      'Trofeo y material deportivo.',
-      'Inscripcion por equipo completo.',
-      'Barcelona',
-      'Pabellon Marina, pista central',
-      now() + interval '24 days',
-      16,
-      now() + interval '17 days',
-      'cash',
-      true,
-      'published',
-      false,
-      1,
-      'global',
-      25,
-      'team'
-    ),
-    (
-      '10000000-0000-4000-8000-000000000003',
-      v_seed_user,
-      '[Seed] Individual, online',
-      'Sin categorias, individual, precio fijo y pago online.',
-      null,
-      null,
-      null,
-      'Valencia',
-      'Club Norte, pista 3',
-      now() + interval '26 days',
-      24,
-      now() + interval '18 days',
-      'online',
-      true,
-      'published',
-      false,
-      1,
-      'none',
-      15,
-      'individual'
-    ),
-    (
-      '10000000-0000-4000-8000-000000000004',
-      v_seed_user,
-      '[Seed] Equipos, efectivo y online',
-      'Sin categorias, equipos, precio fijo y ambos metodos de pago.',
-      null,
-      null,
-      null,
-      'Sevilla',
-      'Polideportivo Sur, campo 2',
-      now() + interval '28 days',
-      20,
-      now() + interval '20 days',
-      'both',
-      true,
-      'published',
-      false,
-      1,
-      'none',
-      30,
-      'team'
-    ),
-    (
-      '10000000-0000-4000-8000-000000000005',
-      v_seed_user,
-      '[Seed] Categorias mixtas, ambos pagos',
-      'Con categorias de distinto formato y precio para probar selector y resumen.',
-      null,
-      null,
-      'Cada categoria puede tener un horario propio.',
-      'Madrid',
-      'Complejo Deportivo Oeste',
-      now() + interval '31 days',
-      null,
-      now() + interval '22 days',
-      'both',
-      true,
-      'published',
-      true,
-      1,
-      'none',
-      0,
-      null
-    ),
-    (
-      '10000000-0000-4000-8000-000000000006',
-      v_seed_user,
-      '[Seed] Una categoria, efectivo',
-      'Con una unica categoria para comprobar seleccion automatica.',
-      null,
-      null,
-      null,
-      'Bilbao',
-      'Fronton Municipal',
-      now() + interval '33 days',
-      null,
-      now() + interval '25 days',
-      'cash',
-      true,
-      'published',
-      true,
-      1,
-      'none',
-      0,
-      null
-    ),
-    (
-      '10000000-0000-4000-8000-000000000007',
-      v_seed_user,
-      '[Seed] Torneo lleno',
-      'Sin categorias y una sola plaza ocupada.',
-      null,
-      null,
-      null,
-      'Malaga',
-      'Pista Municipal 4',
-      now() + interval '19 days',
-      1,
-      now() + interval '12 days',
-      'cash',
-      true,
-      'published',
-      false,
-      1,
-      'none',
-      8,
-      'individual'
-    ),
-    (
-      '10000000-0000-4000-8000-000000000008',
-      v_seed_user,
-      '[Seed] Categoria llena',
-      'Con categorias y una categoria ya sin plazas.',
-      null,
-      null,
-      null,
-      'Zaragoza',
-      'CD Ebro, pabellon 1',
-      now() + interval '34 days',
-      null,
-      now() + interval '26 days',
-      'online',
-      true,
-      'published',
-      true,
-      1,
-      'none',
-      0,
-      null
-    ),
-    (
-      '10000000-0000-4000-8000-000000000009',
-      v_seed_user,
-      '[Seed] Inscripciones cerradas',
-      'Estado cerrado para probar copy y bloqueo del formulario.',
-      null,
-      null,
-      null,
-      'Alicante',
-      'Ciudad Deportiva',
-      now() + interval '15 days',
-      20,
-      now() - interval '1 day',
-      'cash',
-      true,
-      'closed',
-      false,
-      1,
-      'none',
-      12,
-      'individual'
-    ),
-    (
-      '10000000-0000-4000-8000-000000000010',
-      v_seed_user,
-      '[Seed] Torneo finalizado',
-      'Estado finalizado para probar rutas publicas no inscribibles.',
-      null,
-      null,
-      null,
-      'Granada',
-      'Pabellon Central',
-      now() - interval '2 days',
-      16,
-      now() - interval '9 days',
-      'both',
-      true,
-      'finished',
-      false,
-      1,
-      'none',
-      10,
-      'team'
-    ),
-    (
-      '10000000-0000-4000-8000-000000000011',
-      v_seed_user,
-      '[Seed] Oculto por enlace, online',
-      'No aparece en explorar, pero permite probar acceso directo por URL.',
-      null,
-      null,
-      null,
-      'Cordoba',
-      'Instalacion privada',
-      now() + interval '29 days',
-      12,
-      now() + interval '21 days',
-      'online',
-      false,
-      'published',
-      false,
-      1,
-      'none',
-      18,
-      'individual'
-    ),
-    (
-      '10000000-0000-4000-8000-000000000012',
-      v_seed_user,
-      '[Seed] Torneo cancelado',
-      'Estado cancelado para comprobar mensajes publicos.',
-      null,
-      null,
-      null,
-      'Murcia',
-      'Centro Deportivo Este',
-      now() + interval '18 days',
-      20,
-      now() + interval '10 days',
-      'cash',
-      true,
-      'cancelled',
-      false,
-      1,
-      'none',
-      6,
-      'individual'
-    );
+update public.users
+set
+  name = 'Marina Torres',
+  phone = '+34 954 228 194',
+  whatsapp = '+34 622 318 451',
+  public_contact = false
+where id = '10000000-0000-4000-8000-000000000002';
 
-  insert into public.categories (
-    id,
-    tournament_id,
-    name,
-    price,
-    min_participants,
-    max_participants,
-    start_at,
-    address,
-    prizes,
-    participant_type
-  )
-  values
-    (
-      '20000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-8000-000000000005',
-      'Juvenil individual',
-      0,
-      1,
-      24,
-      now() + interval '31 days 10 hours',
-      'Pista 1',
-      null,
-      'individual'
-    ),
-    (
-      '20000000-0000-4000-8000-000000000002',
-      '10000000-0000-4000-8000-000000000005',
-      'Senior individual',
-      12,
-      1,
-      32,
-      now() + interval '31 days 12 hours',
-      'Pista 2',
-      null,
-      'individual'
-    ),
-    (
-      '20000000-0000-4000-8000-000000000003',
-      '10000000-0000-4000-8000-000000000005',
-      'Equipos mixtos',
-      30,
-      1,
-      16,
-      now() + interval '31 days 16 hours',
-      'Campo 1',
-      null,
-      'team'
-    ),
-    (
-      '20000000-0000-4000-8000-000000000004',
-      '10000000-0000-4000-8000-000000000006',
-      'Absoluta',
-      10,
-      1,
-      24,
-      now() + interval '33 days 10 hours',
-      null,
-      null,
-      'team'
-    ),
-    (
-      '20000000-0000-4000-8000-000000000005',
-      '10000000-0000-4000-8000-000000000008',
-      'Sub 18 completa',
-      9,
-      1,
-      1,
-      now() + interval '34 days 10 hours',
-      null,
-      null,
-      'individual'
-    ),
-    (
-      '20000000-0000-4000-8000-000000000006',
-      '10000000-0000-4000-8000-000000000008',
-      'Abierta con plazas',
-      14,
-      1,
-      20,
-      now() + interval '34 days 12 hours',
-      null,
-      null,
-      'individual'
-    );
+-- ---------------------------------------------------------------------------
+-- Tournaments and categories
+-- ---------------------------------------------------------------------------
 
-  insert into public.participants (
-    id,
-    type,
-    display_name,
-    contact_phone,
-    contact_email,
-    players,
-    source_registration_id
-  )
-  values
-    (
-      '30000000-0000-4000-8000-000000000001',
-      'individual',
-      'Seed Participante Gratis',
-      '600100001',
-      'gratis@seed.local',
-      null,
-      '40000000-0000-4000-8000-000000000001'
-    ),
-    (
-      '30000000-0000-4000-8000-000000000002',
-      'team',
-      'Seed Equipo Efectivo',
-      '600100002',
-      'efectivo@seed.local',
-      null,
-      '40000000-0000-4000-8000-000000000002'
-    ),
-    (
-      '30000000-0000-4000-8000-000000000003',
-      'individual',
-      'Seed Online Pendiente',
-      '600100003',
-      'online-pendiente@seed.local',
-      null,
-      '40000000-0000-4000-8000-000000000003'
-    ),
-    (
-      '30000000-0000-4000-8000-000000000004',
-      'team',
-      'Seed Equipo Online Confirmado',
-      '600100004',
-      'online-confirmado@seed.local',
-      null,
-      '40000000-0000-4000-8000-000000000004'
-    ),
-    (
-      '30000000-0000-4000-8000-000000000005',
-      'individual',
-      'Seed Plaza Ocupada',
-      '600100005',
-      'torneo-lleno@seed.local',
-      null,
-      '40000000-0000-4000-8000-000000000005'
-    ),
-    (
-      '30000000-0000-4000-8000-000000000006',
-      'individual',
-      'Seed Categoria Ocupada',
-      '600100006',
-      'categoria-llena@seed.local',
-      null,
-      '40000000-0000-4000-8000-000000000006'
-    ),
-    (
-      '30000000-0000-4000-8000-000000000007',
-      'individual',
-      'Seed Cancelado',
-      '600100007',
-      'cancelado@seed.local',
-      null,
-      '40000000-0000-4000-8000-000000000007'
-    ),
-    (
-      '30000000-0000-4000-8000-000000000008',
-      'team',
-      'Los Halcones',
-      '600100008',
-      'halcones@seed.local',
-      null,
-      '40000000-0000-4000-8000-000000000008'
-    ),
-    (
-      '30000000-0000-4000-8000-000000000009',
-      'team',
-      'Club Norte',
-      '600100009',
-      'club-norte@seed.local',
-      null,
-      '40000000-0000-4000-8000-000000000009'
-    ),
-    (
-      '30000000-0000-4000-8000-000000000010',
-      'team',
-      'Titanes Madrid',
-      '600100010',
-      'titanes@seed.local',
-      null,
-      '40000000-0000-4000-8000-000000000010'
-    ),
-    (
-      '30000000-0000-4000-8000-000000000011',
-      'team',
-      'Barrio Unido',
-      '600100011',
-      'barrio-unido@seed.local',
-      null,
-      '40000000-0000-4000-8000-000000000011'
-    ),
-    (
-      '30000000-0000-4000-8000-000000000012',
-      'team',
-      'Deportivo Sur',
-      '600100012',
-      'deportivo-sur@seed.local',
-      null,
-      '40000000-0000-4000-8000-000000000012'
-    ),
-    (
-      '30000000-0000-4000-8000-000000000013',
-      'team',
-      'Rayo Azul',
-      '600100013',
-      'rayo-azul@seed.local',
-      null,
-      '40000000-0000-4000-8000-000000000013'
-    ),
-    (
-      '30000000-0000-4000-8000-000000000014',
-      'team',
-      'Unión Central',
-      '600100014',
-      'union-central@seed.local',
-      null,
-      '40000000-0000-4000-8000-000000000014'
-    );
+insert into public.tournaments (
+  id,
+  organizer_id,
+  title,
+  description,
+  poster_url,
+  prizes,
+  rules,
+  province,
+  address,
+  date,
+  max_participants,
+  registration_deadline,
+  payment_method,
+  is_public,
+  status,
+  created_at,
+  has_categories,
+  min_participants,
+  prize_mode,
+  entry_price,
+  updated_at,
+  participant_type
+)
+values
+  (
+    '20000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000001',
+    'Copa Costa del Sol de Pádel 2026',
+    'Fin de semana de pádel para clubes y parejas de toda Andalucía. Incluye fase de grupos, eliminatorias y actividades para acompañantes.',
+    null,
+    null,
+    'Partidos al mejor de tres sets con súper tie-break a diez puntos. Diez minutos de cortesía. La organización facilitará bolas nuevas en cada ronda.',
+    'Málaga',
+    'Club Deportivo El Candado, Avenida Principal 3, Málaga',
+    now() + interval '14 days',
+    null,
+    now() - interval '1 day',
+    'both',
+    true,
+    'closed',
+    now() - interval '75 days',
+    true,
+    1,
+    'per_category',
+    0,
+    now() - interval '1 day',
+    null
+  ),
+  (
+    '20000000-0000-4000-8000-000000000002',
+    '10000000-0000-4000-8000-000000000001',
+    'Liga Municipal de Tenis Primavera',
+    'Liga individual abierta a jugadores aficionados. Cada participante tendrá un mínimo de tres partidos.',
+    null,
+    'Trofeo, material deportivo y bono de clases para los tres primeros puestos.',
+    'Partidos a dos sets cortos y súper tie-break de desempate. Se aplicará el reglamento RFET.',
+    'Málaga',
+    'Ciudad Deportiva de Carranque, Avenida Santa Rosa de Lima 7, Málaga',
+    now() + interval '45 days',
+    32,
+    now() + interval '30 days',
+    'both',
+    true,
+    'published',
+    now() - interval '20 days',
+    false,
+    8,
+    'global',
+    18,
+    now() - interval '3 hours',
+    'individual'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000003',
+    '10000000-0000-4000-8000-000000000001',
+    'Open de Ajedrez Villa de Málaga 2026',
+    'Open suizo para jugadores federados y aficionados celebrado en el centro histórico.',
+    null,
+    '1.º: 500 €, 2.º: 300 €, 3.º: 150 € y premio especial sub-18.',
+    'Ritmo de juego de 15 minutos más 10 segundos por jugada. Sistema de desempate Buchholz.',
+    'Málaga',
+    'Centro Cultural Provincial, Calle Ollerías 34, Málaga',
+    now() - interval '30 days',
+    16,
+    now() - interval '45 days',
+    'online',
+    true,
+    'finished',
+    now() - interval '120 days',
+    false,
+    8,
+    'global',
+    10,
+    now() - interval '29 days',
+    'individual'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000004',
+    '10000000-0000-4000-8000-000000000001',
+    'Torneo Solidario de Fútbol 7',
+    'Jornada benéfica a favor del deporte base local.',
+    null,
+    'Trofeos para campeón, subcampeón y equipo más deportivo.',
+    'Plantillas de hasta doce jugadores. Partidos de dos tiempos de veinte minutos.',
+    'Málaga',
+    'Campos Municipales de Guadalmar, Calle Wilkinson 12, Málaga',
+    now() + interval '20 days',
+    16,
+    now() + interval '10 days',
+    'cash',
+    true,
+    'cancelled',
+    now() - interval '40 days',
+    false,
+    4,
+    'global',
+    80,
+    now() - interval '2 days',
+    'team'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000005',
+    '10000000-0000-4000-8000-000000000001',
+    'Copa Universitaria de Baloncesto 3x3',
+    'Borrador de torneo universitario pendiente de confirmar instalación y horarios.',
+    null,
+    null,
+    null,
+    'Málaga',
+    null,
+    now() + interval '80 days',
+    24,
+    now() + interval '65 days',
+    'cash',
+    false,
+    'draft',
+    now() - interval '3 days',
+    false,
+    4,
+    'none',
+    30,
+    now() - interval '2 hours',
+    'team'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000006',
+    '10000000-0000-4000-8000-000000000002',
+    'Circuito Sevillano de Vóley Playa',
+    'Prueba abierta por parejas con cuadro principal y consolación.',
+    null,
+    'Material deportivo para las parejas finalistas.',
+    'Parejas de dos jugadores. Partidos a un set de 21 puntos.',
+    'Sevilla',
+    'Centro Deportivo San Pablo, Avenida Doctor Laffón Soto, Sevilla',
+    now() + interval '60 days',
+    24,
+    now() + interval '40 days',
+    'online',
+    true,
+    'published',
+    now() - interval '10 days',
+    false,
+    4,
+    'global',
+    24,
+    now() - interval '5 hours',
+    'team'
+  );
 
-  insert into public.registrations (
-    id,
-    category_id,
-    status,
-    payment_method,
-    created_at,
-    participant_id,
-    tournament_id,
-    public_reference,
-    contact_email_normalized,
-    contact_phone_normalized,
-    cancel_code_hash,
-    cancel_token_hash,
-    cancelled_at
-  )
-  values
-    (
-      '40000000-0000-4000-8000-000000000001',
-      null,
-      'confirmed',
-      'cash',
-      now() - interval '6 days',
-      '30000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-8000-000000000001',
-      'SEED-FREE-001',
-      public.normalize_email('gratis@seed.local'),
-      public.normalize_spanish_phone('600100001'),
-      extensions.crypt('111111', extensions.gen_salt('bf')),
-      public.sha256_hex('seed-cancel-token-001'),
-      null
-    ),
-    (
-      '40000000-0000-4000-8000-000000000002',
-      null,
-      'pending_cash_validation',
-      'cash',
-      now() - interval '5 days',
-      '30000000-0000-4000-8000-000000000002',
-      '10000000-0000-4000-8000-000000000002',
-      'SEED-CASH-001',
-      public.normalize_email('efectivo@seed.local'),
-      public.normalize_spanish_phone('600100002'),
-      extensions.crypt('222222', extensions.gen_salt('bf')),
-      public.sha256_hex('seed-cancel-token-002'),
-      null
-    ),
-    (
-      '40000000-0000-4000-8000-000000000003',
-      null,
-      'pending_online_payment',
-      'online',
-      now() - interval '4 days',
-      '30000000-0000-4000-8000-000000000003',
-      '10000000-0000-4000-8000-000000000003',
-      'SEED-ONLINE-001',
-      public.normalize_email('online-pendiente@seed.local'),
-      public.normalize_spanish_phone('600100003'),
-      extensions.crypt('333333', extensions.gen_salt('bf')),
-      public.sha256_hex('seed-cancel-token-003'),
-      null
-    ),
-    (
-      '40000000-0000-4000-8000-000000000004',
-      null,
-      'confirmed',
-      'online',
-      now() - interval '3 days',
-      '30000000-0000-4000-8000-000000000004',
-      '10000000-0000-4000-8000-000000000004',
-      'SEED-BOTH-001',
-      public.normalize_email('online-confirmado@seed.local'),
-      public.normalize_spanish_phone('600100004'),
-      extensions.crypt('444444', extensions.gen_salt('bf')),
-      public.sha256_hex('seed-cancel-token-004'),
-      null
-    ),
-    (
-      '40000000-0000-4000-8000-000000000005',
-      null,
-      'confirmed',
-      'cash',
-      now() - interval '2 days',
-      '30000000-0000-4000-8000-000000000005',
-      '10000000-0000-4000-8000-000000000007',
-      'SEED-FULL-001',
-      public.normalize_email('torneo-lleno@seed.local'),
-      public.normalize_spanish_phone('600100005'),
-      extensions.crypt('555555', extensions.gen_salt('bf')),
-      public.sha256_hex('seed-cancel-token-005'),
-      null
-    ),
-    (
-      '40000000-0000-4000-8000-000000000006',
-      '20000000-0000-4000-8000-000000000005',
-      'confirmed',
-      'online',
-      now() - interval '2 days',
-      '30000000-0000-4000-8000-000000000006',
-      '10000000-0000-4000-8000-000000000008',
-      'SEED-CATFULL-001',
-      public.normalize_email('categoria-llena@seed.local'),
-      public.normalize_spanish_phone('600100006'),
-      extensions.crypt('666666', extensions.gen_salt('bf')),
-      public.sha256_hex('seed-cancel-token-006'),
-      null
-    ),
-    (
-      '40000000-0000-4000-8000-000000000007',
-      null,
-      'cancelled',
-      'cash',
-      now() - interval '7 days',
-      '30000000-0000-4000-8000-000000000007',
-      '10000000-0000-4000-8000-000000000001',
-      'SEED-CANCEL-001',
-      public.normalize_email('cancelado@seed.local'),
-      public.normalize_spanish_phone('600100007'),
-      extensions.crypt('777777', extensions.gen_salt('bf')),
-      public.sha256_hex('seed-cancel-token-007'),
-      now() - interval '1 day'
-    ),
-    (
-      '40000000-0000-4000-8000-000000000008',
-      null,
-      'confirmed',
-      'cash',
-      now() - interval '4 days 12 hours',
-      '30000000-0000-4000-8000-000000000008',
-      '10000000-0000-4000-8000-000000000002',
-      'SEED-CASH-002',
-      public.normalize_email('halcones@seed.local'),
-      public.normalize_spanish_phone('600100008'),
-      extensions.crypt('888888', extensions.gen_salt('bf')),
-      public.sha256_hex('seed-cancel-token-008'),
-      null
-    ),
-    (
-      '40000000-0000-4000-8000-000000000009',
-      null,
-      'confirmed',
-      'cash',
-      now() - interval '4 days',
-      '30000000-0000-4000-8000-000000000009',
-      '10000000-0000-4000-8000-000000000002',
-      'SEED-CASH-003',
-      public.normalize_email('club-norte@seed.local'),
-      public.normalize_spanish_phone('600100009'),
-      extensions.crypt('999999', extensions.gen_salt('bf')),
-      public.sha256_hex('seed-cancel-token-009'),
-      null
-    ),
-    (
-      '40000000-0000-4000-8000-000000000010',
-      null,
-      'confirmed',
-      'cash',
-      now() - interval '3 days 12 hours',
-      '30000000-0000-4000-8000-000000000010',
-      '10000000-0000-4000-8000-000000000002',
-      'SEED-CASH-004',
-      public.normalize_email('titanes@seed.local'),
-      public.normalize_spanish_phone('600100010'),
-      extensions.crypt('101010', extensions.gen_salt('bf')),
-      public.sha256_hex('seed-cancel-token-010'),
-      null
-    ),
-    (
-      '40000000-0000-4000-8000-000000000011',
-      null,
-      'confirmed',
-      'cash',
-      now() - interval '3 days',
-      '30000000-0000-4000-8000-000000000011',
-      '10000000-0000-4000-8000-000000000002',
-      'SEED-CASH-005',
-      public.normalize_email('barrio-unido@seed.local'),
-      public.normalize_spanish_phone('600100011'),
-      extensions.crypt('111112', extensions.gen_salt('bf')),
-      public.sha256_hex('seed-cancel-token-011'),
-      null
-    ),
-    (
-      '40000000-0000-4000-8000-000000000012',
-      null,
-      'pending_cash_validation',
-      'cash',
-      now() - interval '2 days',
-      '30000000-0000-4000-8000-000000000012',
-      '10000000-0000-4000-8000-000000000002',
-      'SEED-CASH-006',
-      public.normalize_email('deportivo-sur@seed.local'),
-      public.normalize_spanish_phone('600100012'),
-      extensions.crypt('121212', extensions.gen_salt('bf')),
-      public.sha256_hex('seed-cancel-token-012'),
-      null
-    ),
-    (
-      '40000000-0000-4000-8000-000000000013',
-      null,
-      'pending_cash_validation',
-      'cash',
-      now() - interval '1 day',
-      '30000000-0000-4000-8000-000000000013',
-      '10000000-0000-4000-8000-000000000002',
-      'SEED-CASH-007',
-      public.normalize_email('rayo-azul@seed.local'),
-      public.normalize_spanish_phone('600100013'),
-      extensions.crypt('131313', extensions.gen_salt('bf')),
-      public.sha256_hex('seed-cancel-token-013'),
-      null
-    ),
-    (
-      '40000000-0000-4000-8000-000000000014',
-      null,
-      'cancelled',
-      'cash',
-      now() - interval '6 days',
-      '30000000-0000-4000-8000-000000000014',
-      '10000000-0000-4000-8000-000000000002',
-      'SEED-CASH-008',
-      public.normalize_email('union-central@seed.local'),
-      public.normalize_spanish_phone('600100014'),
-      extensions.crypt('141414', extensions.gen_salt('bf')),
-      public.sha256_hex('seed-cancel-token-014'),
-      now() - interval '12 hours'
-    );
+insert into public.categories (
+  id,
+  tournament_id,
+  name,
+  price,
+  min_participants,
+  max_participants,
+  start_at,
+  address,
+  prizes,
+  participant_type
+)
+values
+  (
+    '30000000-0000-4000-8000-000000000001',
+    '20000000-0000-4000-8000-000000000001',
+    'Primera Masculina',
+    45,
+    8,
+    24,
+    now() + interval '14 days 2 hours',
+    'Pistas 1 a 4, Club Deportivo El Candado',
+    'Campeones: 600 € y trofeo. Finalistas: 250 € y trofeo.',
+    'team'
+  ),
+  (
+    '30000000-0000-4000-8000-000000000002',
+    '20000000-0000-4000-8000-000000000001',
+    'Primera Femenina',
+    45,
+    8,
+    20,
+    now() + interval '14 days 3 hours',
+    'Pistas 5 a 8, Club Deportivo El Candado',
+    'Campeonas: 600 € y trofeo. Finalistas: 250 € y trofeo.',
+    'team'
+  ),
+  (
+    '30000000-0000-4000-8000-000000000003',
+    '20000000-0000-4000-8000-000000000001',
+    'Mixto Open',
+    40,
+    8,
+    20,
+    now() + interval '14 days 5 hours',
+    'Pistas 9 a 12, Club Deportivo El Candado',
+    'Campeones: lote deportivo y dos bonos de clases.',
+    'team'
+  ),
+  (
+    '30000000-0000-4000-8000-000000000004',
+    '20000000-0000-4000-8000-000000000001',
+    'Individual Sub-18',
+    12,
+    8,
+    24,
+    now() + interval '15 days 1 hour',
+    'Pistas 1 a 4, Club Deportivo El Candado',
+    'Trofeo y beca trimestral de entrenamiento para el campeón.',
+    'individual'
+  );
 
-  insert into public.payments (
-    id,
-    registration_id,
-    amount,
-    currency,
-    payment_method,
-    status,
-    stripe_payment_intent_id,
-    paid_at,
-    created_at
-  )
-  values
-    (
-      '50000000-0000-4000-8000-000000000001',
-      '40000000-0000-4000-8000-000000000001',
-      0,
-      'eur',
-      'cash',
-      'paid',
-      null,
-      now() - interval '6 days',
-      now() - interval '6 days'
-    ),
-    (
-      '50000000-0000-4000-8000-000000000002',
-      '40000000-0000-4000-8000-000000000002',
-      25,
-      'eur',
-      'cash',
-      'pending',
-      null,
-      null,
-      now() - interval '5 days'
-    ),
-    (
-      '50000000-0000-4000-8000-000000000003',
-      '40000000-0000-4000-8000-000000000003',
-      15,
-      'eur',
-      'online',
-      'pending',
-      null,
-      null,
-      now() - interval '4 days'
-    ),
-    (
-      '50000000-0000-4000-8000-000000000004',
-      '40000000-0000-4000-8000-000000000004',
-      30,
-      'eur',
-      'online',
-      'paid',
-      'pi_seed_confirmed',
-      now() - interval '3 days',
-      now() - interval '3 days'
-    ),
-    (
-      '50000000-0000-4000-8000-000000000005',
-      '40000000-0000-4000-8000-000000000005',
-      8,
-      'eur',
-      'cash',
-      'paid',
-      null,
-      now() - interval '2 days',
-      now() - interval '2 days'
-    ),
-    (
-      '50000000-0000-4000-8000-000000000006',
-      '40000000-0000-4000-8000-000000000006',
-      9,
-      'eur',
-      'online',
-      'paid',
-      'pi_seed_category_full',
-      now() - interval '2 days',
-      now() - interval '2 days'
-    ),
-    (
-      '50000000-0000-4000-8000-000000000007',
-      '40000000-0000-4000-8000-000000000007',
-      0,
-      'eur',
-      'cash',
-      'refunded',
-      null,
-      null,
-      now() - interval '7 days'
-    ),
-    (
-      '50000000-0000-4000-8000-000000000008',
-      '40000000-0000-4000-8000-000000000008',
-      25,
-      'eur',
-      'cash',
-      'paid',
-      null,
-      now() - interval '4 days 12 hours',
-      now() - interval '4 days 12 hours'
-    ),
-    (
-      '50000000-0000-4000-8000-000000000009',
-      '40000000-0000-4000-8000-000000000009',
-      25,
-      'eur',
-      'cash',
-      'paid',
-      null,
-      now() - interval '4 days',
-      now() - interval '4 days'
-    ),
-    (
-      '50000000-0000-4000-8000-000000000010',
-      '40000000-0000-4000-8000-000000000010',
-      25,
-      'eur',
-      'cash',
-      'paid',
-      null,
-      now() - interval '3 days 12 hours',
-      now() - interval '3 days 12 hours'
-    ),
-    (
-      '50000000-0000-4000-8000-000000000011',
-      '40000000-0000-4000-8000-000000000011',
-      25,
-      'eur',
-      'cash',
-      'paid',
-      null,
-      now() - interval '3 days',
-      now() - interval '3 days'
-    ),
-    (
-      '50000000-0000-4000-8000-000000000012',
-      '40000000-0000-4000-8000-000000000012',
-      25,
-      'eur',
-      'cash',
-      'pending',
-      null,
-      null,
-      now() - interval '2 days'
-    ),
-    (
-      '50000000-0000-4000-8000-000000000013',
-      '40000000-0000-4000-8000-000000000013',
-      25,
-      'eur',
-      'cash',
-      'pending',
-      null,
-      null,
-      now() - interval '1 day'
-    ),
-    (
-      '50000000-0000-4000-8000-000000000014',
-      '40000000-0000-4000-8000-000000000014',
-      25,
-      'eur',
-      'cash',
-      'refunded',
-      null,
-      null,
-      now() - interval '6 days'
-    );
+-- ---------------------------------------------------------------------------
+-- Registrations, participants and payments
+-- ---------------------------------------------------------------------------
 
-  -- Add enough registrations to exercise participant lists, filters, counters,
-  -- categories and brackets in representative seeded tournaments. Some
-  -- published and closed tournaments intentionally remain empty so structural
-  -- configuration and manual-registration flows can still be tested after a
-  -- reset. The capacity trigger is disabled only for this controlled block so
-  -- full tournaments can also keep historical cancelled and expired records.
-  alter table public.registrations disable trigger check_registration_before_insert;
+do $seed_data$
+begin
 
-  for v_target in
-    select *
-    from (
-      select
-        t.id as tournament_id,
-        null::uuid as category_id,
-        t.title as target_name,
-        t.participant_type,
-        t.payment_method,
-        t.status as tournament_status,
-        t.entry_price as price,
-        case
-          when t.status = 'cancelled' then 0
-          else least(
-            6,
-            greatest(
-              coalesce(t.max_participants, count(r.id)::integer + 6) - count(r.id)::integer,
-              0
-            )
-          )
-        end as active_slots
-      from public.tournaments t
-      left join public.registrations r
-        on r.tournament_id = t.id
-        and r.category_id is null
-        and r.status not in ('cancelled', 'expired')
-      where t.organizer_id = v_seed_user
-        and not t.has_categories
-      group by
-        t.id,
-        t.title,
-        t.participant_type,
-        t.payment_method,
-        t.entry_price,
-        t.max_participants,
-        t.status
+create unlogged table public.seed_registration_entries (
+  seed_no integer primary key,
+  tournament_id uuid not null,
+  category_id uuid,
+  participant_type public.participant_type not null,
+  display_name text not null,
+  registration_status public.registration_status not null,
+  registration_payment_method public.registration_payment_method not null,
+  amount numeric not null
+);
 
-      union all
+insert into public.seed_registration_entries
+select
+  ordinality::integer,
+  '20000000-0000-4000-8000-000000000001'::uuid,
+  '30000000-0000-4000-8000-000000000001'::uuid,
+  'team'::public.participant_type,
+  display_name,
+  case
+    when ordinality <= 12 then 'confirmed'
+    when ordinality = 13 then 'pending_cash_validation'
+    when ordinality = 14 then 'pending_online_payment'
+    when ordinality = 15 then 'cancelled'
+    else 'expired'
+  end::public.registration_status,
+  case when ordinality in (2, 4, 6, 8, 10, 12, 14, 15) then 'online' else 'cash' end::public.registration_payment_method,
+  45
+from unnest(array[
+  'Club Pádel Axarquía',
+  'Los Remontadores',
+  'Smash Point Málaga',
+  'Pareja del Limonar',
+  'Costa Pádel Team',
+  'Los de la Reja',
+  'Pádel Torremolinos',
+  'Volea y Bandeja',
+  'Rincón Pádel Club',
+  'Los Globos de Oro',
+  'Benalmádena Match Point',
+  'Mijas Pádel Center',
+  'Los Tie-Break',
+  'Equipo Malagueta',
+  'Pádel Alameda',
+  'Los Veteranos del Sur'
+]::text[]) with ordinality as names(display_name, ordinality);
 
-      select
-        t.id as tournament_id,
-        c.id as category_id,
-        t.title || ' / ' || c.name as target_name,
-        c.participant_type,
-        t.payment_method,
-        t.status as tournament_status,
-        c.price,
-        case
-          when t.status = 'cancelled' then 0
-          else least(
-            6,
-            greatest(
-              coalesce(c.max_participants, count(r.id)::integer + 6) - count(r.id)::integer,
-              0
-            )
-          )
-        end as active_slots
-      from public.tournaments t
-      join public.categories c on c.tournament_id = t.id
-      left join public.registrations r
-        on r.category_id = c.id
-        and r.status not in ('cancelled', 'expired')
-      where t.organizer_id = v_seed_user
-        and t.has_categories
-      group by
-        t.id,
-        c.id,
-        t.title,
-        c.name,
-        c.participant_type,
-        t.payment_method,
-        c.price,
-        c.max_participants,
-        t.status
-    ) targets
-    where tournament_id in (
-      '10000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-8000-000000000002',
-      '10000000-0000-4000-8000-000000000003',
-      '10000000-0000-4000-8000-000000000004',
-      '10000000-0000-4000-8000-000000000005',
-      '10000000-0000-4000-8000-000000000007',
-      '10000000-0000-4000-8000-000000000008',
-      '10000000-0000-4000-8000-000000000010',
-      '10000000-0000-4000-8000-000000000012'
+insert into public.seed_registration_entries
+select
+  20 + ordinality::integer,
+  '20000000-0000-4000-8000-000000000001'::uuid,
+  '30000000-0000-4000-8000-000000000002'::uuid,
+  'team'::public.participant_type,
+  display_name,
+  case
+    when ordinality <= 8 then 'confirmed'
+    when ordinality <= 10 then 'pending_cash_validation'
+    when ordinality = 11 then 'cancelled'
+    else 'expired'
+  end::public.registration_status,
+  case when ordinality in (2, 4, 6, 8, 11) then 'online' else 'cash' end::public.registration_payment_method,
+  45
+from unnest(array[
+  'Las Panteras del Pádel',
+  'Volea Femenina Málaga',
+  'Las Incombustibles',
+  'Pádel La Cala',
+  'Las Reinas de la Red',
+  'Marbella Match',
+  'Las Bandejas',
+  'Alhaurín Pádel Girls',
+  'Las del Tercer Set',
+  'Equipo Pedregalejo',
+  'Punto de Oro',
+  'Las Lobas del Sur'
+]::text[]) with ordinality as names(display_name, ordinality);
+
+insert into public.seed_registration_entries
+select
+  40 + ordinality::integer,
+  '20000000-0000-4000-8000-000000000001'::uuid,
+  '30000000-0000-4000-8000-000000000003'::uuid,
+  'team'::public.participant_type,
+  display_name,
+  case
+    when ordinality <= 10 then 'confirmed'
+    when ordinality = 11 then 'pending_online_payment'
+    else 'cancelled'
+  end::public.registration_status,
+  case when ordinality in (2, 4, 6, 8, 10, 11, 12) then 'online' else 'cash' end::public.registration_payment_method,
+  40
+from unnest(array[
+  'Dúo Mediterráneo',
+  'Los Cruzados',
+  'Pareja Alameda',
+  'Volea Mixta',
+  'Team Alcazaba',
+  'Los Boquerones',
+  'Pádel sin Fronteras',
+  'Dúo Gibralfaro',
+  'La Pareja del Puerto',
+  'Team Guadalhorce',
+  'Mixto El Palo',
+  'Los del Último Punto'
+]::text[]) with ordinality as names(display_name, ordinality);
+
+insert into public.seed_registration_entries
+select
+  60 + ordinality::integer,
+  '20000000-0000-4000-8000-000000000001'::uuid,
+  '30000000-0000-4000-8000-000000000004'::uuid,
+  'individual'::public.participant_type,
+  display_name,
+  case
+    when ordinality <= 8 then 'confirmed'
+    when ordinality = 9 then 'pending_cash_validation'
+    when ordinality = 10 then 'pending_online_payment'
+    when ordinality = 11 then 'cancelled'
+    else 'expired'
+  end::public.registration_status,
+  case when ordinality in (2, 4, 6, 8, 10, 11) then 'online' else 'cash' end::public.registration_payment_method,
+  12
+from unnest(array[
+  'Alejandro Ruiz Martín',
+  'Lucía Fernández Vega',
+  'Hugo Navarro León',
+  'Sofía Jiménez Ortiz',
+  'Martín Castillo Ramos',
+  'Paula Moreno Gil',
+  'Daniel Sánchez Rojas',
+  'Carla Romero Díaz',
+  'Adrián Molina Cruz',
+  'Elena Prieto Santos',
+  'Mario Ortega Vidal',
+  'Claudia Reyes Cano'
+]::text[]) with ordinality as names(display_name, ordinality);
+
+insert into public.seed_registration_entries
+select
+  80 + ordinality::integer,
+  '20000000-0000-4000-8000-000000000002'::uuid,
+  null::uuid,
+  'individual'::public.participant_type,
+  display_name,
+  case
+    when ordinality <= 8 or ordinality = 16 then 'confirmed'
+    when ordinality <= 11 then 'pending_cash_validation'
+    when ordinality <= 13 then 'pending_online_payment'
+    when ordinality = 14 then 'cancelled'
+    else 'expired'
+  end::public.registration_status,
+  case when ordinality in (2, 4, 6, 8, 12, 13, 14, 16) then 'online' else 'cash' end::public.registration_payment_method,
+  18
+from unnest(array[
+  'Javier Morales Pérez',
+  'Andrea López Fuentes',
+  'Pablo Herrera Núñez',
+  'Marta Cabrera Soler',
+  'Álvaro Domínguez Rey',
+  'Irene Pastor Blanco',
+  'Guillermo Martín Pardo',
+  'Natalia Gómez Vidal',
+  'Sergio Medina Torres',
+  'Beatriz Ramos Peña',
+  'Rubén Castro Lara',
+  'Cristina Suárez Nieto',
+  'Víctor Aguilar Montes',
+  'Laura Benítez Flores',
+  'Óscar León Crespo',
+  'Noelia Serrano Muñoz'
+]::text[]) with ordinality as names(display_name, ordinality);
+
+insert into public.seed_registration_entries
+select
+  100 + ordinality::integer,
+  '20000000-0000-4000-8000-000000000003'::uuid,
+  null::uuid,
+  'individual'::public.participant_type,
+  display_name,
+  'confirmed'::public.registration_status,
+  'online'::public.registration_payment_method,
+  10
+from unnest(array[
+  'Antonio Valdés Romero',
+  'Carmen Pineda Ruiz',
+  'Francisco Javier Soto',
+  'María Luisa Carrasco',
+  'Raúl Espejo Molina',
+  'Teresa Villalba Cano',
+  'Ignacio Robles Vera',
+  'Ana Belén Arias'
+]::text[]) with ordinality as names(display_name, ordinality);
+
+insert into public.seed_registration_entries
+select
+  110 + ordinality::integer,
+  '20000000-0000-4000-8000-000000000004'::uuid,
+  null::uuid,
+  'team'::public.participant_type,
+  display_name,
+  'cancelled'::public.registration_status,
+  'cash'::public.registration_payment_method,
+  80
+from unnest(array[
+  'Atlético Guadalmar',
+  'Deportivo Huelin',
+  'Unión Portada Alta',
+  'Sporting Teatinos',
+  'Club El Palo',
+  'Veteranos de Churriana'
+]::text[]) with ordinality as names(display_name, ordinality);
+
+insert into public.participants (
+  id,
+  type,
+  display_name,
+  contact_phone,
+  contact_email,
+  players,
+  created_at
+)
+select
+  format('40000000-0000-4000-8000-%s', lpad(seed_no::text, 12, '0'))::uuid,
+  participant_type,
+  display_name,
+  '+346' || lpad((10000000 + seed_no)::text, 8, '0'),
+  'participante+' || lpad(seed_no::text, 3, '0') || '@demo.organizatorneo.test',
+  case
+    when participant_type = 'team' then jsonb_build_array(
+      jsonb_build_object(
+        'name',
+        (array[
+          'Alberto Rivas', 'Carlos Medina', 'David Luque', 'Eduardo Pardo',
+          'Fernando Calvo', 'Gabriel Santos', 'Héctor Molina', 'Iván Ruiz',
+          'Jorge Navarro', 'Luis Romero', 'Manuel Ortega', 'Pablo Vega',
+          'Raquel Prieto', 'Sara Campos', 'Teresa León', 'Verónica Gil'
+        ]::text[])[(seed_no % 16) + 1]
+      ),
+      jsonb_build_object(
+        'name',
+        (array[
+          'Adriana Flores', 'Beatriz Cruz', 'Clara Martín', 'Daniela Reyes',
+          'Elena Vidal', 'Inés Castillo', 'Laura Moreno', 'Marcos Pastor',
+          'Nerea Cabrera', 'Óscar Peña', 'Patricia Soler', 'Rubén Torres',
+          'Sergio Ramos', 'Silvia Fuentes', 'Víctor Herrera', 'Yolanda Nieto'
+        ]::text[])[((seed_no + 5) % 16) + 1]
+      )
     )
-    order by tournament_id, category_id nulls first
-  loop
-    for v_index in 1..10
-    loop
-      v_bulk_index := v_bulk_index + 1;
-      v_participant_id := md5('seed-bulk-participant-' || v_bulk_index::text)::uuid;
-      v_registration_id := md5('seed-bulk-registration-' || v_bulk_index::text)::uuid;
-      v_payment_id := md5('seed-bulk-payment-' || v_bulk_index::text)::uuid;
-      v_created_at := now() - make_interval(days => 15 - v_index);
-      v_contact_phone := '610' || lpad(v_bulk_index::text, 6, '0');
-      v_contact_email := 'bulk-' || lpad(v_bulk_index::text, 3, '0') || '@seed.local';
-      v_display_name :=
-        case
-          when v_target.participant_type = 'team' then 'Seed Equipo '
-          else 'Seed Participante '
-        end
-        || lpad(v_index::text, 2, '0')
-        || ' - '
-        || v_target.target_name;
+    else null
+  end,
+  now() - make_interval(days => 60 - (seed_no % 50))
+from public.seed_registration_entries;
 
-      if v_target.payment_method = 'both' then
-        v_registration_payment_method :=
-          case
-            when mod(v_index, 2) = 0 then 'online'::public.registration_payment_method
-            else 'cash'::public.registration_payment_method
-          end;
-      else
-        v_registration_payment_method :=
-          v_target.payment_method::text::public.registration_payment_method;
-      end if;
+alter table public.registrations disable trigger check_registration_before_insert;
 
-      if v_index > v_target.active_slots then
-        v_registration_status :=
-          case
-            when mod(v_index, 2) = 0 then 'expired'::public.registration_status
-            else 'cancelled'::public.registration_status
-          end;
-      elsif v_target.tournament_status = 'finished'::public.tournament_status then
-        v_registration_status := 'confirmed'::public.registration_status;
-      elsif mod(v_index, 4) = 0 then
-        v_registration_status :=
-          case
-            when v_registration_payment_method = 'online'
-              then 'pending_online_payment'::public.registration_status
-            else 'pending_cash_validation'::public.registration_status
-          end;
-      else
-        v_registration_status := 'confirmed'::public.registration_status;
-      end if;
+with secrets as (
+  select extensions.crypt('654321', extensions.gen_salt('bf')) as cancel_code_hash
+)
+insert into public.registrations (
+  id,
+  category_id,
+  status,
+  payment_method,
+  created_at,
+  participant_id,
+  tournament_id,
+  public_reference,
+  contact_email_normalized,
+  contact_phone_normalized,
+  cancel_code_hash,
+  cancel_token_hash,
+  cancelled_at
+)
+select
+  format('50000000-0000-4000-8000-%s', lpad(seed_no::text, 12, '0'))::uuid,
+  category_id,
+  registration_status,
+  registration_payment_method,
+  now() - make_interval(days => 60 - (seed_no % 50)),
+  format('40000000-0000-4000-8000-%s', lpad(seed_no::text, 12, '0'))::uuid,
+  tournament_id,
+  'OT-2026-' || lpad(seed_no::text, 5, '0'),
+  'participante+' || lpad(seed_no::text, 3, '0') || '@demo.organizatorneo.test',
+  '+346' || lpad((10000000 + seed_no)::text, 8, '0'),
+  secrets.cancel_code_hash,
+  public.sha256_hex('seed-cancel-token-' || seed_no::text),
+  case when registration_status = 'cancelled' then now() - interval '2 days' else null end
+from public.seed_registration_entries
+cross join secrets;
 
-      v_payment_status :=
-        case
-          when v_registration_status = 'confirmed' then 'paid'::public.payment_status
-          when v_registration_status = 'cancelled' then 'refunded'::public.payment_status
-          else 'pending'::public.payment_status
-        end;
+alter table public.registrations enable trigger check_registration_before_insert;
 
-      insert into public.participants (
-        id,
-        type,
-        display_name,
-        contact_phone,
-        contact_email,
-        players,
-        created_at,
-        source_registration_id
-      )
-      values (
-        v_participant_id,
-        v_target.participant_type,
-        v_display_name,
-        v_contact_phone,
-        v_contact_email,
-        null,
-        v_created_at,
-        v_registration_id
-      );
+update public.participants p
+set source_registration_id = format(
+  '50000000-0000-4000-8000-%s',
+  right(p.id::text, 12)
+)::uuid
+where p.id::text like '40000000-0000-4000-8000-%';
 
-      insert into public.registrations (
-        id,
-        category_id,
-        status,
-        payment_method,
-        created_at,
-        participant_id,
-        tournament_id,
-        public_reference,
-        contact_email_normalized,
-        contact_phone_normalized,
-        cancel_code_hash,
-        cancel_token_hash,
-        cancelled_at
-      )
-      values (
-        v_registration_id,
-        v_target.category_id,
-        v_registration_status,
-        v_registration_payment_method,
-        v_created_at,
-        v_participant_id,
-        v_target.tournament_id,
-        'SEED-BULK-' || lpad(v_bulk_index::text, 3, '0'),
-        public.normalize_email(v_contact_email),
-        public.normalize_spanish_phone(v_contact_phone),
-        null,
-        public.sha256_hex('seed-bulk-cancel-token-' || v_bulk_index::text),
-        case
-          when v_registration_status = 'cancelled' then v_created_at + interval '2 days'
-          else null
-        end
-      );
+insert into public.payments (
+  id,
+  registration_id,
+  amount,
+  currency,
+  payment_method,
+  status,
+  stripe_payment_intent_id,
+  paid_at,
+  created_at
+)
+select
+  format('60000000-0000-4000-8000-%s', lpad(seed_no::text, 12, '0'))::uuid,
+  format('50000000-0000-4000-8000-%s', lpad(seed_no::text, 12, '0'))::uuid,
+  amount,
+  'eur',
+  registration_payment_method,
+  case
+    when registration_status = 'confirmed' then 'paid'
+    when registration_status = 'cancelled' then 'refunded'
+    else 'pending'
+  end::public.payment_status,
+  case
+    when registration_payment_method = 'online' then 'pi_seed_' || lpad(seed_no::text, 6, '0')
+    else null
+  end,
+  case
+    when registration_status in ('confirmed', 'cancelled') then now() - interval '3 days'
+    else null
+  end,
+  now() - make_interval(days => 60 - (seed_no % 50))
+from public.seed_registration_entries;
 
-      insert into public.payments (
-        id,
-        registration_id,
-        amount,
-        currency,
-        payment_method,
-        status,
-        stripe_payment_intent_id,
-        paid_at,
-        created_at
-      )
-      values (
-        v_payment_id,
-        v_registration_id,
-        v_target.price,
-        'eur',
-        v_registration_payment_method,
-        v_payment_status,
-        case
-          when v_payment_status = 'paid' and v_registration_payment_method = 'online'
-            then 'pi_seed_bulk_' || lpad(v_bulk_index::text, 3, '0')
-          else null
-        end,
-        case when v_payment_status = 'paid' then v_created_at else null end,
-        v_created_at
-      );
-    end loop;
-  end loop;
+-- ---------------------------------------------------------------------------
+-- Registration requests
+-- ---------------------------------------------------------------------------
 
-  alter table public.registrations enable trigger check_registration_before_insert;
-
-  insert into public.registration_requests (
-    id,
-    tournament_id,
-    category_id,
-    participant_type,
-    display_name,
-    contact_phone,
-    contact_phone_normalized,
-    contact_email,
-    contact_email_normalized,
-    players,
-    payment_method,
-    verification_code_hash,
-    verification_token_hash,
-    expires_at,
-    verified_at,
-    consumed_at,
-    registration_id,
-    created_at,
-    resend_count,
-    last_email_sent_at
-  )
+with request_secret as (
+  select extensions.crypt('123456', extensions.gen_salt('bf')) as code_hash
+)
+insert into public.registration_requests (
+  id,
+  tournament_id,
+  category_id,
+  participant_type,
+  display_name,
+  contact_phone,
+  contact_phone_normalized,
+  contact_email,
+  contact_email_normalized,
+  players,
+  payment_method,
+  verification_code_hash,
+  verification_token_hash,
+  expires_at,
+  verified_at,
+  consumed_at,
+  registration_id,
+  created_at,
+  resend_count,
+  last_email_sent_at
+)
+select
+  request_id,
+  tournament_id,
+  category_id,
+  participant_type,
+  display_name,
+  contact_phone,
+  contact_phone,
+  contact_email,
+  lower(contact_email),
+  players,
+  payment_method,
+  request_secret.code_hash,
+  public.sha256_hex('seed-verification-token-' || request_no::text),
+  expires_at,
+  verified_at,
+  consumed_at,
+  registration_id,
+  created_at,
+  resend_count,
+  last_email_sent_at
+from (
   values
     (
-      '60000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-8000-000000000005',
-      '20000000-0000-4000-8000-000000000002',
-      'individual',
-      'Seed Solicitud Pendiente',
-      '600100101',
-      public.normalize_spanish_phone('600100101'),
-      'solicitud-pendiente@seed.local',
-      public.normalize_email('solicitud-pendiente@seed.local'),
-      null,
-      'cash',
-      extensions.crypt('123456', extensions.gen_salt('bf')),
-      public.sha256_hex('seed-verification-token'),
-      now() + interval '30 minutes',
-      null,
-      null,
-      null,
+      1,
+      '70000000-0000-4000-8000-000000000001'::uuid,
+      '20000000-0000-4000-8000-000000000002'::uuid,
+      null::uuid,
+      'individual'::public.participant_type,
+      'Eva Márquez Soto',
+      '+34621000001',
+      'eva.marquez@example.com',
+      null::jsonb,
+      'cash'::public.registration_payment_method,
+      now() + interval '25 minutes',
+      null::timestamptz,
+      null::timestamptz,
+      null::uuid,
       now() - interval '5 minutes',
       0,
       now() - interval '5 minutes'
-    );
-end $$;
+    ),
+    (
+      2,
+      '70000000-0000-4000-8000-000000000002'::uuid,
+      '20000000-0000-4000-8000-000000000002'::uuid,
+      null::uuid,
+      'individual'::public.participant_type,
+      'Miguel Ángel Peña',
+      '+34621000002',
+      'miguel.pena@example.com',
+      null::jsonb,
+      'online'::public.registration_payment_method,
+      now() + interval '20 minutes',
+      null::timestamptz,
+      null::timestamptz,
+      null::uuid,
+      now() - interval '45 minutes',
+      2,
+      now() - interval '10 minutes'
+    ),
+    (
+      3,
+      '70000000-0000-4000-8000-000000000003'::uuid,
+      '20000000-0000-4000-8000-000000000002'::uuid,
+      null::uuid,
+      'individual'::public.participant_type,
+      'Rocío Campos Vera',
+      '+34621000003',
+      'rocio.campos@example.com',
+      null::jsonb,
+      'cash'::public.registration_payment_method,
+      now() - interval '2 hours',
+      null::timestamptz,
+      null::timestamptz,
+      null::uuid,
+      now() - interval '3 hours',
+      0,
+      now() - interval '3 hours'
+    ),
+    (
+      4,
+      '70000000-0000-4000-8000-000000000004'::uuid,
+      '20000000-0000-4000-8000-000000000002'::uuid,
+      null::uuid,
+      'individual'::public.participant_type,
+      'Samuel Ortiz Bravo',
+      '+34621000004',
+      'samuel.ortiz@example.com',
+      null::jsonb,
+      'online'::public.registration_payment_method,
+      now() + interval '15 minutes',
+      now() - interval '5 minutes',
+      null::timestamptz,
+      null::uuid,
+      now() - interval '20 minutes',
+      1,
+      now() - interval '8 minutes'
+    ),
+    (
+      5,
+      '70000000-0000-4000-8000-000000000005'::uuid,
+      '20000000-0000-4000-8000-000000000002'::uuid,
+      null::uuid,
+      'individual'::public.participant_type,
+      'Javier Morales Pérez',
+      '+34610000081',
+      'participante+081@demo.organizatorneo.test',
+      null::jsonb,
+      'cash'::public.registration_payment_method,
+      now() - interval '10 days',
+      now() - interval '12 days',
+      now() - interval '12 days',
+      '50000000-0000-4000-8000-000000000081'::uuid,
+      now() - interval '12 days',
+      0,
+      now() - interval '12 days'
+    ),
+    (
+      6,
+      '70000000-0000-4000-8000-000000000006'::uuid,
+      '20000000-0000-4000-8000-000000000001'::uuid,
+      '30000000-0000-4000-8000-000000000001'::uuid,
+      'team'::public.participant_type,
+      'Club Pádel Axarquía',
+      '+34610000001',
+      'participante+001@demo.organizatorneo.test',
+      '[{"name":"Carlos Medina"},{"name":"Laura Moreno"}]'::jsonb,
+      'cash'::public.registration_payment_method,
+      now() - interval '50 days',
+      now() - interval '52 days',
+      now() - interval '52 days',
+      '50000000-0000-4000-8000-000000000001'::uuid,
+      now() - interval '52 days',
+      0,
+      now() - interval '52 days'
+    ),
+    (
+      7,
+      '70000000-0000-4000-8000-000000000007'::uuid,
+      '20000000-0000-4000-8000-000000000001'::uuid,
+      '30000000-0000-4000-8000-000000000004'::uuid,
+      'individual'::public.participant_type,
+      'Nicolás Calvo Martín',
+      '+34621000007',
+      'nicolas.calvo@example.com',
+      null::jsonb,
+      'cash'::public.registration_payment_method,
+      now() + interval '12 minutes',
+      null::timestamptz,
+      null::timestamptz,
+      null::uuid,
+      now() - interval '18 minutes',
+      1,
+      now() - interval '6 minutes'
+    ),
+    (
+      8,
+      '70000000-0000-4000-8000-000000000008'::uuid,
+      '20000000-0000-4000-8000-000000000001'::uuid,
+      '30000000-0000-4000-8000-000000000003'::uuid,
+      'team'::public.participant_type,
+      'Dúo Montes de Málaga',
+      '+34621000008',
+      'duo.montes@example.com',
+      '[{"name":"Alicia Montes"},{"name":"Carlos Málaga"}]'::jsonb,
+      'online'::public.registration_payment_method,
+      now() - interval '1 day',
+      null::timestamptz,
+      null::timestamptz,
+      null::uuid,
+      now() - interval '2 days',
+      0,
+      now() - interval '2 days'
+    )
+) as requests(
+  request_no,
+  request_id,
+  tournament_id,
+  category_id,
+  participant_type,
+  display_name,
+  contact_phone,
+  contact_email,
+  players,
+  payment_method,
+  expires_at,
+  verified_at,
+  consumed_at,
+  registration_id,
+  created_at,
+  resend_count,
+  last_email_sent_at
+)
+cross join request_secret;
+
+-- ---------------------------------------------------------------------------
+-- Brackets
+-- ---------------------------------------------------------------------------
+
+execute $function$
+create function public.seed_participant(p_seed_no integer)
+returns jsonb
+language sql
+stable
+as $$
+  select jsonb_build_object(
+    'id', format('40000000-0000-4000-8000-%s', lpad(seed_no::text, 12, '0')),
+    'name', display_name
+  )
+  from public.seed_registration_entries
+  where seed_no = p_seed_no
+$$;
+$function$;
+
+execute $function$
+create function public.seed_slot(p_seed_no integer)
+returns jsonb
+language sql
+stable
+as $$
+  select jsonb_build_object(
+    'kind', 'participant',
+    'id', format('40000000-0000-4000-8000-%s', lpad(seed_no::text, 12, '0')),
+    'name', display_name
+  )
+  from public.seed_registration_entries
+  where seed_no = p_seed_no
+$$;
+$function$;
+
+execute $function$
+create function public.seed_result(p_score_a integer, p_score_b integer, p_winner text)
+returns jsonb
+language sql
+immutable
+as $$
+  select jsonb_build_object('scoreA', p_score_a, 'scoreB', p_score_b, 'winner', p_winner)
+$$;
+$function$;
+
+execute $function$
+create function public.seed_match_slot(p_label text, p_source_type text, p_match_id text)
+returns jsonb
+language sql
+immutable
+as $$
+  select jsonb_build_object(
+    'kind', 'placeholder',
+    'label', p_label,
+    'source', jsonb_build_object('type', p_source_type, 'matchId', p_match_id)
+  )
+$$;
+$function$;
+
+execute $function$
+create function public.seed_group_slot(p_label text, p_group text, p_position integer)
+returns jsonb
+language sql
+immutable
+as $$
+  select jsonb_build_object(
+    'kind', 'placeholder',
+    'label', p_label,
+    'source', jsonb_build_object('type', 'group_qualifier', 'group', p_group, 'position', p_position)
+  )
+$$;
+$function$;
+
+insert into public.tournament_brackets (
+  id,
+  tournament_id,
+  category_id,
+  format,
+  structure,
+  participant_count,
+  created_at,
+  updated_at
+)
+values
+  (
+    '80000000-0000-4000-8000-000000000001',
+    '20000000-0000-4000-8000-000000000001',
+    '30000000-0000-4000-8000-000000000001',
+    'single_elimination',
+    jsonb_build_object(
+      'version', 2,
+      'format', 'single_elimination',
+      'options', jsonb_build_object('thirdPlace', true),
+      'participants', jsonb_build_array(
+        public.seed_participant(1), public.seed_participant(2),
+        public.seed_participant(3), public.seed_participant(4),
+        public.seed_participant(5), public.seed_participant(6),
+        public.seed_participant(7), public.seed_participant(8)
+      ),
+      'body', jsonb_build_object(
+        'kind', 'single_elimination',
+        'rounds', jsonb_build_array(
+          jsonb_build_object(
+            'name', 'Cuartos de final',
+            'matches', jsonb_build_array(
+              jsonb_build_object('id', 'ko-r1-m1', 'slotA', public.seed_slot(1), 'slotB', public.seed_slot(8), 'result', public.seed_result(6, 3, 'A')),
+              jsonb_build_object('id', 'ko-r1-m2', 'slotA', public.seed_slot(4), 'slotB', public.seed_slot(5), 'result', public.seed_result(4, 6, 'B')),
+              jsonb_build_object('id', 'ko-r1-m3', 'slotA', public.seed_slot(2), 'slotB', public.seed_slot(7)),
+              jsonb_build_object('id', 'ko-r1-m4', 'slotA', public.seed_slot(3), 'slotB', public.seed_slot(6))
+            )
+          ),
+          jsonb_build_object(
+            'name', 'Semifinales',
+            'matches', jsonb_build_array(
+              jsonb_build_object(
+                'id', 'ko-r2-m1',
+                'slotA', public.seed_match_slot('Ganador Cuartos 1', 'winner', 'ko-r1-m1'),
+                'slotB', public.seed_match_slot('Ganador Cuartos 2', 'winner', 'ko-r1-m2')
+              ),
+              jsonb_build_object(
+                'id', 'ko-r2-m2',
+                'slotA', public.seed_match_slot('Ganador Cuartos 3', 'winner', 'ko-r1-m3'),
+                'slotB', public.seed_match_slot('Ganador Cuartos 4', 'winner', 'ko-r1-m4')
+              )
+            )
+          ),
+          jsonb_build_object(
+            'name', 'Final',
+            'matches', jsonb_build_array(
+              jsonb_build_object(
+                'id', 'ko-r3-m1',
+                'slotA', public.seed_match_slot('Ganador Semifinal 1', 'winner', 'ko-r2-m1'),
+                'slotB', public.seed_match_slot('Ganador Semifinal 2', 'winner', 'ko-r2-m2')
+              )
+            )
+          ),
+          jsonb_build_object(
+            'name', 'Tercer y cuarto puesto',
+            'matches', jsonb_build_array(
+              jsonb_build_object(
+                'id', 'ko-third',
+                'slotA', public.seed_match_slot('Perdedor Semifinal 1', 'loser', 'ko-r2-m1'),
+                'slotB', public.seed_match_slot('Perdedor Semifinal 2', 'loser', 'ko-r2-m2')
+              )
+            )
+          )
+        )
+      )
+    ),
+    8,
+    now() - interval '1 day',
+    now() - interval '2 hours'
+  ),
+  (
+    '80000000-0000-4000-8000-000000000002',
+    '20000000-0000-4000-8000-000000000001',
+    '30000000-0000-4000-8000-000000000002',
+    'round_robin',
+    jsonb_build_object(
+      'version', 2,
+      'format', 'round_robin',
+      'options', jsonb_build_object('doubleRound', false),
+      'participants', jsonb_build_array(
+        public.seed_participant(21), public.seed_participant(22),
+        public.seed_participant(23), public.seed_participant(24),
+        public.seed_participant(25), public.seed_participant(26)
+      ),
+      'body', jsonb_build_object(
+        'kind', 'round_robin',
+        'rounds', jsonb_build_array(
+          jsonb_build_object(
+            'name', 'Jornada 1',
+            'matches', jsonb_build_array(
+              jsonb_build_object('id', 'rr-j1-m1', 'slotA', public.seed_slot(21), 'slotB', public.seed_slot(26), 'result', public.seed_result(6, 2, 'A')),
+              jsonb_build_object('id', 'rr-j1-m2', 'slotA', public.seed_slot(22), 'slotB', public.seed_slot(25), 'result', public.seed_result(4, 6, 'B')),
+              jsonb_build_object('id', 'rr-j1-m3', 'slotA', public.seed_slot(23), 'slotB', public.seed_slot(24), 'result', public.seed_result(6, 4, 'A'))
+            )
+          ),
+          jsonb_build_object(
+            'name', 'Jornada 2',
+            'matches', jsonb_build_array(
+              jsonb_build_object('id', 'rr-j2-m1', 'slotA', public.seed_slot(21), 'slotB', public.seed_slot(25), 'result', public.seed_result(5, 5, null)),
+              jsonb_build_object('id', 'rr-j2-m2', 'slotA', public.seed_slot(26), 'slotB', public.seed_slot(24), 'result', public.seed_result(3, 6, 'B')),
+              jsonb_build_object('id', 'rr-j2-m3', 'slotA', public.seed_slot(22), 'slotB', public.seed_slot(23), 'result', public.seed_result(6, 1, 'A'))
+            )
+          ),
+          jsonb_build_object(
+            'name', 'Jornada 3',
+            'matches', jsonb_build_array(
+              jsonb_build_object('id', 'rr-j3-m1', 'slotA', public.seed_slot(21), 'slotB', public.seed_slot(24)),
+              jsonb_build_object('id', 'rr-j3-m2', 'slotA', public.seed_slot(25), 'slotB', public.seed_slot(23)),
+              jsonb_build_object('id', 'rr-j3-m3', 'slotA', public.seed_slot(26), 'slotB', public.seed_slot(22))
+            )
+          )
+        )
+      )
+    ),
+    6,
+    now() - interval '1 day',
+    now() - interval '90 minutes'
+  ),
+  (
+    '80000000-0000-4000-8000-000000000003',
+    '20000000-0000-4000-8000-000000000001',
+    '30000000-0000-4000-8000-000000000003',
+    'groups_knockout',
+    jsonb_build_object(
+      'version', 2,
+      'format', 'groups_knockout',
+      'options', jsonb_build_object('groupCount', 2, 'qualifiersPerGroup', 2),
+      'participants', jsonb_build_array(
+        public.seed_participant(41), public.seed_participant(42),
+        public.seed_participant(43), public.seed_participant(44),
+        public.seed_participant(45), public.seed_participant(46),
+        public.seed_participant(47), public.seed_participant(48)
+      ),
+      'body', jsonb_build_object(
+        'kind', 'groups_knockout',
+        'groups', jsonb_build_array(
+          jsonb_build_object(
+            'name', 'Grupo A',
+            'participants', jsonb_build_array(
+              public.seed_participant(41), public.seed_participant(43),
+              public.seed_participant(45), public.seed_participant(47)
+            ),
+            'rounds', jsonb_build_array(
+              jsonb_build_object('name', 'Jornada 1', 'matches', jsonb_build_array(
+                jsonb_build_object('id', 'g1-j1-m1', 'slotA', public.seed_slot(41), 'slotB', public.seed_slot(47), 'result', public.seed_result(6, 2, 'A')),
+                jsonb_build_object('id', 'g1-j1-m2', 'slotA', public.seed_slot(43), 'slotB', public.seed_slot(45), 'result', public.seed_result(5, 5, null))
+              )),
+              jsonb_build_object('name', 'Jornada 2', 'matches', jsonb_build_array(
+                jsonb_build_object('id', 'g1-j2-m1', 'slotA', public.seed_slot(41), 'slotB', public.seed_slot(45), 'result', public.seed_result(6, 3, 'A')),
+                jsonb_build_object('id', 'g1-j2-m2', 'slotA', public.seed_slot(47), 'slotB', public.seed_slot(43), 'result', public.seed_result(2, 6, 'B'))
+              )),
+              jsonb_build_object('name', 'Jornada 3', 'matches', jsonb_build_array(
+                jsonb_build_object('id', 'g1-j3-m1', 'slotA', public.seed_slot(41), 'slotB', public.seed_slot(43), 'result', public.seed_result(6, 4, 'A')),
+                jsonb_build_object('id', 'g1-j3-m2', 'slotA', public.seed_slot(45), 'slotB', public.seed_slot(47), 'result', public.seed_result(6, 1, 'A'))
+              ))
+            )
+          ),
+          jsonb_build_object(
+            'name', 'Grupo B',
+            'participants', jsonb_build_array(
+              public.seed_participant(42), public.seed_participant(44),
+              public.seed_participant(46), public.seed_participant(48)
+            ),
+            'rounds', jsonb_build_array(
+              jsonb_build_object('name', 'Jornada 1', 'matches', jsonb_build_array(
+                jsonb_build_object('id', 'g2-j1-m1', 'slotA', public.seed_slot(42), 'slotB', public.seed_slot(48), 'result', public.seed_result(6, 0, 'A')),
+                jsonb_build_object('id', 'g2-j1-m2', 'slotA', public.seed_slot(44), 'slotB', public.seed_slot(46), 'result', public.seed_result(3, 6, 'B'))
+              )),
+              jsonb_build_object('name', 'Jornada 2', 'matches', jsonb_build_array(
+                jsonb_build_object('id', 'g2-j2-m1', 'slotA', public.seed_slot(42), 'slotB', public.seed_slot(46), 'result', public.seed_result(6, 4, 'A')),
+                jsonb_build_object('id', 'g2-j2-m2', 'slotA', public.seed_slot(48), 'slotB', public.seed_slot(44), 'result', public.seed_result(2, 6, 'B'))
+              )),
+              jsonb_build_object('name', 'Jornada 3', 'matches', jsonb_build_array(
+                jsonb_build_object('id', 'g2-j3-m1', 'slotA', public.seed_slot(42), 'slotB', public.seed_slot(44), 'result', public.seed_result(6, 3, 'A')),
+                jsonb_build_object('id', 'g2-j3-m2', 'slotA', public.seed_slot(46), 'slotB', public.seed_slot(48), 'result', public.seed_result(6, 2, 'A'))
+              ))
+            )
+          )
+        ),
+        'knockout', jsonb_build_array(
+          jsonb_build_object(
+            'name', 'Semifinales',
+            'matches', jsonb_build_array(
+              jsonb_build_object(
+                'id', 'gko-r1-m1',
+                'slotA', public.seed_group_slot('1.º Grupo A', 'Grupo A', 1),
+                'slotB', public.seed_group_slot('2.º Grupo A', 'Grupo A', 2),
+                'result', public.seed_result(6, 4, 'A')
+              ),
+              jsonb_build_object(
+                'id', 'gko-r1-m2',
+                'slotA', public.seed_group_slot('1.º Grupo B', 'Grupo B', 1),
+                'slotB', public.seed_group_slot('2.º Grupo B', 'Grupo B', 2)
+              )
+            )
+          ),
+          jsonb_build_object(
+            'name', 'Final',
+            'matches', jsonb_build_array(
+              jsonb_build_object(
+                'id', 'gko-r2-m1',
+                'slotA', public.seed_match_slot('Ganador Semifinal 1', 'winner', 'gko-r1-m1'),
+                'slotB', public.seed_match_slot('Ganador Semifinal 2', 'winner', 'gko-r1-m2')
+              )
+            )
+          )
+        )
+      )
+    ),
+    8,
+    now() - interval '1 day',
+    now() - interval '30 minutes'
+  ),
+  (
+    '80000000-0000-4000-8000-000000000004',
+    '20000000-0000-4000-8000-000000000003',
+    null,
+    'single_elimination',
+    jsonb_build_object(
+      'version', 2,
+      'format', 'single_elimination',
+      'options', '{}'::jsonb,
+      'participants', jsonb_build_array(
+        public.seed_participant(101), public.seed_participant(102),
+        public.seed_participant(103), public.seed_participant(104),
+        public.seed_participant(105), public.seed_participant(106),
+        public.seed_participant(107), public.seed_participant(108)
+      ),
+      'body', jsonb_build_object(
+        'kind', 'single_elimination',
+        'rounds', jsonb_build_array(
+          jsonb_build_object('name', 'Cuartos de final', 'matches', jsonb_build_array(
+            jsonb_build_object('id', 'ko-r1-m1', 'slotA', public.seed_slot(101), 'slotB', public.seed_slot(108), 'result', public.seed_result(1, 0, 'A')),
+            jsonb_build_object('id', 'ko-r1-m2', 'slotA', public.seed_slot(104), 'slotB', public.seed_slot(105), 'result', public.seed_result(0, 1, 'B')),
+            jsonb_build_object('id', 'ko-r1-m3', 'slotA', public.seed_slot(102), 'slotB', public.seed_slot(107), 'result', public.seed_result(1, 0, 'A')),
+            jsonb_build_object('id', 'ko-r1-m4', 'slotA', public.seed_slot(103), 'slotB', public.seed_slot(106), 'result', public.seed_result(1, 0, 'A'))
+          )),
+          jsonb_build_object('name', 'Semifinales', 'matches', jsonb_build_array(
+            jsonb_build_object(
+              'id', 'ko-r2-m1',
+              'slotA', public.seed_match_slot('Ganador Cuartos 1', 'winner', 'ko-r1-m1'),
+              'slotB', public.seed_match_slot('Ganador Cuartos 2', 'winner', 'ko-r1-m2'),
+              'result', public.seed_result(1, 0, 'A')
+            ),
+            jsonb_build_object(
+              'id', 'ko-r2-m2',
+              'slotA', public.seed_match_slot('Ganador Cuartos 3', 'winner', 'ko-r1-m3'),
+              'slotB', public.seed_match_slot('Ganador Cuartos 4', 'winner', 'ko-r1-m4'),
+              'result', public.seed_result(0, 1, 'B')
+            )
+          )),
+          jsonb_build_object('name', 'Final', 'matches', jsonb_build_array(
+            jsonb_build_object(
+              'id', 'ko-r3-m1',
+              'slotA', public.seed_match_slot('Ganador Semifinal 1', 'winner', 'ko-r2-m1'),
+              'slotB', public.seed_match_slot('Ganador Semifinal 2', 'winner', 'ko-r2-m2'),
+              'result', public.seed_result(1, 0, 'A')
+            )
+          ))
+        )
+      )
+    ),
+    8,
+    now() - interval '31 days',
+    now() - interval '30 days'
+  );
+
+drop function public.seed_group_slot(text, text, integer);
+drop function public.seed_match_slot(text, text, text);
+drop function public.seed_result(integer, integer, text);
+drop function public.seed_slot(integer);
+drop function public.seed_participant(integer);
+drop table public.seed_registration_entries;
+
+end;
+$seed_data$;
+
+-- Fail loudly if a future schema change leaves the development dataset partial.
+do $$
+begin
+  if (select count(*) from public.tournaments) < 6 then
+    raise exception 'Seed validation failed: tournaments are missing';
+  end if;
+
+  if (select count(*) from public.registrations) < 80 then
+    raise exception 'Seed validation failed: expected at least 80 registrations';
+  end if;
+
+  if (select count(distinct status) from public.registrations) < 5 then
+    raise exception 'Seed validation failed: not all registration statuses are represented';
+  end if;
+
+  if (select count(distinct status) from public.tournaments) < 5 then
+    raise exception 'Seed validation failed: not all tournament statuses are represented';
+  end if;
+
+  if (select count(distinct format) from public.tournament_brackets) < 3 then
+    raise exception 'Seed validation failed: not all bracket formats are represented';
+  end if;
+end
+$$;
+
+select set_config('app.bypass_registration_window', 'off', false);

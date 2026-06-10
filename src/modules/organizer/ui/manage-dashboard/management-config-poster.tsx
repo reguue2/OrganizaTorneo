@@ -26,6 +26,11 @@ export function ManagementConfigPoster({
     if (file) onSelect(file)
   }
 
+  const clearPoster = () => {
+    if (inputRef.current) inputRef.current.value = ""
+    onClear()
+  }
+
   const dropPoster = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault()
     setDragging(false)
@@ -51,17 +56,21 @@ export function ManagementConfigPoster({
         accept="image/jpeg,image/png,image/webp,image/gif"
         className="sr-only"
         disabled={disabled}
-        onChange={(event) => selectFile(event.target.files?.[0])}
+        onChange={(event) => {
+          selectFile(event.target.files?.[0])
+          event.currentTarget.value = ""
+        }}
       />
 
       {previewUrl ? (
         <div className="grid lg:grid-cols-[minmax(0,1fr)_220px]">
           <div className="relative aspect-[16/7] min-h-52 bg-muted">
             <Image
+              key={previewUrl}
               src={previewUrl}
               alt="Vista previa del cartel"
               fill
-              unoptimized={previewUrl.startsWith("blob:")}
+              unoptimized
               className="object-contain"
               sizes="(min-width: 1024px) 45vw, 100vw"
             />
@@ -89,7 +98,7 @@ export function ManagementConfigPoster({
                 type="button"
                 variant="destructive"
                 disabled={disabled}
-                onClick={onClear}
+                onClick={clearPoster}
               >
                 <X className="size-4" />
                 Quitar

@@ -6,6 +6,7 @@ import { createManagementErrorPayload } from "@/modules/organizer/domain"
 import {
   deleteTournamentBracketsUseCase,
   generateTournamentBracketsUseCase,
+  setBracketMatchResultUseCase,
 } from "./bracket-actions-use-cases"
 
 type RouteContext = {
@@ -31,6 +32,18 @@ const BracketConfigSchema = z.object({
 
 const GenerateBracketSchema = z.object({
   brackets: z.array(BracketConfigSchema).min(1).max(64),
+})
+
+const MatchResultSchema = z.object({
+  scoreA: z.number().int().min(0).max(999).nullable(),
+  scoreB: z.number().int().min(0).max(999).nullable(),
+  winner: z.enum(["A", "B"]).nullable(),
+})
+
+const SetMatchResultSchema = z.object({
+  bracketId: z.string().uuid(),
+  matchId: z.string().min(1).max(64),
+  result: MatchResultSchema.nullable(),
 })
 
 async function readJson(request: Request) {
@@ -99,6 +112,46 @@ export async function generateTournamentBracket(
       format: bracket.format,
       options: bracket.options ?? {},
     })),
+    supabase: auth.supabase,
+    tournamentId: params.data.tournamentId,
+  })
+
+  return NextResponse.json(result.body, { status: result.status })
+}
+
+export async function setBracketMatchResult(
+  request: Request,
+  context: RouteContext
+) {
+  const params = TournamentParamsSchema.safeParse(await context.params)
+  if (!params.success) {
+    return NextResponse.json(
+      createManagementErrorPayload(
+        "El torneo no es válido.",
+        "MANAGEMENT_TOURNAMENT_INVALID"
+      ),
+      { status: 400 }
+    )
+  }
+
+  const body = SetMatchResultSchema.safeParse(await readJson(request))
+  if (!body.success) {
+    return NextResponse.json(
+      createManagementErrorPayload(
+        "El resultado no es válido.",
+        "MANAGEMENT_VALIDATION_ERROR"
+      ),
+      { status: 400 }
+    )
+  }
+
+  const auth = await requireAuthenticatedClient()
+  if (auth.response) return auth.response
+
+  const result = await setBracketMatchResultUseCase({
+    bracketId: body.data.bracketId,
+    matchId: body.data.matchId,
+    result: body.data.result,
     supabase: auth.supabase,
     tournamentId: params.data.tournamentId,
   })

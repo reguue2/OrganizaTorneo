@@ -29,7 +29,8 @@ export function DashboardHeader({
         <ShareTournamentButton
           path={`/torneos/${tournament.id}`}
           title={tournament.title}
-          variant="icon"
+          variant="inline"
+          label="Compartir torneo"
         />
         <Button asChild variant="secondary" size="lg">
           <Link href={`/torneos/${tournament.id}`}>

@@ -1,31 +1,38 @@
-import type { GroupsKnockoutBody } from "@/modules/tournaments/domain"
+import type {
+  BracketParticipant,
+  GroupsKnockoutBody,
+  Standing,
+} from "@/modules/tournaments/domain"
 
 import { EliminationColumns } from "./elimination-view"
 import { FixtureCard } from "./round-robin-view"
+import { StandingsTable } from "./standings-table"
 
-export function GroupsKnockoutView({ body }: { body: GroupsKnockoutBody }) {
+export function GroupsKnockoutView({
+  body,
+  standings,
+  champion = null,
+  qualifiersPerGroup = 0,
+}: {
+  body: GroupsKnockoutBody
+  standings: Record<string, Standing[]>
+  champion?: BracketParticipant | null
+  qualifiersPerGroup?: number
+}) {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2">
         {body.groups.map((group) => (
-          <div key={group.name} className="rounded-lg border border-border p-4">
+          <div key={group.name} className="space-y-3 rounded-lg border border-border p-4">
             <h3 className="font-semibold text-foreground">{group.name}</h3>
 
-            <ol className="mt-3 space-y-1 text-sm">
-              {group.participants.map((participant, index) => (
-                <li key={participant.id} className="flex items-center gap-2">
-                  <span className="w-5 shrink-0 text-right text-xs text-muted-foreground">
-                    {index + 1}.
-                  </span>
-                  <span className="min-w-0 flex-1 truncate font-medium text-foreground">
-                    {participant.name}
-                  </span>
-                </li>
-              ))}
-            </ol>
+            <StandingsTable
+              standings={standings[group.name] ?? []}
+              qualifiers={qualifiersPerGroup}
+            />
 
             {group.rounds.length > 0 && (
-              <div className="mt-4 space-y-2">
+              <div className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Calendario
                 </p>
@@ -43,7 +50,7 @@ export function GroupsKnockoutView({ body }: { body: GroupsKnockoutBody }) {
       {body.knockout.length > 0 && (
         <div className="space-y-3">
           <h3 className="font-semibold text-foreground">Fase final</h3>
-          <EliminationColumns rounds={body.knockout} />
+          <EliminationColumns rounds={body.knockout} champion={champion} />
         </div>
       )}
     </div>

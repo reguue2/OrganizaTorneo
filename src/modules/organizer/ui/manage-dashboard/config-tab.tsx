@@ -13,7 +13,11 @@ export function ConfigTab({
 }) {
   return (
     <SectionBlock title="Configuración">
-      <ManagementConfigForm dashboard={dashboard} tournament={tournament} />
+      <ManagementConfigForm
+        key={`${tournament.id}:${tournament.poster_url ?? ""}`}
+        dashboard={dashboard}
+        tournament={tournament}
+      />
     </SectionBlock>
   )
 }

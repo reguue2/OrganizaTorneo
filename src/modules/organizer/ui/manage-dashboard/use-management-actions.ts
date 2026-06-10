@@ -1,4 +1,5 @@
 import type { TournamentRow } from "@/modules/organizer/domain"
+import type { MatchResult } from "@/modules/tournaments/domain"
 
 import {
   areRegistrationsClosed,
@@ -327,6 +328,27 @@ export function useManagementActions({
     refresh()
   }
 
+  const saveMatchResult = async (
+    bracketId: string,
+    matchId: string,
+    result: MatchResult | null
+  ): Promise<{ ok: boolean; error?: string }> => {
+    const response = await requestManagementAction(
+      `/api/organizer/tournaments/${tournament.id}/bracket/results`,
+      { bracketId, matchId, result },
+      "PUT"
+    )
+
+    if (response.error) {
+      // Surface the specific server message (the modal shows it inline) instead
+      // of the generic mapped text, so the organizer sees the real reason.
+      return { ok: false, error: response.error }
+    }
+
+    refresh()
+    return { ok: true }
+  }
+
   const deleteBracket = async () => {
     setPageError(null)
 
@@ -356,6 +378,7 @@ export function useManagementActions({
     deleteBracket,
     generateBracket,
     saveConfig,
+    saveMatchResult,
     updateTournamentStatus,
   }
 }

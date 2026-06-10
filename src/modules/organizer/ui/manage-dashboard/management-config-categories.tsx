@@ -25,7 +25,6 @@ export function ManagementConfigCategories({
   registrations: RegistrationRow[]
   setForm: React.Dispatch<React.SetStateAction<ConfigForm>>
 }) {
-  const canAddCategory = canEdit && brackets.length === 0
   const [openCategories, setOpenCategories] = useState<Set<string>>(() => new Set())
 
   const updateCategory = (
@@ -83,7 +82,7 @@ export function ManagementConfigCategories({
           type="button"
           variant="outline"
           onClick={addCategory}
-          disabled={!canAddCategory}
+          disabled={!canEdit}
         >
           <Plus className="size-4" />
           Añadir categoría

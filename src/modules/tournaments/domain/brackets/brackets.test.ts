@@ -121,7 +121,7 @@ describe("buildBracketStructure", () => {
       participants: makeParticipants(6),
       rng: () => 0,
     })
-    expect(structure.version).toBe(1)
+    expect(structure.version).toBe(2)
     expect(structure.format).toBe("single_elimination")
     expect(structure.participants).toHaveLength(6)
     expect(structure.body.kind).toBe("single_elimination")

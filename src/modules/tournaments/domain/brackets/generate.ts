@@ -44,7 +44,7 @@ export function buildBracketStructure({
   const seeded = shuffle(participants, rng)
 
   return {
-    version: 1,
+    version: 2,
     format,
     options,
     participants: seeded,

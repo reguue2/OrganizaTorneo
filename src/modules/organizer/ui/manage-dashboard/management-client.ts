@@ -10,7 +10,7 @@ type ManagementActionResult =
 export async function requestManagementAction(
   path: string,
   body?: unknown,
-  method: "POST" | "DELETE" = "POST"
+  method: "POST" | "PUT" | "DELETE" = "POST"
 ): Promise<ManagementActionResult> {
   const response = await fetch(path, {
     method,
