@@ -22,6 +22,7 @@ import type {
   VerifyFlowProps,
 } from "./types"
 import { VerificationSuccessPanel } from "./verification-success-panel"
+import { normalizeSixDigitCodeInput } from "@/shared/forms/numbers"
 
 export default function VerifyFlow({
   initialRequestId,
@@ -30,13 +31,13 @@ export default function VerifyFlow({
 }: VerifyFlowProps) {
   const [requestId, setRequestId] = useState(initialRequestId)
   const token = initialToken
-  const [code, setCode] = useState(initialCode)
+  const [code, setCode] = useState(() => normalizeSixDigitCodeInput(initialCode))
   const [flowStatus, setFlowStatus] = useState<FlowStatus>("idle")
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<VerificationResult | null>(null)
 
   const hasLinkAccess = Boolean(token)
-  const canSubmitWithCode = requestId.trim() !== "" && code.trim() !== ""
+  const canSubmitWithCode = requestId.trim() !== "" && code.length === 6
 
   const cancelUrl = useMemo(() => {
     if (!result?.public_reference || !result.cancel_token) return null
@@ -163,7 +164,10 @@ export default function VerifyFlow({
           <Input
             className="mt-2"
             value={code}
-            onChange={(event) => setCode(event.target.value)}
+            inputMode="numeric"
+            maxLength={6}
+            pattern="\\d{6}"
+            onChange={(event) => setCode(normalizeSixDigitCodeInput(event.target.value))}
             placeholder="Código recibido"
           />
         </div>

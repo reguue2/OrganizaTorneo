@@ -26,8 +26,13 @@ export async function updateOrganizerProfile(
   }
 
   const name = readString(formData, "name")
-  const whatsapp = normalizeWhatsappToInternational(readString(formData, "whatsapp"))
+  const whatsappInput = readString(formData, "whatsapp")
+  const whatsapp = normalizeWhatsappToInternational(whatsappInput)
   const contactEmail = readString(formData, "contact_email")
+
+  if (whatsappInput && !whatsapp) {
+    return { status: "error", message: "Introduce un número de WhatsApp válido." }
+  }
 
   const { error } = await supabase
     .from("users")

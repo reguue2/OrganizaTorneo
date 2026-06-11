@@ -3,6 +3,8 @@ import { z } from "zod"
 
 import { createClient } from "@/lib/supabase/server"
 import { createManagementErrorPayload } from "@/modules/organizer/domain"
+import { normalizeSpanishPhone } from "@/shared/contact/phone"
+import { isValidMoneyAmount, MAX_POSTGRES_INTEGER } from "@/shared/forms/numbers"
 import {
   approveManagedCashRegistrationUseCase,
   cancelManagedRegistrationUseCase,
@@ -42,7 +44,13 @@ const UpdateTournamentStatusSchema = z.object({
 const CreateManualRegistrationSchema = z.object({
   displayName: z.string().trim().min(1),
   categoryId: z.string().uuid().optional(),
-  contactPhone: z.string().trim().optional(),
+  contactPhone: z
+    .string()
+    .trim()
+    .optional()
+    .refine((value) => !value || normalizeSpanishPhone(value) !== null, {
+      message: "Invalid phone",
+    }),
   contactEmail: z
     .string()
     .trim()
@@ -65,8 +73,8 @@ const UpdateTournamentConfigSchema = z.object({
   showOrganizerContact: z.boolean(),
   paymentMethod: z.enum(["cash", "online", "both"]),
   participantType: z.enum(["individual", "team"]).nullable(),
-  entryPrice: z.number().nonnegative(),
-  maxParticipants: z.number().int().positive().nullable(),
+  entryPrice: z.number().nonnegative().refine(isValidMoneyAmount),
+  maxParticipants: z.number().int().positive().max(MAX_POSTGRES_INTEGER).nullable(),
   prizeMode: z.enum(["none", "global", "per_category"]),
   prizes: z.string().trim().optional(),
   posterAction: z.enum(["keep", "remove", "replace"]),
@@ -76,8 +84,8 @@ const UpdateTournamentConfigSchema = z.object({
       isNew: z.boolean(),
       name: z.string().trim().min(1),
       participantType: z.enum(["individual", "team"]),
-      price: z.number().nonnegative(),
-      maxParticipants: z.number().int().positive().nullable(),
+      price: z.number().nonnegative().refine(isValidMoneyAmount),
+      maxParticipants: z.number().int().positive().max(MAX_POSTGRES_INTEGER).nullable(),
       startAt: z.string().trim().nullable(),
       address: z.string().trim().nullable(),
       prizes: z.string().trim().nullable(),
@@ -285,7 +293,9 @@ export async function createManualRegistration(
   const result = await createManualRegistrationUseCase({
     categoryId: body.data.categoryId,
     contactEmail: emptyToUndefined(body.data.contactEmail),
-    contactPhone: emptyToUndefined(body.data.contactPhone),
+    contactPhone: body.data.contactPhone
+      ? (normalizeSpanishPhone(body.data.contactPhone) ?? undefined)
+      : undefined,
     displayName: body.data.displayName,
     markAsPaid: body.data.markAsPaid,
     supabase: auth.supabase,

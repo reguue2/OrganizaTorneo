@@ -14,6 +14,7 @@ describe("phone domain", () => {
 
   it("rejects invalid phone numbers", () => {
     expect(normalizeSpanishPhone("123")).toBeNull()
+    expect(normalizeSpanishPhone("abc612345678")).toBeNull()
     expect(isValidSpanishPhone("123")).toBe(false)
   })
 

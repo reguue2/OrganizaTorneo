@@ -2,6 +2,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { normalizeSixDigitCodeInput } from "@/shared/forms/numbers"
 
 import type {
   RegistrationRequestResult,
@@ -93,7 +94,7 @@ function VerificationCodeModal({
                 placeholder="000000"
                 value={code}
                 onChange={(event) =>
-                  onCodeChange(event.target.value.replace(/\D/g, "").slice(0, 6))
+                  onCodeChange(normalizeSixDigitCodeInput(event.target.value))
                 }
                 autoFocus
               />

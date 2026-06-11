@@ -2,7 +2,11 @@ import {
   MIN_TOURNAMENT_CATEGORIES,
   MIN_TOURNAMENT_CATEGORIES_ERROR,
 } from "@/modules/tournaments/domain/constants"
-import { hasRequiredContact } from "@/modules/profile/domain"
+import {
+  hasRequiredContact,
+  normalizeWhatsappToInternational,
+} from "@/modules/profile/domain"
+import { parseIntegerInput, parseMoneyInput } from "@/shared/forms/numbers"
 
 import type {
   CreateTournamentCategoryDraft,
@@ -126,20 +130,17 @@ export function validateCategoryDraft(
   category: CreateTournamentCategoryDraft
 ): CreateTournamentErrors {
   const errors: CreateTournamentErrors = {}
-  const price = Number(category.price || "0")
-  const maxParticipants = Number(category.max_participants || "0")
+  const price = parseMoneyInput(category.price || "0")
+  const maxParticipants = parseIntegerInput(category.max_participants || "0", { min: 1 })
 
   if (!category.name.trim()) errors.name = "El nombre es obligatorio."
   if (!category.participant_type) {
     errors.participant_type = "El formato de inscripción es obligatorio."
   }
-  if (!Number.isFinite(price) || price < 0) {
+  if (price === null) {
     errors.price = "El precio no es válido."
   }
-  if (
-    !category.noMax &&
-    (!Number.isInteger(maxParticipants) || maxParticipants < 1)
-  ) {
+  if (!category.noMax && maxParticipants === null) {
     errors.max_participants = "Las plazas deben ser al menos 1."
   }
 
@@ -188,16 +189,13 @@ export function validateStep(
   if (step === "pricing") {
     if (draft.has_categories) return errors
 
-    const maxParticipants = Number(draft.max_participants || "0")
-    const entryPrice = Number(draft.entry_price || "0")
+    const maxParticipants = parseIntegerInput(draft.max_participants || "0", { min: 1 })
+    const entryPrice = parseMoneyInput(draft.entry_price || "0")
 
-    if (
-      !draft.noMax &&
-      (!Number.isInteger(maxParticipants) || maxParticipants < 1)
-    ) {
+    if (!draft.noMax && maxParticipants === null) {
       errors.max_participants = "Las plazas deben ser al menos 1."
     }
-    if (!Number.isFinite(entryPrice) || entryPrice < 0) {
+    if (entryPrice === null) {
       errors.entry_price = "El precio no es válido."
     }
   }
@@ -224,6 +222,11 @@ export function validateStep(
       errors.contact_name = "Indica tu nombre o el de tu club."
     } else if (!hasRequiredContact(contact)) {
       errors.contact = "Añade al menos WhatsApp o email para que puedan escribirte."
+    } else if (
+      draft.contact_whatsapp.trim() &&
+      !normalizeWhatsappToInternational(draft.contact_whatsapp)
+    ) {
+      errors.contact = "Introduce un número de WhatsApp válido."
     }
   }
 
@@ -231,8 +234,8 @@ export function validateStep(
 }
 
 export function formatPreviewMoney(value: string | number) {
-  const amount = typeof value === "number" ? value : Number(value)
-  if (!Number.isFinite(amount)) return "-"
+  const amount = typeof value === "number" ? value : parseMoneyInput(value)
+  if (amount === null || !Number.isFinite(amount)) return "-"
   if (amount === 0) return "Gratis"
 
   const text = Number.isInteger(amount)

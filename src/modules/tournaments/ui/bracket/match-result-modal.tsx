@@ -14,6 +14,7 @@ import {
   type BracketSlot,
   type MatchResult,
 } from "@/modules/tournaments/domain"
+import { parseIntegerInput } from "@/shared/forms/numbers"
 
 export type SaveResultOutcome = { ok: boolean; error?: string }
 
@@ -22,13 +23,7 @@ function slotName(slot: BracketSlot): string {
 }
 
 function parseScore(value: string): number | null {
-  if (value.trim() === "") return null
-  const parsed = Number.parseInt(value, 10)
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null
-}
-
-function digitsOnly(value: string): string {
-  return value.replace(/\D/g, "")
+  return parseIntegerInput(value, { min: 0, max: 999 })
 }
 
 /**
@@ -153,13 +148,13 @@ export function MatchResultModal({
                   name={nameA}
                   value={scoreA}
                   highlight={liveWinner === "A"}
-                  onChange={(value) => setScoreA(digitsOnly(value))}
+                  onChange={setScoreA}
                 />
                 <ContenderRow
                   name={nameB}
                   value={scoreB}
                   highlight={liveWinner === "B"}
-                  onChange={(value) => setScoreB(digitsOnly(value))}
+                  onChange={setScoreB}
                 />
               </div>
 
@@ -248,6 +243,7 @@ function ContenderRow({
         id={inputId}
         type="text"
         inputMode="numeric"
+        maxLength={3}
         aria-label={`Puntuación de ${name}`}
         className="h-11 w-16 text-center text-lg font-semibold"
         value={value}

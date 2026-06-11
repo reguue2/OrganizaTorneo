@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
+import { normalizeSpanishPhone } from "@/shared/contact/phone"
 
 import { formatMoney } from "./display"
 
@@ -71,11 +72,19 @@ export function AddRegistrationModal({
       return
     }
 
+    const normalizedPhone = contactPhone.trim()
+      ? normalizeSpanishPhone(contactPhone)
+      : null
+    if (contactPhone.trim() && !normalizedPhone) {
+      setError("Introduce un teléfono español válido.")
+      return
+    }
+
     setError(null)
 
     const result = await onSubmit({
       displayName: trimmedName,
-      contactPhone: contactPhone.trim() || undefined,
+      contactPhone: normalizedPhone ?? undefined,
       contactEmail: contactEmail.trim() || undefined,
       markAsPaid: isFree ? true : markAsPaid,
     })

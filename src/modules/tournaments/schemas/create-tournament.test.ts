@@ -51,6 +51,31 @@ describe("create tournament schema", () => {
     })
   })
 
+  it("normalizes localized prices and grouped capacities", () => {
+    const result = parseCreateTournamentFormData(
+      baseFormData({ entry_price: "10,50", max_participants: "1.000" })
+    )
+
+    expect(result.success).toBe(true)
+    if (!result.success) return
+
+    expect(result.data.entry_price).toBe(10.5)
+    expect(result.data.max_participants).toBe(1000)
+  })
+
+  it("rejects unsafe numeric formats", () => {
+    expect(parseCreateTournamentFormData(baseFormData({ entry_price: "1e3" }))).toEqual({
+      success: false,
+      error: "El precio del torneo no es válido.",
+    })
+    expect(
+      parseCreateTournamentFormData(baseFormData({ max_participants: "1.5" }))
+    ).toEqual({
+      success: false,
+      error: "Las plazas del torneo no son válidas.",
+    })
+  })
+
   it("parses a tournament with categories and ignores global entry price", () => {
     const result = parseCreateTournamentFormData(
       baseFormData({

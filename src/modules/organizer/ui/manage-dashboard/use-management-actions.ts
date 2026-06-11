@@ -1,5 +1,6 @@
 import type { TournamentRow } from "@/modules/organizer/domain"
 import type { MatchResult } from "@/modules/tournaments/domain"
+import { parseIntegerInput, parseMoneyInput } from "@/shared/forms/numbers"
 
 import {
   areRegistrationsClosed,
@@ -87,19 +88,16 @@ export function useManagementActions({
       return fail("Completa provincia, dirección y fechas antes de guardar.")
     }
 
-    const entryPrice = Number(form.entry_price)
+    const entryPrice = parseMoneyInput(form.entry_price)
     const maxParticipants = form.no_max_participants
       ? null
-      : Number(form.max_participants)
+      : parseIntegerInput(form.max_participants, { min: 1 })
 
-    if (!Number.isFinite(entryPrice) || entryPrice < 0) {
+    if (entryPrice === null) {
       return fail("El precio de inscripción no es válido.")
     }
 
-    if (
-      maxParticipants !== null &&
-      (!Number.isInteger(maxParticipants) || maxParticipants < 1)
-    ) {
+    if (!form.no_max_participants && maxParticipants === null) {
       return fail("Las plazas disponibles deben ser un número mayor que cero.")
     }
 
@@ -112,16 +110,15 @@ export function useManagementActions({
     }
 
     const invalidCategory = form.categories.find((category) => {
-      const price = Number(category.price)
+      const price = parseMoneyInput(category.price)
       const capacity = category.no_max_participants
         ? null
-        : Number(category.max_participants)
+        : parseIntegerInput(category.max_participants, { min: 1 })
 
       return (
         !category.name.trim() ||
-        !Number.isFinite(price) ||
-        price < 0 ||
-        (capacity !== null && (!Number.isInteger(capacity) || capacity < 1)) ||
+        price === null ||
+        (!category.no_max_participants && capacity === null) ||
         (form.prize_mode === "per_category" && !category.prizes.trim())
       )
     })
@@ -156,10 +153,10 @@ export function useManagementActions({
         isNew: category.id === null,
         name: category.name.trim(),
         participantType: category.participant_type,
-        price: Number(category.price),
+        price: parseMoneyInput(category.price) ?? 0,
         maxParticipants: category.no_max_participants
           ? null
-          : Number(category.max_participants),
+          : parseIntegerInput(category.max_participants, { min: 1 }),
         startAt: category.start_at || null,
         address: category.address.trim() || null,
         prizes: category.prizes.trim() || null,

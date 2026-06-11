@@ -1,5 +1,6 @@
 import { listPublishedPublicTournaments } from "@/modules/tournaments/server"
 import { ExploreTournamentsView } from "@/modules/tournaments/ui"
+import { parseIntegerInput } from "@/shared/forms/numbers"
 
 export default async function ExplorarPage({
   searchParams,
@@ -9,14 +10,14 @@ export default async function ExplorarPage({
   const params = await searchParams
   const q = params.q ?? ""
   const province = params.province ?? ""
-  const page = Number(params.page ?? "1")
+  const page = parseIntegerInput(params.page ?? "1", { min: 1 }) ?? 1
   const result = await listPublishedPublicTournaments({ province })
 
   return (
     <ExploreTournamentsView
       key={`${q}-${province}-${page}`}
       initialTournaments={result.data}
-      initialPage={Number.isInteger(page) && page > 0 ? page : 1}
+      initialPage={page}
       initialQuery={q}
       initialProvince={province}
       loadError={

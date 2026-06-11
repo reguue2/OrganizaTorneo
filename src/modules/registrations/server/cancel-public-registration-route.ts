@@ -9,7 +9,7 @@ const CancelPublicRegistrationSchema = z
   .object({
     publicReference: z.string().trim().min(1),
     cancelToken: z.string().trim().optional(),
-    cancelCode: z.string().trim().optional(),
+    cancelCode: z.string().trim().regex(/^\d{6}$/).optional(),
   })
   .superRefine((value, ctx) => {
     if (!value.cancelToken && !value.cancelCode) {

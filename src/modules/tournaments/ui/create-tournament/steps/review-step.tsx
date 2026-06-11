@@ -13,6 +13,7 @@ import type {
   PublicTournamentDetail,
 } from "@/modules/tournaments/domain"
 import { PublicTournamentContent } from "@/modules/tournaments/ui/public-tournament/public-tournament-page"
+import { parseIntegerInput, parseMoneyInput } from "@/shared/forms/numbers"
 
 import type {
   CreateTournamentCategoryDraft,
@@ -86,19 +87,12 @@ function ContactStep({
     <Card>
       <CardHeader className="border-b border-border">
         <CardTitle>Contacto para participantes</CardTitle>
-        <CardDescription>
-          Para torneos locales lo habitual es dejar un contacto para que los participantes
-          puedan escribirte (pagos, dudas…). Se guarda en tu perfil para reutilizarlo.
-        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 p-5">
         <label className="flex items-start justify-between gap-4 rounded-xl border border-border bg-muted/20 p-4">
           <span>
             <span className="block font-medium text-foreground">
               Mostrar mi contacto en la ficha del torneo
-            </span>
-            <span className="mt-1 block text-sm text-muted-foreground">
-              Aparecerán tu nombre/club, WhatsApp y email de contacto.
             </span>
           </span>
           <input
@@ -214,15 +208,11 @@ function toNullableText(value: string) {
 }
 
 function toNullableInteger(value: string) {
-  const number = Number(value)
-  if (!Number.isInteger(number) || number < 1) return null
-  return number
+  return parseIntegerInput(value, { min: 1 })
 }
 
 function toNumber(value: string) {
-  const number = Number(value)
-  if (!Number.isFinite(number) || number < 0) return 0
-  return number
+  return parseMoneyInput(value) ?? 0
 }
 
 export { ReviewStep }

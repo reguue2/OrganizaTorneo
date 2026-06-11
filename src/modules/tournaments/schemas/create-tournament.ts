@@ -3,19 +3,38 @@ import {
   MIN_TOURNAMENT_CATEGORIES,
   MIN_TOURNAMENT_CATEGORIES_ERROR,
 } from "@/modules/tournaments/domain/constants"
+import { normalizeWhatsappToInternational } from "@/shared/contact/phone"
+import {
+  MAX_POSTGRES_INTEGER,
+  isValidMoneyAmount,
+  parseIntegerInput,
+  parseMoneyInput,
+} from "@/shared/forms/numbers"
+
+const MoneySchema = z.preprocess(
+  (value) => (typeof value === "string" ? (parseMoneyInput(value) ?? Number.NaN) : value),
+  z
+    .number()
+    .finite()
+    .nonnegative("El precio no puede ser negativo.")
+    .refine(isValidMoneyAmount, "El precio no es válido.")
+)
+
+const PositiveIntegerSchema = z.preprocess(
+  (value) =>
+    typeof value === "string"
+      ? (parseIntegerInput(value, { min: 1 }) ?? Number.NaN)
+      : value,
+  z.number().int().min(1).max(MAX_POSTGRES_INTEGER)
+)
 
 export const CreateTournamentCategorySchema = z
   .object({
     name: z.string().trim().min(1, "El nombre de la categoría es obligatorio."),
     participant_type: z.enum(["individual", "team"]),
-    price: z.coerce
-      .number()
-      .min(0, "El precio de la categoría no puede ser negativo."),
-    min_participants: z.coerce
-      .number()
-      .int()
-      .min(1, "Las plazas de la categoría no son válidas."),
-    max_participants: z.union([z.coerce.number().int().min(1), z.null()]),
+    price: MoneySchema,
+    min_participants: PositiveIntegerSchema,
+    max_participants: z.union([PositiveIntegerSchema, z.null()]),
     start_at: z.string().nullable(),
     address: z.string().nullable(),
     prizes: z.string().nullable(),
@@ -57,13 +76,19 @@ export const CreateTournamentFormSchema = z
     min_participants: z
       .number()
       .int("Las plazas del torneo no son válidas.")
-      .min(1, "Las plazas del torneo no son válidas."),
-    max_participants: z.number().int().nullable(),
+      .min(1, "Las plazas del torneo no son válidas.")
+      .max(MAX_POSTGRES_INTEGER, "Las plazas del torneo no son válidas."),
+    max_participants: z
+      .number()
+      .int()
+      .min(1, "Las plazas del torneo no son válidas.")
+      .max(MAX_POSTGRES_INTEGER, "Las plazas del torneo no son válidas.")
+      .nullable(),
     payment_method: PaymentMethodSchema.nullable(),
     prize_mode: PrizeModeSchema,
     prizes: z.string().trim(),
     rules: z.string().trim(),
-    entry_price: z.number(),
+    entry_price: z.number().finite().nonnegative().refine(isValidMoneyAmount),
     categories: z.array(CreateTournamentCategorySchema),
     show_contact: z.boolean(),
     contact_name: z.string().trim(),
@@ -83,6 +108,15 @@ export const CreateTournamentFormSchema = z
           code: "custom",
           message:
             "Añade al menos WhatsApp o email para que los participantes puedan escribirte.",
+          path: ["contact"],
+        })
+      } else if (
+        value.contact_whatsapp &&
+        !normalizeWhatsappToInternational(value.contact_whatsapp)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Introduce un número de WhatsApp válido.",
           path: ["contact"],
         })
       }
@@ -214,10 +248,7 @@ export function parseNullableIntegerFormValue(
   const text = typeof value === "string" ? value.trim() : ""
   if (!text) return null
 
-  const parsed = Number(text)
-  if (!Number.isInteger(parsed)) return Number.NaN
-
-  return parsed
+  return parseIntegerInput(text, { min: 1 }) ?? Number.NaN
 }
 
 export function parseCreateTournamentCategories(raw: string) {
@@ -275,7 +306,7 @@ export function parseCreateTournamentFormData(formData: FormData):
     formData.get("max_participants")
   )
   const entryPriceRaw = (formData.get("entry_price") as string | null)?.trim() ?? ""
-  const entryPrice = hasCategories ? 0 : Number(entryPriceRaw || "0")
+  const entryPrice = hasCategories ? 0 : parseMoneyInput(entryPriceRaw || "0")
 
   if (minParticipants === null || Number.isNaN(minParticipants)) {
     return {
@@ -288,6 +319,13 @@ export function parseCreateTournamentFormData(formData: FormData):
     return {
       success: false,
       error: "Las plazas del torneo no son válidas.",
+    }
+  }
+
+  if (entryPrice === null) {
+    return {
+      success: false,
+      error: "El precio del torneo no es válido.",
     }
   }
 

@@ -13,6 +13,7 @@ import {
   BRACKET_FORMAT_LABELS,
   type BracketFormat,
 } from "@/modules/tournaments/domain"
+import { parseIntegerInput } from "@/shared/forms/numbers"
 
 import type { BracketConfig } from "./types"
 
@@ -51,12 +52,7 @@ function initialRow(target: BracketTarget): RowState {
 }
 
 function parsePositiveInt(value: string): number | undefined {
-  const parsed = Number.parseInt(value, 10)
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
-}
-
-function digitsOnly(value: string): string {
-  return value.replace(/\D/g, "")
+  return parseIntegerInput(value, { min: 1, max: 64 }) ?? undefined
 }
 
 function optionsFor(row: RowState): BracketConfig["options"] {
@@ -108,6 +104,14 @@ export function GenerateBracketModal({
   const selectedCount = eligible.filter((target) => rows[keyOf(target)]?.included).length
   const allEligibleSelected = eligible.length > 0 && selectedCount === eligible.length
   const totalPending = targets.reduce((sum, target) => sum + target.pendingCount, 0)
+  const hasInvalidOptions = eligible.some((target) => {
+    const row = rows[keyOf(target)]
+    if (!row?.included || row.format !== "groups_knockout") return false
+    return (
+      (row.groupCount.trim() !== "" && parsePositiveInt(row.groupCount) === undefined) ||
+      parsePositiveInt(row.qualifiers) === undefined
+    )
+  })
 
   function toggleAll() {
     setRows((prev) => {
@@ -121,6 +125,7 @@ export function GenerateBracketModal({
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
+    if (hasInvalidOptions) return
 
     const configs: BracketConfig[] = []
     for (const target of targets) {
@@ -224,7 +229,10 @@ export function GenerateBracketModal({
                 <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={busy || selectedCount === 0}>
+                <Button
+                  type="submit"
+                  disabled={busy || selectedCount === 0 || hasInvalidOptions}
+                >
                   {busy
                     ? "Generando..."
                     : selectedCount > 1
@@ -361,7 +369,8 @@ function FormatOptions({
           inputMode="numeric"
           placeholder="Automático"
           value={row.groupCount}
-          onChange={(event) => onChange({ groupCount: digitsOnly(event.target.value) })}
+          maxLength={2}
+          onChange={(event) => onChange({ groupCount: event.target.value })}
         />
       </div>
       <div className="space-y-1.5">
@@ -371,7 +380,8 @@ function FormatOptions({
           type="text"
           inputMode="numeric"
           value={row.qualifiers}
-          onChange={(event) => onChange({ qualifiers: digitsOnly(event.target.value) })}
+          maxLength={2}
+          onChange={(event) => onChange({ qualifiers: event.target.value })}
         />
       </div>
     </div>

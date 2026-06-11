@@ -194,6 +194,8 @@ function ParticipantContactFields({
             Teléfono de contacto <span className="text-red-500">*</span>
           </Label>
           <Input
+            type="tel"
+            inputMode="tel"
             value={contactPhone}
             onChange={(event) => onContactPhoneChange(event.target.value)}
             placeholder="Telefono de contacto"

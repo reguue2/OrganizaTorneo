@@ -15,6 +15,15 @@ describe("normalizeWhatsappToInternational", () => {
     expect(normalizeWhatsappToInternational("+34 611 240 873")).toBe("34611240873")
   })
 
+  it("converts an international 00 prefix for wa.me", () => {
+    expect(normalizeWhatsappToInternational("0034 611 240 873")).toBe("34611240873")
+  })
+
+  it("rejects malformed or incomplete numbers", () => {
+    expect(normalizeWhatsappToInternational("abc123")).toBe("")
+    expect(normalizeWhatsappToInternational("123")).toBe("")
+  })
+
   it("returns an empty string when there are no digits", () => {
     expect(normalizeWhatsappToInternational("")).toBe("")
   })

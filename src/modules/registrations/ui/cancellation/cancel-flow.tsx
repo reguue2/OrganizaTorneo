@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { normalizeSixDigitCodeInput } from "@/shared/forms/numbers"
 
 import {
   getCancellationStatusLabel,
@@ -27,13 +28,13 @@ export default function CancelFlow({
 }: CancelFlowProps) {
   const [reference, setReference] = useState(initialReference)
   const token = initialToken
-  const [code, setCode] = useState(initialCode)
+  const [code, setCode] = useState(() => normalizeSixDigitCodeInput(initialCode))
   const [flowStatus, setFlowStatus] = useState<FlowStatus>("idle")
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<CancelResult | null>(null)
 
   const hasLinkAccess = Boolean(token)
-  const canSubmitWithCode = reference.trim() !== "" && code.trim() !== ""
+  const canSubmitWithCode = reference.trim() !== "" && code.length === 6
   const canSubmitWithToken = reference.trim() !== "" && token.trim() !== ""
 
   const submitCancellation = async (mode: "token" | "code") => {
@@ -193,7 +194,10 @@ export default function CancelFlow({
           <Input
             className="mt-2"
             value={code}
-            onChange={(event) => setCode(event.target.value)}
+            inputMode="numeric"
+            maxLength={6}
+            pattern="\\d{6}"
+            onChange={(event) => setCode(normalizeSixDigitCodeInput(event.target.value))}
             placeholder="Código de cancelación"
           />
         </div>
