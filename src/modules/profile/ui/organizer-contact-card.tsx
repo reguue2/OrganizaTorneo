@@ -1,13 +1,7 @@
-import { Mail, MessageCircle, Phone } from "lucide-react"
+import { Mail, MessageCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   buildTournamentContactMessage,
   buildWhatsappLink,
@@ -30,39 +24,34 @@ export function OrganizerContactCard({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Contactar con el organizador</CardTitle>
-        <CardDescription>
-          {contact.name
-            ? `Habla con ${contact.name} para pagar o resolver dudas.`
-            : "Habla con el organizador para pagar o resolver dudas."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-wrap gap-2 pt-0">
-        {whatsappLink && (
-          <Button asChild>
-            <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-              <MessageCircle data-icon="inline-start" />
-              WhatsApp
-            </a>
-          </Button>
-        )}
-        {contact.phone && (
-          <Button asChild variant="outline">
-            <a href={`tel:${contact.phone}`}>
-              <Phone data-icon="inline-start" />
-              Llamar
-            </a>
-          </Button>
-        )}
-        {contact.email && (
-          <Button asChild variant="outline">
-            <a href={`mailto:${contact.email}`}>
-              <Mail data-icon="inline-start" />
-              Email
-            </a>
-          </Button>
-        )}
+      <CardContent className="space-y-5 p-5">
+        <div className="space-y-2">
+          <p className="text-xl font-semibold text-foreground">
+            {contact.name ? `Organiza ${contact.name}` : "Contactar con el organizador"}
+          </p>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Escríbele para pagar o resolver cualquier duda del torneo.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          {whatsappLink && (
+            <Button asChild size="lg" className="w-full">
+              <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                <MessageCircle data-icon="inline-start" />
+                WhatsApp
+              </a>
+            </Button>
+          )}
+          {contact.contactEmail && (
+            <Button asChild variant="outline" size="lg" className="w-full">
+              <a href={`mailto:${contact.contactEmail}`}>
+                <Mail data-icon="inline-start" />
+                Email
+              </a>
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   )

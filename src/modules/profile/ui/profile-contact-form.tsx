@@ -44,12 +44,12 @@ export function ProfileContactForm({ profile }: { profile: OrganizerProfile }) {
         </CardHeader>
         <CardContent className="space-y-4 pt-0">
           <div className="space-y-1.5">
-            <Label htmlFor="name">Nombre</Label>
+            <Label htmlFor="name">Nombre o club</Label>
             <Input
               id="name"
               name="name"
               defaultValue={profile.name}
-              placeholder="Tu nombre o el de tu club"
+              placeholder=""
               autoComplete="name"
             />
           </div>
@@ -58,22 +58,11 @@ export function ProfileContactForm({ profile }: { profile: OrganizerProfile }) {
             <Label htmlFor="email">Email de la cuenta</Label>
             <Input id="email" value={profile.email} disabled readOnly />
             <p className="text-xs text-muted-foreground">
-              Es el email con el que inicias sesión.
+              Es el email con el que inicias sesión. No se muestra en tus torneos.
             </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="phone">Teléfono</Label>
-              <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                defaultValue={profile.phone}
-                placeholder="600 123 456"
-                autoComplete="tel"
-              />
-            </div>
             <div className="space-y-1.5">
               <Label htmlFor="whatsapp">WhatsApp</Label>
               <Input
@@ -81,7 +70,22 @@ export function ProfileContactForm({ profile }: { profile: OrganizerProfile }) {
                 name="whatsapp"
                 type="tel"
                 defaultValue={profile.whatsapp}
-                placeholder="Puede ser el mismo que tu teléfono"
+                placeholder=""
+                autoComplete="tel"
+              />
+              <p className="text-xs text-muted-foreground">
+                Incluye el prefijo de país (España +34) para que el enlace funcione.
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="contact_email">Email de contacto</Label>
+              <Input
+                id="contact_email"
+                name="contact_email"
+                type="email"
+                defaultValue={profile.contactEmail}
+                placeholder=""
+                autoComplete="email"
               />
             </div>
           </div>
@@ -90,34 +94,13 @@ export function ProfileContactForm({ profile }: { profile: OrganizerProfile }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Contacto público</CardTitle>
+          <CardTitle>Contacto visible en tus torneos</CardTitle>
           <CardDescription>
-            Permite que los participantes te escriban para pagar o resolver dudas.
+            Tu nombre/club, WhatsApp y email de contacto pueden aparecer en la ficha pública
+            de tus torneos para que los participantes te escriban (pagos, dudas…). En cada
+            torneo eliges si mostrarlo o no.
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-0">
-          <label
-            htmlFor="public_contact"
-            className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-4"
-          >
-            <input
-              id="public_contact"
-              name="public_contact"
-              type="checkbox"
-              defaultChecked={profile.publicContact}
-              className="mt-0.5 size-4 rounded border-input accent-primary"
-            />
-            <span className="space-y-1">
-              <span className="block text-sm font-medium text-foreground">
-                Mostrar mi contacto en mis torneos
-              </span>
-              <span className="block text-xs leading-5 text-muted-foreground">
-                Si lo activas, en la ficha pública de tus torneos aparecerán botones
-                para contactarte por WhatsApp, teléfono o email.
-              </span>
-            </span>
-          </label>
-        </CardContent>
       </Card>
 
       {state.status !== "idle" && state.message && (

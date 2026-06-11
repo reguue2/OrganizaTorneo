@@ -3,39 +3,11 @@ import {
   Banknote,
   CreditCard,
   Clock,
-  Wallet,
 } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { EmptyState } from "@/components/ui/empty-state"
-import {
-  formatEur,
-  formatWalletDate,
-  type OrganizerWallet,
-  type WalletPaymentMethod,
-  type WalletPaymentStatus,
-} from "@/modules/profile/domain"
-
-function methodLabel(method: WalletPaymentMethod | null): string {
-  if (method === "online") return "Online"
-  if (method === "cash") return "Efectivo"
-  return "—"
-}
-
-function StatusBadge({ status }: { status: WalletPaymentStatus | null }) {
-  if (status === "paid") return <Badge variant="success">Pagado</Badge>
-  if (status === "pending") return <Badge variant="warning">Pendiente</Badge>
-  if (status === "refunded") return <Badge variant="destructive">Reembolsado</Badge>
-  return <Badge variant="outline">—</Badge>
-}
+import { Card, CardContent } from "@/components/ui/card"
+import { formatEur, type OrganizerWallet } from "@/modules/profile/domain"
 
 function SummaryCard({
   icon,
@@ -114,63 +86,6 @@ export function WalletTab({ wallet }: { wallet: OrganizerWallet }) {
           hint="Pagos online iniciados que aún no se han confirmado."
         />
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Movimientos</CardTitle>
-          <CardDescription>
-            Cada inscripción cobrada genera un movimiento en tu monedero.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-0">
-          {wallet.movements.length === 0 ? (
-            <EmptyState
-              icon={<Wallet className="size-5" />}
-              title="Aún no hay movimientos"
-              description="Cuando cobres inscripciones de tus torneos aparecerán aquí."
-            />
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                    <th className="px-3 py-2 font-medium">Torneo</th>
-                    <th className="px-3 py-2 font-medium">Participante</th>
-                    <th className="px-3 py-2 font-medium">Método</th>
-                    <th className="px-3 py-2 font-medium">Estado</th>
-                    <th className="px-3 py-2 font-medium">Fecha</th>
-                    <th className="px-3 py-2 text-right font-medium">Importe</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {wallet.movements.map((movement) => (
-                    <tr key={movement.id} className="border-b border-border/60">
-                      <td className="px-3 py-2.5 font-medium text-foreground">
-                        {movement.tournamentTitle}
-                      </td>
-                      <td className="px-3 py-2.5 text-muted-foreground">
-                        {movement.participantName}
-                      </td>
-                      <td className="px-3 py-2.5 text-muted-foreground">
-                        {methodLabel(movement.method)}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <StatusBadge status={movement.status} />
-                      </td>
-                      <td className="px-3 py-2.5 text-muted-foreground">
-                        {formatWalletDate(movement.date)}
-                      </td>
-                      <td className="px-3 py-2.5 text-right font-semibold text-foreground">
-                        {formatEur(movement.amount)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   )
 }

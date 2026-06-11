@@ -22,6 +22,10 @@ function baseFormData(overrides: Record<string, string> = {}) {
     rules: "",
     entry_price: "10",
     categories_json: "[]",
+    show_contact: "true",
+    contact_name: "Club Local",
+    contact_whatsapp: "+34 600 123 456",
+    contact_email: "",
     ...overrides,
   }
 
@@ -123,6 +127,42 @@ describe("create tournament schema", () => {
       success: false,
       error: "Debes crear al menos 2 categorías.",
     })
+  })
+
+  it("requires at least WhatsApp or email for the organizer contact", () => {
+    const result = parseCreateTournamentFormData(
+      baseFormData({ contact_whatsapp: "", contact_email: "" })
+    )
+
+    expect(result).toEqual({
+      success: false,
+      error:
+        "Añade al menos WhatsApp o email para que los participantes puedan escribirte.",
+    })
+  })
+
+  it("requires the organizer name", () => {
+    const result = parseCreateTournamentFormData(baseFormData({ contact_name: "" }))
+
+    expect(result).toEqual({
+      success: false,
+      error: "Indica tu nombre o el de tu club para que puedan contactarte.",
+    })
+  })
+
+  it("skips the contact requirement when it is hidden", () => {
+    const result = parseCreateTournamentFormData(
+      baseFormData({
+        show_contact: "false",
+        contact_name: "",
+        contact_whatsapp: "",
+        contact_email: "",
+      })
+    )
+
+    expect(result.success).toBe(true)
+    if (!result.success) return
+    expect(result.data.show_contact).toBe(false)
   })
 
   it("rejects per-category prizes when categories have no prizes", () => {

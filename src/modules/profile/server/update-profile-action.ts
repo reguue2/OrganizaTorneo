@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import { createClient } from "@/lib/supabase/server"
+import { normalizeWhatsappToInternational } from "@/modules/profile/domain"
 
 import type { ProfileActionState } from "./profile-action-state"
 
@@ -25,17 +26,15 @@ export async function updateOrganizerProfile(
   }
 
   const name = readString(formData, "name")
-  const phone = readString(formData, "phone")
-  const whatsapp = readString(formData, "whatsapp")
-  const publicContact = formData.get("public_contact") === "on"
+  const whatsapp = normalizeWhatsappToInternational(readString(formData, "whatsapp"))
+  const contactEmail = readString(formData, "contact_email")
 
   const { error } = await supabase
     .from("users")
     .update({
       name: name || null,
-      phone: phone || null,
       whatsapp: whatsapp || null,
-      public_contact: publicContact,
+      contact_email: contactEmail || null,
     })
     .eq("id", user.id)
 

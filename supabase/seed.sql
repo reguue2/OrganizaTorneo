@@ -107,7 +107,7 @@ set
   name = 'Daniel Romero',
   phone = '+34 952 410 286',
   whatsapp = '+34 611 240 873',
-  public_contact = true,
+  contact_email = 'daniel.romero@example.com',
   stripe_account_id = 'acct_seed_daniel'
 where id = '10000000-0000-4000-8000-000000000001';
 
@@ -116,7 +116,7 @@ set
   name = 'Marina Torres',
   phone = '+34 954 228 194',
   whatsapp = '+34 622 318 451',
-  public_contact = false
+  contact_email = 'marina.torres@example.com'
 where id = '10000000-0000-4000-8000-000000000002';
 
 -- ---------------------------------------------------------------------------

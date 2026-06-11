@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { v4 as uuidv4 } from "uuid"
 import type { Database } from "@/types/database"
+import { normalizeWhatsappToInternational } from "@/modules/profile/domain"
 import { parseCreateTournamentFormData } from "@/modules/tournaments/schemas"
 
 export type CreateTournamentActionState = {
@@ -42,6 +43,23 @@ export async function createTournament(
   if (!parsed.success) return { error: parsed.error }
 
   const tournament = parsed.data
+
+  // Persist the organizer contact globally (reused across tournaments) only when
+  // the organizer chose to show it, so hiding it never wipes saved contact.
+  if (tournament.show_contact) {
+    const { error: contactError } = await supabase
+      .from("users")
+      .update({
+        name: tournament.contact_name || null,
+        whatsapp: normalizeWhatsappToInternational(tournament.contact_whatsapp) || null,
+        contact_email: tournament.contact_email || null,
+      })
+      .eq("id", user.id)
+
+    if (contactError) {
+      return { error: "No se pudo guardar tu contacto. Inténtalo de nuevo." }
+    }
+  }
 
   let fileName: string | null = null
   let posterUrl: string | null = null
@@ -105,6 +123,14 @@ export async function createTournament(
       await supabase.storage.from("tournament-posters").remove([fileName])
     }
     return { error: "No se pudo crear el torneo." }
+  }
+
+  // Honour the per-tournament contact visibility (column defaults to true).
+  if (!tournament.show_contact) {
+    await supabase
+      .from("tournaments")
+      .update({ show_organizer_contact: false })
+      .eq("id", tournamentId)
   }
 
   redirect(`/torneos/${tournamentId}`)

@@ -44,6 +44,7 @@ export type ConfigForm = {
   date: string
   registration_deadline: string
   is_public: boolean
+  show_organizer_contact: boolean
   payment_method: "cash" | "online" | "both"
   participant_type: "individual" | "team" | null
   entry_price: string

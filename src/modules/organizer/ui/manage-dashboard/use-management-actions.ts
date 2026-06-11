@@ -143,6 +143,7 @@ export function useManagementActions({
       date: form.date,
       registrationDeadline: form.registration_deadline,
       isPublic: form.is_public,
+      showOrganizerContact: form.show_organizer_contact,
       paymentMethod: form.payment_method,
       participantType: form.participant_type,
       entryPrice,

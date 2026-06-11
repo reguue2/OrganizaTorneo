@@ -5,6 +5,7 @@ import {
   ImageIcon,
   LockKeyhole,
   MapPin,
+  MessageCircle,
   Save,
   Settings2,
   Trophy,
@@ -142,6 +143,26 @@ export function ManagementConfigForm({
             checked={form.is_public}
             disabled={!canEdit}
             onChange={(event) => updateForm("is_public", event.target.checked)}
+            className="mt-1 size-5 shrink-0 accent-primary"
+          />
+        </label>
+
+        <label className="flex items-start justify-between gap-4 rounded-xl border border-border bg-muted/20 p-4">
+          <span>
+            <span className="flex items-center gap-2 font-medium text-foreground">
+              <MessageCircle className="size-4" />
+              Mostrar mi contacto en este torneo
+            </span>
+            <span className="mt-1 block text-sm text-muted-foreground">
+              Tu nombre, WhatsApp y email de contacto aparecen en la ficha para que los
+              participantes te escriban.
+            </span>
+          </span>
+          <input
+            type="checkbox"
+            checked={form.show_organizer_contact}
+            disabled={!canEdit}
+            onChange={(event) => updateForm("show_organizer_contact", event.target.checked)}
             className="mt-1 size-5 shrink-0 accent-primary"
           />
         </label>

@@ -43,6 +43,10 @@ export type CreateTournamentDraft = {
   prizes: string
   rules: string
   categories: CreateTournamentCategoryDraft[]
+  show_contact: boolean
+  contact_name: string
+  contact_whatsapp: string
+  contact_email: string
 }
 
 export type CreateTournamentErrors = Record<string, string>

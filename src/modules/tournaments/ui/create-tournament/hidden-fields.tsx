@@ -51,6 +51,10 @@ function CreateTournamentHiddenFields({
         name="categories_json"
         value={serializeCreateTournamentCategories(draft)}
       />
+      <input type="hidden" name="show_contact" value={String(draft.show_contact)} />
+      <input type="hidden" name="contact_name" value={draft.contact_name} />
+      <input type="hidden" name="contact_whatsapp" value={draft.contact_whatsapp} />
+      <input type="hidden" name="contact_email" value={draft.contact_email} />
     </>
   )
 }

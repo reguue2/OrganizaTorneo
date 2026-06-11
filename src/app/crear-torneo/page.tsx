@@ -4,6 +4,7 @@ import {
   OrganizerPage,
   OrganizerPageHeader,
 } from "@/components/layout"
+import { getOrganizerProfile } from "@/modules/profile/server"
 import { CreateTournamentForm } from "@/modules/tournaments/ui"
 
 export default async function CrearTorneoPage() {
@@ -15,13 +16,21 @@ export default async function CrearTorneoPage() {
 
   if (!user) redirect("/login")
 
+  const profile = await getOrganizerProfile(user.id, user.email ?? "")
+
   return (
     <OrganizerPage size="wide">
       <OrganizerPageHeader
         title="Crear torneo"
         description="Configura tu torneo y publícalo cuando completes los datos."
       />
-      <CreateTournamentForm />
+      <CreateTournamentForm
+        profileContact={{
+          name: profile.name,
+          whatsapp: profile.whatsapp,
+          contactEmail: profile.contactEmail,
+        }}
+      />
     </OrganizerPage>
   )
 }

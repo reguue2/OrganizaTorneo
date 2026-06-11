@@ -387,6 +387,7 @@ export type Database = {
           province: string | null
           registration_deadline: string | null
           rules: string | null
+          show_organizer_contact: boolean
           status: Database["public"]["Enums"]["tournament_status"] | null
           title: string
           updated_at: string
@@ -415,6 +416,7 @@ export type Database = {
           province?: string | null
           registration_deadline?: string | null
           rules?: string | null
+          show_organizer_contact?: boolean
           status?: Database["public"]["Enums"]["tournament_status"] | null
           title: string
           updated_at?: string
@@ -443,6 +445,7 @@ export type Database = {
           province?: string | null
           registration_deadline?: string | null
           rules?: string | null
+          show_organizer_contact?: boolean
           status?: Database["public"]["Enums"]["tournament_status"] | null
           title?: string
           updated_at?: string
@@ -459,32 +462,32 @@ export type Database = {
       }
       users: {
         Row: {
+          contact_email: string | null
           created_at: string | null
           email: string
           id: string
           name: string | null
           phone: string | null
-          public_contact: boolean
           stripe_account_id: string | null
           whatsapp: string | null
         }
         Insert: {
+          contact_email?: string | null
           created_at?: string | null
           email: string
           id: string
           name?: string | null
           phone?: string | null
-          public_contact?: boolean
           stripe_account_id?: string | null
           whatsapp?: string | null
         }
         Update: {
+          contact_email?: string | null
           created_at?: string | null
           email?: string
           id?: string
           name?: string | null
           phone?: string | null
-          public_contact?: boolean
           stripe_account_id?: string | null
           whatsapp?: string | null
         }
@@ -516,9 +519,8 @@ export type Database = {
       get_public_organizer_contact: {
         Args: { p_tournament_id: string }
         Returns: {
-          email: string
+          contact_email: string
           name: string
-          phone: string
           whatsapp: string
         }[]
       }

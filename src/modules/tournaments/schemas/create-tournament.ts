@@ -65,8 +65,29 @@ export const CreateTournamentFormSchema = z
     rules: z.string().trim(),
     entry_price: z.number(),
     categories: z.array(CreateTournamentCategorySchema),
+    show_contact: z.boolean(),
+    contact_name: z.string().trim(),
+    contact_whatsapp: z.string().trim(),
+    contact_email: z.string().trim(),
   })
   .superRefine((value, ctx) => {
+    if (value.show_contact) {
+      if (!value.contact_name) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Indica tu nombre o el de tu club para que puedan contactarte.",
+          path: ["contact_name"],
+        })
+      } else if (!value.contact_whatsapp && !value.contact_email) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "Añade al menos WhatsApp o email para que los participantes puedan escribirte.",
+          path: ["contact"],
+        })
+      }
+    }
+
     const date = new Date(value.date)
     const deadline = new Date(value.registration_deadline)
 
@@ -291,6 +312,10 @@ export function parseCreateTournamentFormData(formData: FormData):
     rules: (formData.get("rules") as string | null) ?? "",
     entry_price: entryPrice,
     categories,
+    show_contact: parseBooleanFormValue(formData.get("show_contact")),
+    contact_name: (formData.get("contact_name") as string | null) ?? "",
+    contact_whatsapp: (formData.get("contact_whatsapp") as string | null) ?? "",
+    contact_email: (formData.get("contact_email") as string | null) ?? "",
   })
 
   if (!parsed.success) {

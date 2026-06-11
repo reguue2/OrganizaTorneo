@@ -4,9 +4,8 @@ import type { OrganizerProfile } from "@/modules/profile/domain"
 type OrganizerProfileRow = {
   name: string | null
   email: string | null
-  phone: string | null
+  contact_email: string | null
   whatsapp: string | null
-  public_contact: boolean | null
 }
 
 export async function getOrganizerProfile(
@@ -17,15 +16,14 @@ export async function getOrganizerProfile(
 
   const { data } = await supabase
     .from("users")
-    .select("name,email,phone,whatsapp,public_contact")
+    .select("name,email,contact_email,whatsapp")
     .eq("id", userId)
     .maybeSingle<OrganizerProfileRow>()
 
   return {
     name: data?.name ?? "",
     email: data?.email ?? fallbackEmail,
-    phone: data?.phone ?? "",
+    contactEmail: data?.contact_email ?? "",
     whatsapp: data?.whatsapp ?? "",
-    publicContact: data?.public_contact ?? false,
   }
 }

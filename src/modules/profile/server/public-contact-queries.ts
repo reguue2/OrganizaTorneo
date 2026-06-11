@@ -20,8 +20,7 @@ export async function getPublicOrganizerContact(
   const row = data[0]
   const contact: OrganizerPublicContact = {
     name: row.name ?? null,
-    email: row.email ?? null,
-    phone: row.phone ?? null,
+    contactEmail: row.contact_email ?? null,
     whatsapp: row.whatsapp ?? null,
   }
 

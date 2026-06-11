@@ -24,6 +24,7 @@ const baseTournament: TournamentRow = {
   has_categories: false,
   payment_method: "both",
   is_public: true,
+  show_organizer_contact: true,
   min_participants: 1,
   max_participants: 32,
   entry_price: 10,

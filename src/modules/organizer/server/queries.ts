@@ -45,6 +45,7 @@ export async function getManagedTournamentDashboard(
       has_categories,
       payment_method,
       is_public,
+      show_organizer_contact,
       min_participants,
       max_participants,
       entry_price,

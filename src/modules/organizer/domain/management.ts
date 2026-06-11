@@ -28,6 +28,7 @@ export type TournamentRow = {
   has_categories: boolean
   payment_method: "cash" | "online" | "both" | null
   is_public: boolean | null
+  show_organizer_contact: boolean
   min_participants: number
   max_participants: number | null
   entry_price: number

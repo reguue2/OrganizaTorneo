@@ -18,6 +18,7 @@ const form: ConfigForm = {
   date: "2026-07-01T10:00",
   registration_deadline: "2026-06-30T10:00",
   is_public: true,
+  show_organizer_contact: true,
   payment_method: "cash",
   participant_type: null,
   entry_price: "0",

@@ -2,6 +2,7 @@ import {
   MIN_TOURNAMENT_CATEGORIES,
   MIN_TOURNAMENT_CATEGORIES_ERROR,
 } from "@/modules/tournaments/domain/constants"
+import { hasRequiredContact } from "@/modules/profile/domain"
 
 import type {
   CreateTournamentCategoryDraft,
@@ -53,6 +54,10 @@ export const INITIAL_CREATE_TOURNAMENT_DRAFT: CreateTournamentDraft = {
   prizes: "",
   rules: "",
   categories: [],
+  show_contact: true,
+  contact_name: "",
+  contact_whatsapp: "",
+  contact_email: "",
 }
 
 export function createCategoryId() {
@@ -206,6 +211,19 @@ export function validateStep(
       draft.categories.some((category) => !category.prizes.trim())
     ) {
       errors.categories = "Rellena los premios de cada categoría."
+    }
+  }
+
+  if (step === "review" && draft.show_contact) {
+    const contact = {
+      name: draft.contact_name,
+      whatsapp: draft.contact_whatsapp,
+      contactEmail: draft.contact_email,
+    }
+    if (!draft.contact_name.trim()) {
+      errors.contact_name = "Indica tu nombre o el de tu club."
+    } else if (!hasRequiredContact(contact)) {
+      errors.contact = "Añade al menos WhatsApp o email para que puedan escribirte."
     }
   }
 

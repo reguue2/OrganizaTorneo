@@ -5,6 +5,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { PublicPage } from "@/components/layout"
 import type {
   PublicTournamentCategory,
@@ -15,11 +17,15 @@ import { PublicTournamentContent } from "@/modules/tournaments/ui/public-tournam
 import type {
   CreateTournamentCategoryDraft,
   CreateTournamentDraft,
+  CreateTournamentErrors,
   CreateTournamentPreviewItem,
+  UpdateCreateTournamentDraftValue,
 } from "../types"
 
 type ReviewStepProps = {
   draft: CreateTournamentDraft
+  errors: CreateTournamentErrors
+  onDraftChange: UpdateCreateTournamentDraftValue
   posterName: string
   posterPreview: string | null
   previewItems: CreateTournamentPreviewItem[]
@@ -30,11 +36,14 @@ type PublicPreviewData = {
   tournament: PublicTournamentDetail
 }
 
-function ReviewStep({ draft, posterPreview }: ReviewStepProps) {
+function ReviewStep({ draft, errors, onDraftChange, posterPreview }: ReviewStepProps) {
   const preview = createPublicPreviewData(draft, posterPreview)
 
   return (
-    <Card className="overflow-hidden">
+    <div className="space-y-6">
+      <ContactStep draft={draft} errors={errors} onDraftChange={onDraftChange} />
+
+      <Card className="overflow-hidden">
       <CardHeader className="border-b border-border">
         <CardTitle>Confirmar</CardTitle>
         <CardDescription>
@@ -58,6 +67,92 @@ function ReviewStep({ draft, posterPreview }: ReviewStepProps) {
             </div>
           </div>
         </div>
+      </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function ContactStep({
+  draft,
+  errors,
+  onDraftChange,
+}: {
+  draft: CreateTournamentDraft
+  errors: CreateTournamentErrors
+  onDraftChange: UpdateCreateTournamentDraftValue
+}) {
+  return (
+    <Card>
+      <CardHeader className="border-b border-border">
+        <CardTitle>Contacto para participantes</CardTitle>
+        <CardDescription>
+          Para torneos locales lo habitual es dejar un contacto para que los participantes
+          puedan escribirte (pagos, dudas…). Se guarda en tu perfil para reutilizarlo.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4 p-5">
+        <label className="flex items-start justify-between gap-4 rounded-xl border border-border bg-muted/20 p-4">
+          <span>
+            <span className="block font-medium text-foreground">
+              Mostrar mi contacto en la ficha del torneo
+            </span>
+            <span className="mt-1 block text-sm text-muted-foreground">
+              Aparecerán tu nombre/club, WhatsApp y email de contacto.
+            </span>
+          </span>
+          <input
+            type="checkbox"
+            checked={draft.show_contact}
+            onChange={(event) => onDraftChange("show_contact", event.target.checked)}
+            className="mt-1 size-5 shrink-0 accent-primary"
+          />
+        </label>
+
+        {draft.show_contact && (
+          <>
+            <div className="space-y-1.5">
+              <Label htmlFor="contact_name_input">Nombre o club</Label>
+              <Input
+                id="contact_name_input"
+                value={draft.contact_name}
+                onChange={(event) => onDraftChange("contact_name", event.target.value)}
+                placeholder="Tu nombre o el de tu club"
+                autoComplete="name"
+              />
+              {errors.contact_name && (
+                <p className="text-sm text-destructive">{errors.contact_name}</p>
+              )}
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="contact_whatsapp_input">WhatsApp</Label>
+                <Input
+                  id="contact_whatsapp_input"
+                  type="tel"
+                  value={draft.contact_whatsapp}
+                  onChange={(event) => onDraftChange("contact_whatsapp", event.target.value)}
+                  placeholder="+34 600 123 456"
+                  autoComplete="tel"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="contact_email_input">Email de contacto</Label>
+                <Input
+                  id="contact_email_input"
+                  type="email"
+                  value={draft.contact_email}
+                  onChange={(event) => onDraftChange("contact_email", event.target.value)}
+                  placeholder="contacto@tuclub.com"
+                  autoComplete="email"
+                />
+              </div>
+            </div>
+
+            {errors.contact && <p className="text-sm text-destructive">{errors.contact}</p>}
+          </>
+        )}
       </CardContent>
     </Card>
   )

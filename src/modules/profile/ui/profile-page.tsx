@@ -45,10 +45,7 @@ export function ProfilePage({
 
   return (
     <OrganizerPage>
-      <OrganizerPageHeader
-        title="Mi cuenta"
-        description="Gestiona tu perfil de organizador y tu monedero."
-      />
+      <OrganizerPageHeader title="Mi cuenta" className="border-b-0 pb-0" />
 
       <div
         aria-label="Secciones del perfil"

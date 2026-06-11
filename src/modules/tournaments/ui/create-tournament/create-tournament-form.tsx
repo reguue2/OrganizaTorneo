@@ -11,9 +11,14 @@ import { ReviewStep } from "./steps/review-step"
 import { StructureStep } from "./steps/structure-step"
 import { CreateTournamentStepSidebar } from "./step-sidebar"
 import { useCreateTournamentForm } from "./use-create-tournament-form"
+import type { CreateTournamentProfileContact } from "./use-create-tournament-form"
 import { CreateTournamentWizardNavigation } from "./wizard-navigation"
 
-function CreateTournamentForm() {
+function CreateTournamentForm({
+  profileContact,
+}: {
+  profileContact: CreateTournamentProfileContact
+}) {
   const {
     addOrSaveCategory,
     canGoBack,
@@ -44,7 +49,7 @@ function CreateTournamentForm() {
     setDraftValue,
     step,
     submit,
-  } = useCreateTournamentForm()
+  } = useCreateTournamentForm(profileContact)
 
   return (
     <form
@@ -126,6 +131,8 @@ function CreateTournamentForm() {
         {step === "review" && (
           <ReviewStep
             draft={draft}
+            errors={errors}
+            onDraftChange={setDraftValue}
             posterName={posterName}
             posterPreview={posterPreview}
             previewItems={previewItems}

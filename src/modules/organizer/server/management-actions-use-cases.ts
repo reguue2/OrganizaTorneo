@@ -52,6 +52,7 @@ export async function updateManagedTournamentConfigUseCase({
   province,
   registrationDeadline,
   rules,
+  showOrganizerContact,
   supabase,
   title,
   tournamentId,
@@ -72,6 +73,7 @@ export async function updateManagedTournamentConfigUseCase({
   description?: string
   entryPrice: number
   isPublic: boolean
+  showOrganizerContact: boolean
   maxParticipants: number | null
   participantType: "individual" | "team" | null
   paymentMethod: "cash" | "online" | "both"
@@ -220,6 +222,18 @@ export async function updateManagedTournamentConfigUseCase({
     return {
       status: 400,
       body: createManagementErrorPayload(error.message),
+    }
+  }
+
+  const { error: contactVisibilityError } = await supabase
+    .from("tournaments")
+    .update({ show_organizer_contact: showOrganizerContact })
+    .eq("id", tournamentId)
+
+  if (contactVisibilityError) {
+    return {
+      status: 400,
+      body: createManagementErrorPayload(contactVisibilityError.message),
     }
   }
 

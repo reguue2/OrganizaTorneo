@@ -6,11 +6,14 @@ import {
   formatDate,
   getRegistrationState,
 } from "@/modules/tournaments/domain"
+import type { OrganizerPublicContact } from "@/modules/profile/domain"
+import { OrganizerContactCard } from "@/modules/profile/ui/organizer-contact-card"
 
 import { ShareTournamentButton } from "./share-tournament-button"
 import type { PublicTournamentViewData } from "./types"
 
 type TournamentRegistrationSidebarProps = PublicTournamentViewData & {
+  contact?: OrganizerPublicContact | null
   registerPath: string
   registrationState: ReturnType<typeof getRegistrationState>
   sharePath: string
@@ -18,6 +21,7 @@ type TournamentRegistrationSidebarProps = PublicTournamentViewData & {
 
 function TournamentRegistrationSidebar({
   tournament,
+  contact,
   registerPath,
   registrationState,
   sharePath,
@@ -61,6 +65,10 @@ function TournamentRegistrationSidebar({
           />
         </CardContent>
       </Card>
+
+      {contact && (
+        <OrganizerContactCard contact={contact} tournamentTitle={tournament.title} />
+      )}
     </aside>
   )
 }

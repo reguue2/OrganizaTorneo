@@ -19,6 +19,7 @@ function createConfigForm({
     date: toDateTimeLocal(tournament.date),
     registration_deadline: toDateTimeLocal(tournament.registration_deadline),
     is_public: tournament.is_public ?? true,
+    show_organizer_contact: tournament.show_organizer_contact ?? true,
     payment_method: tournament.payment_method ?? "cash",
     participant_type: tournament.participant_type,
     entry_price: String(tournament.entry_price ?? 0),

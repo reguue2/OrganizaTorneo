@@ -5,7 +5,6 @@ import {
   getRegistrationState,
 } from "@/modules/tournaments/domain"
 import type { OrganizerPublicContact } from "@/modules/profile/domain"
-import { OrganizerContactCard } from "@/modules/profile/ui/organizer-contact-card"
 import { cn } from "@/lib/utils"
 
 import { TournamentCategoriesCard } from "./categories-card"
@@ -104,19 +103,13 @@ function PublicTournamentContent({
           {tournament.has_categories && categories.length > 0 && (
             <TournamentCategoriesCard categories={categories} />
           )}
-
-          {contact && (
-            <OrganizerContactCard
-              contact={contact}
-              tournamentTitle={tournament.title}
-            />
-          )}
         </div>
 
         {showRegistrationSidebar && (
           <TournamentRegistrationSidebar
             tournament={tournament}
             categories={categories}
+            contact={contact}
             registerPath={registerPath}
             registrationState={registrationState}
             sharePath={sharePath}

@@ -45,6 +45,12 @@ const STORAGE_KEY = "create-tournament-form-v2"
 const SUBMITTED_STORAGE_KEY = "create-tournament-form-v2-submitted"
 const MAX_POSTER_SIZE = 5 * 1024 * 1024
 
+export type CreateTournamentProfileContact = {
+  name: string
+  whatsapp: string
+  contactEmail: string
+}
+
 const initialActionState: CreateTournamentActionState = {
   error: null,
 }
@@ -93,8 +99,13 @@ function buildPreviewItems(
   ]
 }
 
-function useCreateTournamentForm() {
+function useCreateTournamentForm(profileContact: CreateTournamentProfileContact) {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const {
+    name: prefillName,
+    whatsapp: prefillWhatsapp,
+    contactEmail: prefillContactEmail,
+  } = profileContact
   const [serverState, formAction, pending] = useActionState(
     createTournament,
     initialActionState
@@ -132,14 +143,22 @@ function useCreateTournamentForm() {
         ? null
         : parseStoredCreateTournamentDraft(sessionStorage.getItem(STORAGE_KEY))
 
-      setDraft(stored ?? INITIAL_CREATE_TOURNAMENT_DRAFT)
+      // Prefill the contact from the organizer profile when the draft has none,
+      // so it is set once and reused across tournaments.
+      const base = stored ?? INITIAL_CREATE_TOURNAMENT_DRAFT
+      setDraft({
+        ...base,
+        contact_name: base.contact_name || prefillName,
+        contact_whatsapp: base.contact_whatsapp || prefillWhatsapp,
+        contact_email: base.contact_email || prefillContactEmail,
+      })
       setLoaded(true)
     })
 
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [prefillName, prefillWhatsapp, prefillContactEmail])
 
   useEffect(() => {
     if (!loaded) return
